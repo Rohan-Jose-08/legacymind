@@ -1,6 +1,6 @@
 # LegacyMind benchmark results
 
-Generated 2026-07-07T14:52:22.341Z by `node benchmark/run-benchmark.mjs`.
+Generated 2026-07-07T19:59:48.136Z by `node benchmark/run-benchmark.mjs`.
 
 Every module below was parsed to IR, migrated to Java 21 by the
 transpiler (two prompt-variant candidates, replayed from the committed
@@ -11,10 +11,10 @@ selected candidate; every disclosed gap is listed in the certificate.
 
 | Module | COBOL lines | Winner | Layer B | Layer A (seeded) | Layer C obligations | Paths | Layer D keys | Verdict | LLM cost | Wall time |
 |---|---|---|---|---|---|---|---|---|---|---|
-| PAYROLL | 59 | candidate a of 2 | 4 cases | 200/200 (seed 20260705) | 2✓ 0✗ 0 unrealized | 2/2 | 4/4 static | **CERTIFIED** | $0.0000 | 129.2s |
-| INTEREST | 53 | candidate a of 2 | 4 cases | 200/200 (seed 20260706) | 1✓ 0✗ 1 unrealized | 2/2 | 3/3 static | **CERTIFIED** | $0.0000 | 136.9s |
-| DISCOUNT | 54 | candidate a of 2 | 5 cases | 200/200 (seed 20260706) | 3✓ 0✗ 0 unrealized | 2/2 | 4/4 static | **CERTIFIED** | $0.0000 | 193.9s |
-| LEDGER | 72 | candidate a of 2 | 6 cases | 200/200 (seed 20260707) | 4✓ 0✗ 1 unrealized | 4/6 | 4/4 static | **CERTIFIED** | $0.0000 | 178.1s |
+| PAYROLL | 59 | candidate a of 2 | 4 cases | 200/200 (seed 20260705) | 2✓ 0✗ 0 unrealized | 2/2 | 4/4 static | **CERTIFIED** | $0.0000 | 135.5s |
+| INTEREST | 53 | candidate a of 2 | 4 cases | 200/200 (seed 20260706) | 2✓ 0✗ 0 unrealized | 2/2 | 3/3 static | **CERTIFIED** | $0.0000 | 170.4s |
+| DISCOUNT | 54 | candidate a of 2 | 5 cases | 200/200 (seed 20260706) | 3✓ 0✗ 0 unrealized | 2/2 | 4/4 static | **CERTIFIED** | $0.0000 | 215.1s |
+| LEDGER | 72 | candidate a of 2 | 6 cases | 200/200 (seed 20260707) | 5✓ 0✗ 0 unrealized | 4/4 (+2 dead) | 4/4 static | **CERTIFIED** | $0.0000 | 242.5s |
 
 ## Disclosed gaps per certificate
 
@@ -22,14 +22,12 @@ selected candidate; every disclosed gap is listed in the certificate.
 - layer C: 1 obligation-path combination(s) unrealized (see report)
 
 **INTEREST**
-- layer C: 1 obligation(s) could not be realized as inputs (see report)
 
 **DISCOUNT**
 - layer C: 2 obligation-path combination(s) unrealized (see report)
 
 **LEDGER**
-- layer C: 1 obligation(s) could not be realized as inputs (see report)
-- layer C: 9 obligation-path combination(s) unrealized (see report)
+- layer C: 3 obligation-path combination(s) unrealized (see report)
 
 ## Parser coverage against an external corpus
 

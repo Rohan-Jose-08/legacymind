@@ -144,10 +144,79 @@ interface Affine {
   fuzz: Rat;
 }
 
+/**
+ * Exact structure of a value whose fuzzy affine form went through rounding:
+ * an affine part plus a linear combination of rounded terms, each
+ * round_mode,scale(inner) with an exactly-affine inner. One level deep —
+ * a rounded value flowing into another rounding drops the exact form (the
+ * fuzz bound still applies).
+ */
+interface RoundTerm {
+  coeff: Rat;
+  mode: "half-up" | "trunc";
+  scale: number;
+  inner: Affine; // fuzz always 0 by construction
+}
+
+interface ExactForm {
+  affine: Affine; // fuzz always 0 by construction
+  rounds: RoundTerm[];
+}
+
 type SymVal =
-  | { kind: "affine"; a: Affine }
+  | { kind: "affine"; a: Affine; exact?: ExactForm }
   | { kind: "text"; input: number }
   | { kind: "opaque"; reason: string };
+
+/** Exact form of a value: explicit, or the affine itself when drift-free. */
+function exactOf(v: SymVal): ExactForm | null {
+  if (v.kind !== "affine") return null;
+  if (v.exact) return v.exact;
+  return rIsZero(v.a.fuzz) ? { affine: v.a, rounds: [] } : null;
+}
+
+function exactCombine(a: ExactForm, b: ExactForm, sign: 1 | -1): ExactForm {
+  return {
+    affine: affineCombine(a.affine, b.affine, sign),
+    rounds: [
+      ...a.rounds,
+      ...b.rounds.map((r) => (sign === 1 ? r : { ...r, coeff: rNeg(r.coeff) })),
+    ],
+  };
+}
+
+function exactScale(e: ExactForm, k: Rat): ExactForm {
+  return {
+    affine: affineScale(e.affine, k),
+    rounds: e.rounds.map((r) => ({ ...r, coeff: rMul(r.coeff, k) })),
+  };
+}
+
+/** Round a rational to `scale` with COBOL semantics (exact, no floats). */
+function ratRound(v: Rat, scale: number, mode: "half-up" | "trunc"): Rat {
+  const m = 10n ** BigInt(scale);
+  const scaled = rMul(v, { n: m, d: 1n }); // want integer part per mode
+  const q = scaled.n / scaled.d;
+  const rem = scaled.n % scaled.d;
+  if (rem === 0n) return rat(q, m);
+  if (mode === "trunc") {
+    // toward zero
+    return rat(q, m);
+  }
+  // half away from zero: |rem/d| >= 1/2 rounds away
+  const away = (rem < 0n ? -rem : rem) * 2n >= scaled.d;
+  const adj = away ? (scaled.n < 0n ? q - 1n : q + 1n) : q;
+  return rat(adj, m);
+}
+
+/** Evaluate an exact form at a full assignment. */
+function evalExact(e: ExactForm, x: Assignment): Rat {
+  let acc = evalAffine(e.affine, x);
+  for (const r of e.rounds) {
+    acc = rAdd(acc, rMul(r.coeff, ratRound(evalAffine(r.inner, x), r.scale, r.mode)));
+  }
+  return acc;
+}
 
 const affineConst = (c: Rat): Affine => ({ terms: new Map(), c, fuzz: R0 });
 const affineVar = (idx: number): Affine => ({ terms: new Map([[idx, { n: 1n, d: 1n }]]), c: R0, fuzz: R0 });
@@ -234,6 +303,16 @@ function parseExpression(text: string, ctx: ExprCtx): SymVal {
     return opaque(`identifier ${t} has no symbolic value`);
   }
 
+  const scaleVal = (v: SymVal, k: Rat): SymVal => {
+    if (v.kind !== "affine") return v;
+    const e = exactOf(v);
+    return {
+      kind: "affine",
+      a: affineScale(v.a, k),
+      ...(e && e.rounds.length > 0 ? { exact: exactScale(e, k) } : {}),
+    };
+  };
+
   function factor(): SymVal {
     let left = atom();
     while (peek() === "*" || peek() === "/") {
@@ -243,14 +322,14 @@ function parseExpression(text: string, ctx: ExprCtx): SymVal {
         return left.kind === "opaque" ? left : right.kind === "opaque" ? right : { kind: "opaque", reason: "non-affine operand" };
       }
       if (op === "*") {
-        if (isConstant(right.a)) left = { kind: "affine", a: affineScale(left.a, right.a.c) };
-        else if (isConstant(left.a)) left = { kind: "affine", a: affineScale(right.a, left.a.c) };
+        if (isConstant(right.a)) left = scaleVal(left, right.a.c);
+        else if (isConstant(left.a)) left = scaleVal(right, left.a.c);
         else return { kind: "opaque", reason: "variable × variable product (nonlinear)" };
       } else {
         if (!isConstant(right.a) || rIsZero(right.a.c)) {
           return { kind: "opaque", reason: "division by a non-constant (nonlinear)" };
         }
-        left = { kind: "affine", a: affineScale(left.a, rDiv({ n: 1n, d: 1n }, right.a.c)) };
+        left = scaleVal(left, rDiv({ n: 1n, d: 1n }, right.a.c));
       }
     }
     return left;
@@ -264,13 +343,20 @@ function parseExpression(text: string, ctx: ExprCtx): SymVal {
       if (left.kind !== "affine" || right.kind !== "affine") {
         return left.kind === "opaque" ? left : right.kind === "opaque" ? right : { kind: "opaque", reason: "non-affine operand" };
       }
-      left = { kind: "affine", a: affineCombine(left.a, right.a, op === "+" ? 1 : -1) };
+      const le = exactOf(left);
+      const re = exactOf(right);
+      const combinedExact =
+        le && re ? exactCombine(le, re, op === "+" ? 1 : -1) : null;
+      left = {
+        kind: "affine",
+        a: affineCombine(left.a, right.a, op === "+" ? 1 : -1),
+        ...(combinedExact && combinedExact.rounds.length > 0 ? { exact: combinedExact } : {}),
+      };
     }
     return left;
   }
 
-  const negate = (v: SymVal): SymVal =>
-    v.kind === "affine" ? { kind: "affine", a: affineScale(v.a, { n: -1n, d: 1n }) } : v;
+  const negate = (v: SymVal): SymVal => scaleVal(v, { n: -1n, d: 1n });
 
   const out = expr();
   if (pos !== raw.length && out.kind === "affine") {
@@ -293,12 +379,19 @@ interface Constraint {
   text: string;
   /** true for PICTURE-capacity bounds injected by stores (not branch conds). */
   domain?: boolean;
+  /**
+   * Exact structure of the decision value when representable. With it, the
+   * constraint is decidable at any concrete assignment (no fuzz margin) —
+   * this is what lets the solver sit cases exactly on a rounded boundary.
+   */
+  exact?: ExactForm | null;
 }
 
 interface CondOutcome {
   text: string;
   taken: boolean;
   diff: Affine | null; // null = opaque condition
+  exact?: ExactForm | null;
 }
 
 interface SymCompute {
@@ -342,6 +435,8 @@ interface ExecCtx {
   items: DataItem[];
   assigned: Set<string>;
   acceptOrder: string[]; // ACCEPT targets in source order = stdin positions
+  /** PICTURE scale of each input variable (by stdin position). */
+  inputScales: number[];
 }
 
 function cloneState(s: PathState): PathState {
@@ -364,42 +459,82 @@ function store(state: PathState, ctx: ExecCtx, target: string, val: SymVal, roun
   const scale = item?.type?.scale ?? 0;
   const digits = item?.type?.digits;
   const grid = 10n ** BigInt(scale);
-  // Exact when every coefficient and the constant land on the target grid
-  // (then no rounding happens for on-grid inputs).
-  const exact =
-    rIsZero(val.a.fuzz) &&
-    rMul(val.a.c, { n: grid, d: 1n }).d === 1n &&
-    [...val.a.terms.values()].every((c) => rMul(c, { n: grid, d: 1n }).d === 1n);
+
+  // A value is on the target grid — no truncation/rounding at store time —
+  // when its affine part lands on the grid for every on-grid input (judged
+  // per input scale) and every rounded term's contribution does too.
+  const affineOnGrid = (a: Affine): boolean =>
+    rMul(a.c, { n: grid, d: 1n }).d === 1n &&
+    [...a.terms.entries()].every(
+      ([i, c]) => rMul(c, rat(grid, 10n ** BigInt(ctx.inputScales[i] ?? 0))).d === 1n,
+    );
+  const incoming = exactOf(val);
+  const gridExact = incoming
+    ? affineOnGrid(incoming.affine) &&
+      incoming.rounds.every((r) => rMul(rMul(r.coeff, ulpOf(r.scale)), { n: grid, d: 1n }).d === 1n)
+    : false;
+
   let fuzz = val.a.fuzz;
-  if (!exact) {
+  let exactForm: ExactForm | undefined;
+  if (gridExact && incoming) {
+    // Store is the identity; the exact form (if it has structure) survives.
+    if (incoming.rounds.length > 0) exactForm = incoming;
+  } else {
     const u = ulpOf(scale);
     fuzz = rAdd(fuzz, rounded ? rDiv(u, { n: 2n, d: 1n }) : u);
+    // The stored value is exactly round(inner) when the incoming value is
+    // itself drift-free and affine; one more rounding level drops the form.
+    if (incoming && incoming.rounds.length === 0) {
+      exactForm = {
+        affine: affineConst(R0),
+        rounds: [{ coeff: { n: 1n, d: 1n }, mode: rounded ? "half-up" : "trunc", scale, inner: incoming.affine }],
+      };
+    }
   }
   const storedVal: Affine = { terms: val.a.terms, c: val.a.c, fuzz };
-  state.env.set(target, { kind: "affine", a: storedVal });
+  state.env.set(target, { kind: "affine", a: storedVal, ...(exactForm ? { exact: exactForm } : {}) });
   // Capacity: constrain the path to the wrap-free region — solutions the
   // solver produces stay in the linear regime; wrap semantics belong to
   // layers A/B, which sample it.
   if (digits !== undefined && item?.type?.category === "numeric") {
     const max = rat(10n ** BigInt(digits) - 1n, grid);
-    state.constraints.push({ diff: storedVal, op: ">=", taken: true, text: `${target} >= 0 (storage)`, domain: true });
+    const storedExact: ExactForm | null =
+      exactForm ?? (rIsZero(storedVal.fuzz) ? { affine: storedVal, rounds: [] } : null);
+    state.constraints.push({
+      diff: storedVal,
+      op: ">=",
+      taken: true,
+      text: `${target} >= 0 (storage)`,
+      domain: true,
+      exact: storedExact,
+    });
     state.constraints.push({
       diff: affineCombine(storedVal, affineConst(max), -1),
       op: "<=",
       taken: true,
       text: `${target} <= ${ratToDecimal(max, scale)} (storage)`,
       domain: true,
+      exact: storedExact ? exactCombine(storedExact, { affine: affineConst(max), rounds: [] }, -1) : null,
     });
   }
 }
 
-function parseCondition(text: string, ctx: ExprCtx): { diff: Affine; op: CmpOp } | null {
+function parseCondition(
+  text: string,
+  ctx: ExprCtx,
+): { diff: Affine; op: CmpOp; exact: ExactForm | null } | null {
   const m = /^(.*?)\s*(>=|<=|<>|>|<|=)\s*(.*)$/.exec(text.trim());
   if (!m) return null;
   const left = parseExpression(m[1]!, ctx);
   const right = parseExpression(m[3]!, ctx);
   if (left.kind !== "affine" || right.kind !== "affine") return null;
-  return { diff: affineCombine(left.a, right.a, -1), op: m[2] as CmpOp };
+  const le = exactOf(left);
+  const re = exactOf(right);
+  return {
+    diff: affineCombine(left.a, right.a, -1),
+    op: m[2] as CmpOp,
+    exact: le && re ? exactCombine(le, re, -1) : null,
+  };
 }
 
 function execute(stmts: Statement[], state: PathState, ctx: ExecCtx, out: PathState[]): void {
@@ -441,9 +576,9 @@ function execute(stmts: Statement[], state: PathState, ctx: ExecCtx, out: PathSt
           [s.else ?? [], false],
         ] as const) {
           const forked = cloneState(state);
-          forked.conds.push({ text: s.condition.text, taken, diff: parsed?.diff ?? null });
+          forked.conds.push({ text: s.condition.text, taken, diff: parsed?.diff ?? null, exact: parsed?.exact ?? null });
           if (parsed) {
-            forked.constraints.push({ diff: parsed.diff, op: parsed.op, taken, text: s.condition.text });
+            forked.constraints.push({ diff: parsed.diff, op: parsed.op, taken, text: s.condition.text, exact: parsed.exact });
           } else {
             forked.notes.push(`condition "${s.condition.text}" is not affine; path constraints incomplete`);
           }
@@ -496,8 +631,6 @@ function evalAffine(a: Affine, x: Assignment): Rat {
 
 /** true / false / "margin" (inside the fuzz band — cannot be trusted). */
 function constraintHolds(c: Constraint, x: Assignment): boolean | "margin" {
-  const v = evalAffine(c.diff, x);
-  const f = c.diff.fuzz;
   const cmp = (r: number): boolean => {
     switch (c.op) {
       case ">": return r > 0;
@@ -508,6 +641,13 @@ function constraintHolds(c: Constraint, x: Assignment): boolean | "margin" {
       case "<>": return r !== 0;
     }
   };
+  // Exact structure available: the decision is fully decidable — evaluate
+  // the rounding for real instead of hedging with a fuzz band.
+  if (c.exact) {
+    return cmp(rCmp(evalExact(c.exact, x), R0)) === c.taken;
+  }
+  const v = evalAffine(c.diff, x);
+  const f = c.diff.fuzz;
   if (rIsZero(f)) return cmp(rCmp(v, R0)) === c.taken;
   // With fuzz, the decision is only trustworthy outside the band |v| <= f.
   if (rCmp(rAbs(v), f) <= 0) return "margin";
@@ -676,7 +816,7 @@ export function runSymExec(configPath: string, outPath: string): number {
   };
   collectAccepts(tree);
 
-  const ctx: ExecCtx = { items, assigned, acceptOrder };
+  const ctx: ExecCtx = { items, assigned, acceptOrder, inputScales: inputs.map((s) => s.scale) };
   const states: PathState[] = [];
   execute(tree, { env: new Map(), constraints: [], conds: [], computes: [], notes: [] }, ctx, states);
   const paths = states.map((st, i) => ({ id: i, state: st }));
@@ -695,20 +835,93 @@ export function runSymExec(configPath: string, outPath: string): number {
   const toStdin = (x: Assignment): string[] =>
     x.map((v, i) => (v === null ? sym.baseCase[i]! : ratToDecimal(v, inputs[i]!.scale) ?? sym.baseCase[i]!));
 
-  // --- 2. branch-boundary obligations -----------------------------------------
+  // --- 2. infeasible paths (proved, not guessed) -------------------------------
+  // A constraint whose decision value is a drift-free constant that fails
+  // is a contradiction: the path cannot execute for any input. Only that
+  // shape is treated as proof; a failed witness search alone is not.
+  const infeasible = paths.map((p) =>
+    p.state.constraints.some(
+      (c) =>
+        c.diff.terms.size === 0 &&
+        rIsZero(c.diff.fuzz) &&
+        (!c.exact || c.exact.rounds.length === 0) &&
+        constraintHolds(c, zeroAssign) === false,
+    ),
+  );
+
+  // --- 3. path witnesses (solved first: their assignments seed the
+  //         obligation solver with in-path fixing points) -----------------------
+  interface Witness {
+    path: number;
+    stdin: string[] | null;
+    assign: Assignment | null;
+    note: string;
+    result?: CaseResult;
+  }
+  const witnesses: Witness[] = paths.map((p) => {
+    if (infeasible[p.id]) {
+      return { path: p.id, stdin: null, assign: null, note: "path is infeasible (a constant constraint fails); dead code" };
+    }
+    if (p.state.conds.some((c) => !c.diff)) {
+      return { path: p.id, stdin: null, assign: null, note: "path has a non-affine condition; witness selection is not sound" };
+    }
+    const tried: Assignment[] = [...fixedCandidates];
+    for (let round = 0; round < 6; round++) {
+      const x = tried.shift();
+      if (!x) break;
+      if (x.some((v, i) => inputs[i]!.numeric && v === null)) continue;
+      const ok = allConstraintsHold(p.state.constraints, x);
+      if (ok === true) {
+        return { path: p.id, stdin: toStdin(x), assign: x, note: `witness for path #${p.id}` };
+      }
+      // Find the first violated/marginal branch constraint and push the
+      // decision value beyond its boundary (fuzz + 1ulp margin).
+      for (const c of p.state.constraints) {
+        if (constraintHolds(c, x) === true) continue;
+        const scales = [...c.diff.terms.keys()].map((i) => inputs[i]?.scale ?? 0);
+        const ulp = ulpOf(scales.length > 0 ? Math.max(...scales) : 0);
+        const margin = rAdd(c.diff.fuzz, ulp);
+        let target: Rat;
+        if ((c.op === "=" && c.taken) || (c.op === "<>" && !c.taken)) {
+          target = R0;
+        } else if (c.op === ">" || c.op === ">=") {
+          target = c.taken ? margin : rNeg(margin);
+        } else if (c.op === "<" || c.op === "<=") {
+          target = c.taken ? rNeg(margin) : margin;
+        } else {
+          target = margin; // "=" not-taken / "<>" taken
+        }
+        const solved = solveEquality(c.diff, target, inputs, [x], p.state.constraints);
+        if (solved) tried.push(solved);
+        break;
+      }
+    }
+    return { path: p.id, stdin: null, assign: null, note: "no assignment satisfied all path constraints (see constraints in report)" };
+  });
+
+  /** Fixing points for a path's solver runs: its witness first, then globals. */
+  const fixedCandidatesFor = (pathId: number): Assignment[] => {
+    const w = witnesses[pathId]?.assign;
+    return w ? [w, ...fixedCandidates] : fixedCandidates;
+  };
+
+  // --- 4. branch-boundary obligations -----------------------------------------
   // A condition's decision value is path-dependent (an accumulator may be
   // degenerate on one path and fully affine on another), so each unique
-  // condition is solved against every path's own diff.
+  // condition is solved against every path's own diff — and when the
+  // decision value passes through a rounded store, its exact form is
+  // inverted through the rounding.
   const obligations: Obligation[] = [];
-  const condSites = new Map<string, Map<number, Affine | null>>();
+  const condSites = new Map<string, Map<number, { diff: Affine | null; exact: ExactForm | null }>>();
   for (const path of paths) {
+    if (infeasible[path.id]) continue;
     for (const c of path.state.conds) {
       let site = condSites.get(c.text);
       if (!site) {
         site = new Map();
         condSites.set(c.text, site);
       }
-      if (!site.has(path.id)) site.set(path.id, c.diff);
+      if (!site.has(path.id)) site.set(path.id, { diff: c.diff, exact: c.exact ?? null });
     }
   }
   let branchN = 0;
@@ -724,42 +937,71 @@ export function runSymExec(configPath: string, outPath: string): number {
       unrealizedPaths: [],
     };
     obligations.push(ob);
-    const usable = [...perPath.entries()].filter(
-      ([, d]) => d !== null && rIsZero(d.fuzz) && d.terms.size > 0,
-    ) as [number, Affine][];
-    if (usable.length === 0) {
-      const d = [...perPath.values()].find((x) => x !== null);
+    // Directly affine decision values (no drift) and exact single-rounding
+    // forms are both solvable; anything else is disclosed.
+    const affineSites = [...perPath.entries()].filter(
+      (e): e is [number, { diff: Affine; exact: ExactForm | null }] =>
+        e[1].diff !== null && rIsZero(e[1].diff.fuzz) && e[1].diff.terms.size > 0,
+    );
+    const roundSites = [...perPath.entries()].filter(
+      (e): e is [number, { diff: Affine | null; exact: ExactForm }] =>
+        e[1].exact !== null &&
+        e[1].exact.rounds.length === 1 &&
+        e[1].exact.affine.terms.size === 0 &&
+        e[1].exact.rounds[0]!.inner.terms.size > 0,
+    );
+    if (affineSites.length === 0 && roundSites.length === 0) {
+      const any = [...perPath.values()].find((x) => x.diff !== null);
       ob.notes.push(
-        d === undefined || d === null
+        any === undefined
           ? "condition is not an affine form on any path; needs nonlinear reasoning"
-          : !rIsZero(d.fuzz)
-            ? `condition value carries rounding drift (±${ratToDecimal(d.fuzz, 6) ?? "?"}); ` +
-              "the boundary cannot be pinned exactly through a rounded store"
-            : "condition decision value is constant on every path",
+          : any.diff !== null && !rIsZero(any.diff.fuzz)
+            ? "condition value drifts through more than one rounded store; needs deeper inversion"
+            : "condition decision value is constant on every feasible path",
       );
       continue;
     }
-    for (const [suffix, mkTarget, label] of [
-      ["m", (u: Rat) => rNeg(u), "boundary - 1ulp"],
-      ["0", () => R0, "boundary"],
-      ["p", (u: Rat) => u, "boundary + 1ulp"],
+    for (const [suffix, offset, label] of [
+      ["m", -1n, "boundary - 1ulp"],
+      ["0", 0n, "boundary"],
+      ["p", 1n, "boundary + 1ulp"],
     ] as const) {
       let solved: Assignment | null = null;
       let solvedPath = -1;
-      for (const [pathId, diff] of usable) {
+      let how = "";
+      for (const [pathId, site] of affineSites) {
+        const diff = site.diff;
         const scales = [...diff.terms.keys()].map((i) => inputs[i]?.scale ?? 0);
-        const ulp = ulpOf(scales.length > 0 ? Math.max(...scales) : 0);
-        solved = solveEquality(diff, mkTarget(ulp), inputs, fixedCandidates, paths[pathId]!.state.constraints);
+        const u = ulpOf(scales.length > 0 ? Math.max(...scales) : 0);
+        const target = rMul(u, { n: offset, d: 1n });
+        solved = solveEquality(diff, target, inputs, fixedCandidatesFor(pathId), paths[pathId]!.state.constraints);
         if (solved) {
           solvedPath = pathId;
+          how = "linear";
           break;
+        }
+      }
+      if (!solved) {
+        for (const [pathId, site] of roundSites) {
+          solved = solveThroughRounding(
+            site.exact,
+            offset,
+            inputs,
+            fixedCandidatesFor(pathId),
+            paths[pathId]!.state.constraints,
+          );
+          if (solved) {
+            solvedPath = pathId;
+            how = "inverted through the rounded store";
+            break;
+          }
         }
       }
       if (solved) {
         ob.cases.push({
           id: `sym-${ob.id}-${suffix}`,
           stdin: toStdin(solved),
-          note: `${condText} decision value at ${label} (path #${solvedPath})`,
+          note: `${condText} decision value at ${label} (path #${solvedPath}, ${how})`,
         });
       } else {
         ob.notes.push(`no on-grid inputs reach ${label} within any path's constraints`);
@@ -767,7 +1009,7 @@ export function runSymExec(configPath: string, outPath: string): number {
     }
   }
 
-  // --- 3. rounding half-boundary obligations -----------------------------------
+  // --- 5. rounding half-boundary obligations -----------------------------------
   // Gather each unique money-touching ROUNDED compute with its per-path
   // expression value — the same statement can be affine on one path and
   // degenerate (constant) on another, so realization is chosen per path.
@@ -777,6 +1019,7 @@ export function runSymExec(configPath: string, outPath: string): number {
   }
   const roundedSites = new Map<string, RoundedSite>();
   for (const path of paths) {
+    if (infeasible[path.id]) continue;
     for (const sc of path.state.computes) {
       const cmp = sc.stmt;
       if (!cmp.rounded) continue;
@@ -811,54 +1054,41 @@ export function runSymExec(configPath: string, outPath: string): number {
 
     const targetItem = findItem(items, cmp.target);
     const st = targetItem?.type?.scale ?? 0;
-    let anyAffine = false;
+    let anySolvable = false;
     let anyBoundaryExists = false;
 
-    for (const [pathId, exprVal] of site.perPath) {
+    /**
+     * Realize half-boundary cases for an affine view of the expression on
+     * one path, using the given fixing points. Returns "realized",
+     * "no-boundary" (exact at target scale), or "failed".
+     */
+    const tryCongruence = (
+      a: Affine,
+      pathId: number,
+      fixedList: Assignment[],
+      viaNote: string,
+    ): "realized" | "no-boundary" | "failed" => {
       const path = paths[pathId]!;
-      if (exprVal.kind !== "affine" || !rIsZero(exprVal.a.fuzz) || exprVal.a.terms.size === 0) {
-        const reason =
-          exprVal.kind === "opaque"
-            ? exprVal.reason
-            : exprVal.kind === "affine" && exprVal.a.terms.size === 0
-              ? "expression is constant on this path (no input can move it)"
-              : "expression carries rounding drift on this path";
-        ob.unrealizedPaths.push({ path: pathId, reason });
-        continue;
-      }
-      anyAffine = true;
-      const a = exprVal.a;
       // L = the scale at which the expression is integral for on-grid
       // inputs; a half-unit at the target scale is then m/2, m = 10^(L-st).
       let scaleL = 0;
-      let decimal = true;
       for (const [i, coeff] of a.terms) {
         const si = inputs[i]?.scale ?? 0;
         const s = pow10Scale(rMul(coeff, { n: 1n, d: 10n ** BigInt(si) }).d);
-        if (s === null) {
-          decimal = false;
-          break;
-        }
+        if (s === null) return "failed"; // non-decimal coefficient
         scaleL = Math.max(scaleL, s);
       }
       const s0 = pow10Scale(a.c.d);
-      if (s0 === null) decimal = false;
-      else scaleL = Math.max(scaleL, s0);
-      if (!decimal) {
-        ob.unrealizedPaths.push({ path: pathId, reason: "expression has non-decimal coefficients" });
-        continue;
-      }
+      if (s0 === null) return "failed";
+      scaleL = Math.max(scaleL, s0);
       const modExp = scaleL - st;
-      if (modExp <= 0) {
-        ob.unrealizedPaths.push({ path: pathId, reason: "expression is exact at the target scale on this path" });
-        continue;
-      }
+      if (modExp <= 0) return "no-boundary";
       anyBoundaryExists = true;
       const m = 10n ** BigInt(modExp);
       const h = m / 2n;
       const scaleMul = 10n ** BigInt(scaleL);
       let realizedOnPath = false;
-      for (const fixed of fixedCandidates) {
+      for (const fixed of fixedList) {
         if (realizedOnPath) break;
         for (const [j, cj] of a.terms) {
           if (realizedOnPath) break;
@@ -894,86 +1124,76 @@ export function runSymExec(configPath: string, outPath: string): number {
             ob.cases.push({
               id: `sym-${ob.id}-p${pathId}-${ob.cases.length}`,
               stdin: toStdin(x),
-              note: `${spec.name} = ${ratToDecimal(x[j]!, spec.scale)} lands ${cmp.target} on a half-${st === 0 ? "unit" : "cent"} (path #${pathId})`,
+              note: `${spec.name} = ${ratToDecimal(x[j]!, spec.scale)} lands ${cmp.target} on a half-${st === 0 ? "unit" : "cent"} (path #${pathId}${viaNote})`,
             });
             realizedOnPath = true;
             if (ob.cases.length >= maxSolutions * 2) break;
           }
         }
       }
-      if (!realizedOnPath) {
+      return realizedOnPath ? "realized" : "failed";
+    };
+
+    for (const [pathId, exprVal] of site.perPath) {
+      const path = paths[pathId]!;
+      if (exprVal.kind === "affine" && rIsZero(exprVal.a.fuzz) && exprVal.a.terms.size > 0) {
+        anySolvable = true;
+        const r = tryCongruence(exprVal.a, pathId, fixedCandidatesFor(pathId), "");
+        if (r === "no-boundary") {
+          ob.unrealizedPaths.push({ path: pathId, reason: "expression is exact at the target scale on this path" });
+        } else if (r === "failed") {
+          ob.unrealizedPaths.push({
+            path: pathId,
+            reason: "the half-boundary congruence has no on-grid solution within this path's constraints",
+          });
+        }
+        continue;
+      }
+      if (exprVal.kind === "affine" && exprVal.a.terms.size === 0) {
+        ob.unrealizedPaths.push({ path: pathId, reason: "expression is constant on this path (no input can move it)" });
+        continue;
+      }
+      if (exprVal.kind === "affine") {
+        ob.unrealizedPaths.push({ path: pathId, reason: "expression carries rounding drift on this path" });
+        continue;
+      }
+      // Nonlinear (variable × variable): linearize by fixing all factors
+      // but one at this path's witness values, which satisfy the path
+      // constraints by construction.
+      const linear = linearizeProduct(cmp, path.state, inputs, witnesses[pathId]?.assign ?? baseAssign, items, assigned);
+      if (linear) {
+        anySolvable = true;
+        const r = tryCongruence(linear.a, pathId, [linear.fixed], ` via ${linear.desc}`);
+        if (r === "realized") continue;
         ob.unrealizedPaths.push({
           path: pathId,
-          reason: "the half-boundary congruence has no on-grid solution within this path's constraints",
+          reason:
+            r === "no-boundary"
+              ? "expression is exact at the target scale with the witness-fixed factors"
+              : "no on-grid solution with the witness-fixed factors within this path's constraints",
         });
+        continue;
       }
+      ob.unrealizedPaths.push({
+        path: pathId,
+        reason: exprVal.kind === "opaque" ? exprVal.reason : "expression is not a numeric value on this path",
+      });
     }
 
     if (ob.cases.length > 0) {
       ob.notes.push(`affine congruence solved: expression ≡ half-unit (mod target grid) at target scale ${st}`);
-    } else if (anyAffine && !anyBoundaryExists && ob.unrealizedPaths.every((u) => u.reason.includes("exact at the target scale"))) {
+    } else if (anySolvable && !anyBoundaryExists && ob.unrealizedPaths.every((u) => u.reason.includes("exact at the target scale"))) {
       ob.status = "NOT-APPLICABLE";
       ob.notes.push("the expression is exact at the target scale on every path; no rounding boundary exists");
-    } else if (!anyAffine) {
+    } else if (!anySolvable) {
       // v1 fallback: source * constant with an invertible producer.
-      ob.notes.push("affine engine: expression not affine on any path; falling back to producer-inversion heuristic");
+      ob.notes.push("affine engine: expression not solvable on any path; falling back to producer-inversion heuristic");
       ob.unrealizedPaths = [];
       legacyRoundingRealization(ob, cmp, paths, inputs, sym.baseCase, items, assigned, maxSolutions, st);
     }
   }
 
-  // --- 4. path witnesses ---------------------------------------------------------
-  interface Witness {
-    path: number;
-    stdin: string[] | null;
-    note: string;
-    result?: CaseResult;
-  }
-  const witnesses: Witness[] = paths.map((p) => {
-    if (p.state.conds.some((c) => !c.diff)) {
-      return { path: p.id, stdin: null, note: "path has a non-affine condition; witness selection is not sound" };
-    }
-    // Try the fixed candidates first, then repair one violated constraint at
-    // a time by solving its boundary with margin.
-    const tried: Assignment[] = [...fixedCandidates];
-    for (let round = 0; round < 6; round++) {
-      const x = tried.shift();
-      if (!x) break;
-      if (x.some((v, i) => inputs[i]!.numeric && v === null)) continue;
-      const ok = allConstraintsHold(p.state.constraints, x);
-      if (ok === true) {
-        return { path: p.id, stdin: toStdin(x), note: `witness for path #${p.id}` };
-      }
-      // Find the first violated/marginal branch constraint and push the
-      // decision value beyond its boundary (fuzz + 1ulp margin).
-      for (const c of p.state.constraints) {
-        if (constraintHolds(c, x) === true) continue;
-        const scales = [...c.diff.terms.keys()].map((i) => inputs[i]?.scale ?? 0);
-        const ulp = ulpOf(scales.length > 0 ? Math.max(...scales) : 0);
-        const margin = rAdd(c.diff.fuzz, ulp);
-        // Desired sign of diff so that (diff op 0) === taken holds strictly:
-        //   >,>=: taken wants +, not-taken wants -;  <,<=: mirrored;
-        //   =: taken wants exactly 0, not-taken wants any nonzero (+);
-        //   <>: taken wants nonzero (+), not-taken wants exactly 0.
-        let target: Rat;
-        if ((c.op === "=" && c.taken) || (c.op === "<>" && !c.taken)) {
-          target = R0;
-        } else if (c.op === ">" || c.op === ">=") {
-          target = c.taken ? margin : rNeg(margin);
-        } else if (c.op === "<" || c.op === "<=") {
-          target = c.taken ? rNeg(margin) : margin;
-        } else {
-          target = margin; // "=" not-taken / "<>" taken
-        }
-        const solved = solveEquality(c.diff, target, inputs, [x], p.state.constraints);
-        if (solved) tried.push(solved);
-        break;
-      }
-    }
-    return { path: p.id, stdin: null, note: "no assignment satisfied all path constraints (see constraints in report)" };
-  });
-
-  // --- 5. execute all realized cases ---------------------------------------------
+  // --- 6. execute all realized cases ---------------------------------------------
   let executed = 0;
   for (const ob of obligations) {
     for (const oc of ob.cases) {
@@ -1006,10 +1226,13 @@ export function runSymExec(configPath: string, outPath: string): number {
     }
   }
 
-  // --- 6. path coverage ------------------------------------------------------------
+  // --- 7. path coverage ------------------------------------------------------------
   const allObCases = obligations.flatMap((o) => o.cases);
   const pathCoverage = paths.map((p) => {
     const conds = p.state.conds.map((c) => `${c.text} = ${c.taken}`);
+    if (infeasible[p.id]) {
+      return { id: p.id, conds, covered: "infeasible" as const };
+    }
     if (p.state.conds.some((c) => !c.diff)) {
       return { id: p.id, conds, covered: "unknown" as const };
     }
@@ -1050,7 +1273,7 @@ export function runSymExec(configPath: string, outPath: string): number {
 
   const report = {
     tool: "legacymind symexec (verifier layer C)",
-    version: "0.2.0",
+    version: "0.3.0",
     generatedAt: new Date().toISOString(),
     verdict,
     summary: {
@@ -1060,6 +1283,7 @@ export function runSymExec(configPath: string, outPath: string): number {
         total: paths.length,
         covered: pathCoverage.filter((p) => p.covered === true).length,
         unknown: pathCoverage.filter((p) => p.covered === "unknown").length,
+        infeasible: pathCoverage.filter((p) => p.covered === "infeasible").length,
       },
       unrealizedPathObligations: unrealizedPathTotal,
       witnesses: {
@@ -1074,9 +1298,10 @@ export function runSymExec(configPath: string, outPath: string): number {
       baseCase: sym.baseCase,
       moneyPattern: moneyRe.source,
       note:
-        "path-sensitive engine: exact-rational affine execution with fuzz-bounded rounding stores, " +
-        "equality/congruence solving on PICTURE grids, per-path witnesses; nonlinear forms fall back " +
-        "to producer-inversion and are disclosed",
+        "path-sensitive engine with exact rounding semantics: exact-rational affine execution, " +
+        "rounded stores tracked as exact forms and inverted at boundaries (including exact half " +
+        "points), constraints decided exactly where forms exist, congruence/equality solving on " +
+        "PICTURE grids, witness-fixed product linearization, proven-infeasible path detection",
     },
     paths: pathCoverage.map((p, i) => ({
       ...p,
@@ -1119,11 +1344,126 @@ export function runSymExec(configPath: string, outPath: string): number {
   console.log(
     `  verdict: ${verdict}  (obligations: ${counts.verified} verified, ${counts.divergent} divergent, ` +
       `${counts.unrealized} unrealized, ${counts.notApplicable} n/a; ` +
-      `paths covered: ${report.summary.paths.covered}/${paths.length}; ` +
+      `paths covered: ${report.summary.paths.covered}/${paths.length - report.summary.paths.infeasible}` +
+      (report.summary.paths.infeasible > 0 ? ` (+${report.summary.paths.infeasible} proven infeasible)` : "") +
+      `; ` +
       `witnesses: ${report.summary.witnesses.realized}/${witnesses.length})`,
   );
   console.log(`  report: ${outPath}`);
   return verdict === "PASS" ? 0 : 1;
+}
+
+/**
+ * Solve a boundary target for a decision value of the form
+ * A0 + k·round_mode,scale(inner) with constant A0 and affine inner:
+ * invert the rounding exactly — round(y) = v ⟺ y ∈ [v−½ulp, v+½ulp) for
+ * half-up (y ∈ [v, v+ulp) for truncation) — and drive `inner` to a point
+ * of that interval, including the exact half endpoint where HALF_UP and
+ * HALF_EVEN part ways. `offset` selects boundary−1/boundary/boundary+1 in
+ * units of one representable step of the decision value.
+ */
+function solveThroughRounding(
+  exact: ExactForm,
+  offset: bigint,
+  inputs: InputVar[],
+  fixedCandidates: Assignment[],
+  constraints: Constraint[],
+): Assignment | null {
+  const rt = exact.rounds[0]!;
+  if (rIsZero(rt.coeff)) return null;
+  const u = ulpOf(rt.scale);
+  const step = rMul(rAbs(rt.coeff), u); // one representable move of the decision value
+  const t = rMul(step, { n: offset, d: 1n });
+  const v = rDiv(rSub(t, exact.affine.c), rt.coeff); // required round(inner)
+  if (rCmp(v, R0) < 0) return null; // unsigned PICTURE domains only
+  if (ratToDecimal(v, rt.scale) === null) return null; // off the rounding grid
+  const half = rDiv(u, { n: 2n, d: 1n });
+  const innerTargets =
+    rt.mode === "half-up"
+      ? [rSub(v, half), v, rAdd(v, rDiv(u, { n: 4n, d: 1n }))]
+      : [v, rAdd(v, half)];
+  for (const tA of innerTargets) {
+    if (rCmp(tA, R0) < 0) continue;
+    const solved = solveEquality(rt.inner, tA, inputs, fixedCandidates, constraints);
+    if (solved) return solved;
+  }
+  return null;
+}
+
+/**
+ * Linearize a nonlinear ROUNDED expression of the shape
+ * f1 * f2 * ... [/ literal] by fixing every factor except one at the
+ * path's witness assignment (an in-path point by construction), leaving a
+ * single-variable affine the congruence solver can use.
+ */
+function linearizeProduct(
+  cmp: ComputeStmt,
+  state: PathState,
+  inputs: InputVar[],
+  fixed: Assignment,
+  items: DataItem[],
+  assigned: Set<string>,
+): { a: Affine; fixed: Assignment; desc: string } | null {
+  if (fixed.some((v, i) => inputs[i]!.numeric && v === null)) return null;
+  const toks = cmp.expression.text.split(/\s+/).map((t) => t.replace(/^\(+/, "").replace(/\)+$/, ""));
+  // Expect: operand (* operand)* [/ literal]
+  const factors: string[] = [];
+  let divisor: Rat | null = null;
+  for (let i = 0; i < toks.length; i++) {
+    if (i % 2 === 0) {
+      factors.push(toks[i]!);
+    } else if (toks[i] === "*") {
+      continue;
+    } else if (toks[i] === "/" && i === toks.length - 2) {
+      // trailing "/ literal": the dividend factor is already in the list
+      divisor = ratOf(toks[i + 1]!);
+      if (!divisor || rIsZero(divisor)) return null;
+      break;
+    } else {
+      return null;
+    }
+  }
+  if (factors.length < 2) return null;
+  // Value of each factor on this path: env affine (drift-free) or constant.
+  const factorAffine = (name: string): Affine | null => {
+    const v = state.env.get(name);
+    if (v?.kind === "affine" && rIsZero(v.a.fuzz)) return v.a;
+    if (v) return null;
+    const item = findItem(items, name);
+    const k = item ? constantRat(item, assigned) : null;
+    if (k) return affineConst(k);
+    const lit = ratOf(name);
+    return lit ? affineConst(lit) : null;
+  };
+  for (let free = 0; free < factors.length; free++) {
+    const freeAffine = factorAffine(factors[free]!);
+    if (!freeAffine || freeAffine.terms.size === 0) continue;
+    let k: Rat = divisor ? rDiv({ n: 1n, d: 1n }, divisor) : { n: 1n, d: 1n };
+    let ok = true;
+    const fixedNames: string[] = [];
+    for (let j = 0; j < factors.length; j++) {
+      if (j === free) continue;
+      const fa = factorAffine(factors[j]!);
+      if (!fa) {
+        ok = false;
+        break;
+      }
+      const val = evalAffine(fa, fixed);
+      if (rIsZero(val)) {
+        ok = false; // a zero factor makes the product constant
+        break;
+      }
+      k = rMul(k, val);
+      fixedNames.push(`${factors[j]} = ${ratToDecimal(val, 6) ?? "?"}`);
+    }
+    if (!ok) continue;
+    return {
+      a: affineScale(freeAffine, k),
+      fixed,
+      desc: `${factors[free]} free, ${fixedNames.join(", ")}`,
+    };
+  }
+  return null;
 }
 
 // ---------------------------------------------------------------------------

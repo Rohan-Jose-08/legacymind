@@ -103,9 +103,13 @@ export function runCertify(opts: {
   if (opts.layerCPath) {
     const c = readJson(opts.layerCPath, "layer C report");
     layers.C = evidence(opts.layerCPath, c.verdict, c.summary);
+    const infeasible = c.summary?.paths?.infeasible ?? 0;
     coverage.layerC = {
       obligations: c.summary?.obligations ?? null,
-      pathsCovered: c.summary?.paths ? `${c.summary.paths.covered}/${c.summary.paths.total}` : null,
+      pathsCovered: c.summary?.paths
+        ? `${c.summary.paths.covered}/${c.summary.paths.total - infeasible}` +
+          (infeasible > 0 ? ` (+${infeasible} proven infeasible)` : "")
+        : null,
     };
     const unrealized = c.summary?.obligations?.unrealized ?? 0;
     const unrealizedPaths = c.summary?.unrealizedPathObligations ?? 0;

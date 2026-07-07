@@ -105,14 +105,15 @@ node cli/dist/main.js verify --config examples/payroll-diff-fixed.json --out out
 8. **Plain Java 21, not Spring Boot, for batch-shaped modules.** PAYROLL is
    a stdin/stdout program; a web framework would change observable behavior.
    Spring Boot scaffolding arrives with service-shaped modules.
-9. **Layer C is a path-sensitive symbolic engine (v2).** Exact-rational
-   affine execution with fuzz-bounded rounding stores solves branch and
-   rounding-half boundaries *through* derived-variable chains and
-   accumulators, and proves per-path witnesses (including infeasible-path
-   detection). Nonlinear forms (variable × variable products, boundaries
-   pinned through a rounded store) are reported UNREALIZED per path and
-   flow into the certificate's gaps; closing them is the SMT-backend step,
-   with LEDGER's fee-cap boundary as the committed test case.
+9. **Layer C is a path-sensitive symbolic engine with exact rounding
+   semantics (v3).** Exact-rational affine execution; rounded stores are
+   tracked as exact forms and inverted at boundaries (including the exact
+   half point where HALF_UP and HALF_EVEN part ways); nonlinear products
+   are linearized at path-witness fixing points; infeasible paths are
+   proven, not guessed. On the benchmark this leaves zero unrealized
+   obligations — remaining per-path disclosures are values nested through
+   two rounded stores or nonlinear producers, which need recursive
+   inversion (a full SMT encoding) and are listed in each certificate.
 10. **The certificate's integrity hash is not a cryptographic signature**
     (and says so in the artifact). Org-key/PKI signing is planned.
 11. **Dashboard v1 uses WorkOS AuthKit** (founder decision, 2026-07-05) in

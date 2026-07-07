@@ -160,7 +160,10 @@ for (const r of rows) {
   const o = r.layerC?.obligations
     ? `${r.layerC.obligations.verified}✓ ${r.layerC.obligations.divergent}✗ ${r.layerC.obligations.unrealized} unrealized`
     : "—";
-  const p = r.layerC?.paths ? `${r.layerC.paths.covered}/${r.layerC.paths.total}` : "—";
+  const p = r.layerC?.paths
+    ? `${r.layerC.paths.covered}/${r.layerC.paths.total - (r.layerC.paths.infeasible ?? 0)}` +
+      ((r.layerC.paths.infeasible ?? 0) > 0 ? ` (+${r.layerC.paths.infeasible} dead)` : "")
+    : "—";
   const d = r.layerD?.keys
     ? `${r.layerD.keys.verified}/${r.layerD.keys.total} static` +
       (r.layerD.capacityWarnings ? ` (${r.layerD.capacityWarnings} warn)` : "")
