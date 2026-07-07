@@ -1,0 +1,19 @@
+{
+  "$comment": "Verifier layer C config: symbolic-execution prototype against the migrated candidate A. Derives branch boundaries from IF conditions and exact rounding half-boundaries by congruence solving on money-touching ROUNDED computes. Expected: all realized obligations VERIFIED; the overtime-path realization of the tax rounding obligation is reported UNREALIZED (complex expression needs the full symbolic engine) — a disclosed gap, not a silent one.",
+  "legacy": {
+    "argv": ["node", "mock/legacy-payroll.mjs"],
+    "label": "COBOL 85 PAYROLL (GnuCOBOL semantics, mock)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../out/migrate/candidate-a", "Payroll"],
+    "label": "Java 21 payroll (migrated candidate A)"
+  },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 10000,
+  "symbolic": {
+    "ir": "../out/ir/PAYROLL.ir.json",
+    "stdinFields": ["WS-EMP-ID", "WS-HOURS-WORKED", "WS-HOURLY-RATE"],
+    "baseCase": ["E00001", "38.50", "22.75"],
+    "maxBoundarySolutions": 5
+  }
+}

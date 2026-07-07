@@ -1,0 +1,19 @@
+{
+  "$comment": "Same layer A generator pointed at the REJECTED candidate B (HALF_EVEN tax rounding). Expected: property testing discovers half-cent divergences that no hand-written case covered, and shrinks them to minimal counterexamples. Exit code 1 is the point.",
+  "legacy": {
+    "argv": ["node", "mock/legacy-payroll.mjs"],
+    "label": "COBOL 85 PAYROLL (GnuCOBOL semantics, mock)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../out/migrate/candidate-b", "Payroll"],
+    "label": "Java 21 payroll (rejected candidate B)"
+  },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 10000,
+  "generator": {
+    "ir": "../out/ir/PAYROLL.ir.json",
+    "stdinFields": ["WS-EMP-ID", "WS-HOURS-WORKED", "WS-HOURLY-RATE"],
+    "count": 200,
+    "seed": 20260705
+  }
+}

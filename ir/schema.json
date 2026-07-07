@@ -1,0 +1,300 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://legacymind.dev/ir/schema-0.1.0.json",
+  "title": "LegacyMind Intermediate Representation (IR) v0.1",
+  "description": "Normalized, LLM-agnostic representation of one legacy module. Produced by either parse engine (stub: cli/src/parse; production: parser/proleap, ProLeap ANTLR4 on the JVM), consumed by transpiler/ and all four verifier layers. Every node carries a source span so provenance survives end-to-end. This schema is the contract: both engines must emit identical IR for sources inside the stub's subset, and documents must always validate against this file.",
+  "type": "object",
+  "required": ["irVersion", "module", "dataDivision", "procedureDivision", "controlFlow", "provenance"],
+  "additionalProperties": false,
+  "properties": {
+    "irVersion": { "const": "0.1.0" },
+    "module": {
+      "type": "object",
+      "required": ["programId", "dialect", "source"],
+      "additionalProperties": false,
+      "properties": {
+        "programId": { "type": "string", "pattern": "^[A-Z0-9][A-Z0-9-]*$" },
+        "dialect": { "enum": ["cobol85-fixed", "cobol85-free", "cobol85-variable", "cobol85-tandem"] },
+        "source": {
+          "type": "object",
+          "required": ["file", "sha256"],
+          "additionalProperties": false,
+          "properties": {
+            "file": { "type": "string", "description": "Source path as given to the parser, forward slashes." },
+            "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$", "description": "SHA-256 of the raw source bytes; anchors the provenance chain." }
+          }
+        }
+      }
+    },
+    "dataDivision": {
+      "type": "object",
+      "required": ["items"],
+      "additionalProperties": false,
+      "properties": {
+        "items": { "type": "array", "items": { "$ref": "#/$defs/dataItem" } }
+      }
+    },
+    "procedureDivision": {
+      "type": "object",
+      "required": ["paragraphs"],
+      "additionalProperties": false,
+      "properties": {
+        "paragraphs": { "type": "array", "items": { "$ref": "#/$defs/paragraph" } }
+      }
+    },
+    "controlFlow": {
+      "type": "object",
+      "description": "Paragraph-level CFG. Statement-level CFG (needed by Layer C symbolic execution) is a planned extension; PERFORM return edges are not yet modeled.",
+      "required": ["entry", "nodes", "edges"],
+      "additionalProperties": false,
+      "properties": {
+        "entry": { "type": "string" },
+        "nodes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "kind"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string" },
+              "kind": { "enum": ["paragraph"] }
+            }
+          }
+        },
+        "edges": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["from", "to", "kind"],
+            "additionalProperties": false,
+            "properties": {
+              "from": { "type": "string" },
+              "to": { "type": "string" },
+              "kind": { "enum": ["fallthrough", "perform"] },
+              "atLine": { "type": "integer", "minimum": 1 }
+            }
+          }
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "required": ["parser", "generatedAt", "warnings"],
+      "additionalProperties": false,
+      "properties": {
+        "parser": {
+          "type": "object",
+          "required": ["name", "version"],
+          "additionalProperties": false,
+          "properties": {
+            "name": { "type": "string" },
+            "version": { "type": "string" }
+          }
+        },
+        "generatedAt": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}" },
+        "warnings": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Anything the parser saw but did not fully model. Must never be silently empty when information was dropped — no hidden failures."
+        }
+      }
+    }
+  },
+  "$defs": {
+    "span": {
+      "type": "object",
+      "required": ["file", "startLine", "endLine"],
+      "additionalProperties": false,
+      "properties": {
+        "file": { "type": "string" },
+        "startLine": { "type": "integer", "minimum": 1 },
+        "endLine": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "pictureType": {
+      "type": "object",
+      "required": ["raw", "category"],
+      "additionalProperties": false,
+      "properties": {
+        "raw": { "type": "string", "description": "PICTURE string exactly as written." },
+        "category": { "enum": ["alphanumeric", "numeric", "numeric-edited"] },
+        "digits": { "type": "integer", "minimum": 0, "description": "Total digit positions (numeric / numeric-edited)." },
+        "scale": { "type": "integer", "minimum": 0, "description": "Digit positions right of the implied (V) or editing (.) decimal point. Critical for COMP-3 vs BigDecimal equivalence." },
+        "signed": { "type": "boolean" },
+        "length": { "type": "integer", "minimum": 1, "description": "Character length (alphanumeric only)." }
+      }
+    },
+    "dataItem": {
+      "type": "object",
+      "required": ["level", "name", "path", "usage", "span", "children"],
+      "additionalProperties": false,
+      "properties": {
+        "level": {
+          "type": "integer",
+          "anyOf": [{ "minimum": 1, "maximum": 49 }, { "const": 77 }],
+          "description": "1-49 group/elementary levels, or 77 standalone items. 66 (RENAMES) and 88 (condition names) are not representable."
+        },
+        "name": { "type": "string", "pattern": "^[A-Z][A-Z0-9-]*$" },
+        "path": { "type": "string", "description": "Dot-qualified path from the 01-level root, e.g. WS-WORK.WS-GROSS-PAY." },
+        "filler": {
+          "const": true,
+          "description": "Storage-only FILLER item. The name is parser-synthesized (FILLER-n), MUST NOT be referenced by any statement, and never enters the declared-name set used for refs extraction."
+        },
+        "picture": { "type": "string" },
+        "type": { "$ref": "#/$defs/pictureType" },
+        "usage": { "enum": ["DISPLAY", "COMP", "COMP-3", "BINARY", "PACKED-DECIMAL"] },
+        "value": { "type": "string", "description": "VALUE clause literal exactly as written (e.g. ZERO, .225, 'ABC')." },
+        "span": { "$ref": "#/$defs/span" },
+        "children": { "type": "array", "items": { "$ref": "#/$defs/dataItem" } }
+      }
+    },
+    "operandExpr": {
+      "type": "object",
+      "description": "Stub-level expression: raw normalized text plus the declared data items it references. A full expression AST replaces this when the ProLeap parser lands; refs already enable Layer D data-flow diffing.",
+      "required": ["text", "refs"],
+      "additionalProperties": false,
+      "properties": {
+        "text": { "type": "string" },
+        "refs": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "displayOperand": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["kind", "value"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "const": "literal" },
+            "value": { "type": "string" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["kind", "name"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "const": "ref" },
+            "name": { "type": "string" }
+          }
+        }
+      ]
+    },
+    "paragraph": {
+      "type": "object",
+      "required": ["name", "span", "statements"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "pattern": "^[A-Z][A-Z0-9-]*$" },
+        "span": { "$ref": "#/$defs/span" },
+        "statements": { "type": "array", "items": { "$ref": "#/$defs/statement" } }
+      }
+    },
+    "statement": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["kind", "from", "to", "text", "span"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "const": "move" },
+            "from": { "$ref": "#/$defs/operandExpr" },
+            "to": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+            "text": { "type": "string" },
+            "span": { "$ref": "#/$defs/span" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["kind", "target", "rounded", "expression", "text", "span"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "const": "compute" },
+            "target": { "type": "string" },
+            "rounded": { "type": "boolean", "description": "COBOL ROUNDED = half-up (away from zero). Divergence from Java HALF_EVEN defaults is a classic migration defect; verifier layers key off this flag." },
+            "expression": { "$ref": "#/$defs/operandExpr" },
+            "text": { "type": "string" },
+            "span": { "$ref": "#/$defs/span" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["kind", "condition", "then", "text", "span"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "const": "if" },
+            "condition": { "$ref": "#/$defs/operandExpr" },
+            "then": { "type": "array", "items": { "$ref": "#/$defs/statement" } },
+            "else": { "type": "array", "items": { "$ref": "#/$defs/statement" } },
+            "text": { "type": "string" },
+            "span": { "$ref": "#/$defs/span" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["kind", "target", "text", "span"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "const": "perform" },
+            "target": { "type": "string" },
+            "text": { "type": "string" },
+            "span": { "$ref": "#/$defs/span" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["kind", "operands", "text", "span"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "const": "display" },
+            "operands": { "type": "array", "items": { "$ref": "#/$defs/displayOperand" } },
+            "text": { "type": "string" },
+            "span": { "$ref": "#/$defs/span" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["kind", "target", "text", "span"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "const": "accept" },
+            "target": { "type": "string" },
+            "text": { "type": "string" },
+            "span": { "$ref": "#/$defs/span" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["kind", "text", "span"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "const": "stop-run" },
+            "text": { "type": "string" },
+            "span": { "$ref": "#/$defs/span" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["kind", "text", "span"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "const": "goback" },
+            "text": { "type": "string" },
+            "span": { "$ref": "#/$defs/span" }
+          }
+        },
+        {
+          "type": "object",
+          "description": "EXIT: a no-op paragraph terminator (flow-neutral for every verifier layer). Only representable because PERFORM THRU is not — an EXIT paragraph cannot be a THRU endpoint here.",
+          "required": ["kind", "text", "span"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "const": "exit" },
+            "text": { "type": "string" },
+            "span": { "$ref": "#/$defs/span" }
+          }
+        }
+      ]
+    }
+  }
+}

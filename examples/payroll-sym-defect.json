@@ -1,0 +1,19 @@
+{
+  "$comment": "Layer C against the REJECTED candidate B (HALF_EVEN tax rounding). Unlike layer A's statistical sampling, the congruence solver derives the half-cent inputs EXACTLY — every rounding-boundary case must diverge, deterministically. Exit 1 is the point.",
+  "legacy": {
+    "argv": ["node", "mock/legacy-payroll.mjs"],
+    "label": "COBOL 85 PAYROLL (GnuCOBOL semantics, mock)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../out/migrate/candidate-b", "Payroll"],
+    "label": "Java 21 payroll (rejected candidate B)"
+  },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 10000,
+  "symbolic": {
+    "ir": "../out/ir/PAYROLL.ir.json",
+    "stdinFields": ["WS-EMP-ID", "WS-HOURS-WORKED", "WS-HOURLY-RATE"],
+    "baseCase": ["E00001", "38.50", "22.75"],
+    "maxBoundarySolutions": 5
+  }
+}

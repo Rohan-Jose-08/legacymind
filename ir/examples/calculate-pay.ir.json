@@ -1,0 +1,376 @@
+{
+  "irVersion": "0.1.0",
+  "module": {
+    "programId": "CALCPAY",
+    "dialect": "cobol85-fixed",
+    "source": {
+      "file": "ir/examples/calculate-pay.cbl",
+      "sha256": "464529780d6346184cf7306a186ff44c5acf4d47161bc4d9fa2dc39e08ffcfa9"
+    }
+  },
+  "dataDivision": {
+    "items": [
+      {
+        "level": 1,
+        "name": "WS-WORK",
+        "path": "WS-WORK",
+        "usage": "DISPLAY",
+        "span": {
+          "file": "ir/examples/calculate-pay.cbl",
+          "startLine": 9,
+          "endLine": 9
+        },
+        "children": [
+          {
+            "level": 5,
+            "name": "WS-HOURS-WORKED",
+            "path": "WS-WORK.WS-HOURS-WORKED",
+            "picture": "9(3)V99",
+            "type": {
+              "raw": "9(3)V99",
+              "category": "numeric",
+              "digits": 5,
+              "scale": 2,
+              "signed": false
+            },
+            "usage": "DISPLAY",
+            "value": "ZERO",
+            "span": {
+              "file": "ir/examples/calculate-pay.cbl",
+              "startLine": 10,
+              "endLine": 10
+            },
+            "children": []
+          },
+          {
+            "level": 5,
+            "name": "WS-HOURLY-RATE",
+            "path": "WS-WORK.WS-HOURLY-RATE",
+            "picture": "9(4)V99",
+            "type": {
+              "raw": "9(4)V99",
+              "category": "numeric",
+              "digits": 6,
+              "scale": 2,
+              "signed": false
+            },
+            "usage": "DISPLAY",
+            "value": "ZERO",
+            "span": {
+              "file": "ir/examples/calculate-pay.cbl",
+              "startLine": 11,
+              "endLine": 11
+            },
+            "children": []
+          },
+          {
+            "level": 5,
+            "name": "WS-OVERTIME-HOURS",
+            "path": "WS-WORK.WS-OVERTIME-HOURS",
+            "picture": "9(3)V99",
+            "type": {
+              "raw": "9(3)V99",
+              "category": "numeric",
+              "digits": 5,
+              "scale": 2,
+              "signed": false
+            },
+            "usage": "DISPLAY",
+            "value": "ZERO",
+            "span": {
+              "file": "ir/examples/calculate-pay.cbl",
+              "startLine": 12,
+              "endLine": 12
+            },
+            "children": []
+          },
+          {
+            "level": 5,
+            "name": "WS-GROSS-PAY",
+            "path": "WS-WORK.WS-GROSS-PAY",
+            "picture": "9(7)V99",
+            "type": {
+              "raw": "9(7)V99",
+              "category": "numeric",
+              "digits": 9,
+              "scale": 2,
+              "signed": false
+            },
+            "usage": "DISPLAY",
+            "value": "ZERO",
+            "span": {
+              "file": "ir/examples/calculate-pay.cbl",
+              "startLine": 13,
+              "endLine": 13
+            },
+            "children": []
+          },
+          {
+            "level": 5,
+            "name": "WS-TAX-RATE",
+            "path": "WS-WORK.WS-TAX-RATE",
+            "picture": "V9(3)",
+            "type": {
+              "raw": "V9(3)",
+              "category": "numeric",
+              "digits": 3,
+              "scale": 3,
+              "signed": false
+            },
+            "usage": "DISPLAY",
+            "value": ".225",
+            "span": {
+              "file": "ir/examples/calculate-pay.cbl",
+              "startLine": 14,
+              "endLine": 14
+            },
+            "children": []
+          },
+          {
+            "level": 5,
+            "name": "WS-TAX",
+            "path": "WS-WORK.WS-TAX",
+            "picture": "9(7)V99",
+            "type": {
+              "raw": "9(7)V99",
+              "category": "numeric",
+              "digits": 9,
+              "scale": 2,
+              "signed": false
+            },
+            "usage": "DISPLAY",
+            "value": "ZERO",
+            "span": {
+              "file": "ir/examples/calculate-pay.cbl",
+              "startLine": 15,
+              "endLine": 15
+            },
+            "children": []
+          },
+          {
+            "level": 5,
+            "name": "WS-NET-PAY",
+            "path": "WS-WORK.WS-NET-PAY",
+            "picture": "9(7)V99",
+            "type": {
+              "raw": "9(7)V99",
+              "category": "numeric",
+              "digits": 9,
+              "scale": 2,
+              "signed": false
+            },
+            "usage": "DISPLAY",
+            "value": "ZERO",
+            "span": {
+              "file": "ir/examples/calculate-pay.cbl",
+              "startLine": 16,
+              "endLine": 16
+            },
+            "children": []
+          }
+        ]
+      }
+    ]
+  },
+  "procedureDivision": {
+    "paragraphs": [
+      {
+        "name": "CALCULATE-PAY",
+        "span": {
+          "file": "ir/examples/calculate-pay.cbl",
+          "startLine": 18,
+          "endLine": 31
+        },
+        "statements": [
+          {
+            "kind": "move",
+            "from": {
+              "text": "ZERO",
+              "refs": []
+            },
+            "to": [
+              "WS-GROSS-PAY"
+            ],
+            "text": "MOVE ZERO TO WS-GROSS-PAY",
+            "span": {
+              "file": "ir/examples/calculate-pay.cbl",
+              "startLine": 19,
+              "endLine": 19
+            }
+          },
+          {
+            "kind": "if",
+            "condition": {
+              "text": "WS-HOURS-WORKED > 40",
+              "refs": [
+                "WS-HOURS-WORKED"
+              ]
+            },
+            "then": [
+              {
+                "kind": "compute",
+                "target": "WS-OVERTIME-HOURS",
+                "rounded": false,
+                "expression": {
+                  "text": "WS-HOURS-WORKED - 40",
+                  "refs": [
+                    "WS-HOURS-WORKED"
+                  ]
+                },
+                "text": "COMPUTE WS-OVERTIME-HOURS = WS-HOURS-WORKED - 40",
+                "span": {
+                  "file": "ir/examples/calculate-pay.cbl",
+                  "startLine": 21,
+                  "endLine": 21
+                }
+              },
+              {
+                "kind": "compute",
+                "target": "WS-GROSS-PAY",
+                "rounded": false,
+                "expression": {
+                  "text": "(40 * WS-HOURLY-RATE) + (WS-OVERTIME-HOURS * WS-HOURLY-RATE * 1.5)",
+                  "refs": [
+                    "WS-HOURLY-RATE",
+                    "WS-OVERTIME-HOURS"
+                  ]
+                },
+                "text": "COMPUTE WS-GROSS-PAY = (40 * WS-HOURLY-RATE) + (WS-OVERTIME-HOURS * WS-HOURLY-RATE * 1.5)",
+                "span": {
+                  "file": "ir/examples/calculate-pay.cbl",
+                  "startLine": 22,
+                  "endLine": 24
+                }
+              }
+            ],
+            "text": "IF WS-HOURS-WORKED > 40",
+            "span": {
+              "file": "ir/examples/calculate-pay.cbl",
+              "startLine": 20,
+              "endLine": 29
+            },
+            "else": [
+              {
+                "kind": "move",
+                "from": {
+                  "text": "ZERO",
+                  "refs": []
+                },
+                "to": [
+                  "WS-OVERTIME-HOURS"
+                ],
+                "text": "MOVE ZERO TO WS-OVERTIME-HOURS",
+                "span": {
+                  "file": "ir/examples/calculate-pay.cbl",
+                  "startLine": 26,
+                  "endLine": 26
+                }
+              },
+              {
+                "kind": "compute",
+                "target": "WS-GROSS-PAY",
+                "rounded": false,
+                "expression": {
+                  "text": "WS-HOURS-WORKED * WS-HOURLY-RATE",
+                  "refs": [
+                    "WS-HOURS-WORKED",
+                    "WS-HOURLY-RATE"
+                  ]
+                },
+                "text": "COMPUTE WS-GROSS-PAY = WS-HOURS-WORKED * WS-HOURLY-RATE",
+                "span": {
+                  "file": "ir/examples/calculate-pay.cbl",
+                  "startLine": 27,
+                  "endLine": 28
+                }
+              }
+            ]
+          },
+          {
+            "kind": "compute",
+            "target": "WS-TAX",
+            "rounded": true,
+            "expression": {
+              "text": "WS-GROSS-PAY * WS-TAX-RATE",
+              "refs": [
+                "WS-GROSS-PAY",
+                "WS-TAX-RATE"
+              ]
+            },
+            "text": "COMPUTE WS-TAX ROUNDED = WS-GROSS-PAY * WS-TAX-RATE",
+            "span": {
+              "file": "ir/examples/calculate-pay.cbl",
+              "startLine": 30,
+              "endLine": 30
+            }
+          },
+          {
+            "kind": "compute",
+            "target": "WS-NET-PAY",
+            "rounded": false,
+            "expression": {
+              "text": "WS-GROSS-PAY - WS-TAX",
+              "refs": [
+                "WS-GROSS-PAY",
+                "WS-TAX"
+              ]
+            },
+            "text": "COMPUTE WS-NET-PAY = WS-GROSS-PAY - WS-TAX",
+            "span": {
+              "file": "ir/examples/calculate-pay.cbl",
+              "startLine": 31,
+              "endLine": 31
+            }
+          }
+        ]
+      },
+      {
+        "name": "END-PARA",
+        "span": {
+          "file": "ir/examples/calculate-pay.cbl",
+          "startLine": 32,
+          "endLine": 33
+        },
+        "statements": [
+          {
+            "kind": "goback",
+            "text": "GOBACK",
+            "span": {
+              "file": "ir/examples/calculate-pay.cbl",
+              "startLine": 33,
+              "endLine": 33
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "controlFlow": {
+    "entry": "CALCULATE-PAY",
+    "nodes": [
+      {
+        "id": "CALCULATE-PAY",
+        "kind": "paragraph"
+      },
+      {
+        "id": "END-PARA",
+        "kind": "paragraph"
+      }
+    ],
+    "edges": [
+      {
+        "from": "CALCULATE-PAY",
+        "to": "END-PARA",
+        "kind": "fallthrough"
+      }
+    ]
+  },
+  "provenance": {
+    "parser": {
+      "name": "legacymind-parse-stub",
+      "version": "0.1.0"
+    },
+    "generatedAt": "2026-07-05T13:55:52.842Z",
+    "warnings": []
+  }
+}

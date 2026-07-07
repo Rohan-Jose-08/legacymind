@@ -1,0 +1,7 @@
+{
+  "$comment": "Layer D for LEDGER: static data-flow equivalence between the IR and migrated candidate A. The arithmetic verbs arrive as lowered compute statements, so this also exercises the wave-1 lowering path statically.",
+  "static": {
+    "ir": "../../out/ir/LEDGER.ir.json",
+    "modernJava": "../../out/bench/ledger/migrate/candidate-a/Ledger.java"
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "$comment": "Layer D for DISCOUNT: static data-flow equivalence between the IR and migrated candidate A.",
+  "static": {
+    "ir": "../../out/ir/DISCOUNT.ir.json",
+    "modernJava": "../../out/bench/discount/migrate/candidate-a/Discount.java"
+  }
+}

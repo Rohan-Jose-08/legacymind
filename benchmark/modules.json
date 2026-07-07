@@ -1,0 +1,50 @@
+[
+  {
+    "id": "payroll",
+    "programId": "PAYROLL",
+    "source": "examples/payroll.cbl",
+    "imageTag": "legacymind/legacy-payroll",
+    "diffConfig": "examples/payroll-diff-real.json",
+    "propConfig": "examples/payroll-prop-real.json",
+    "symConfig": "examples/payroll-sym-real.json",
+    "staticConfig": "examples/payroll-static.json",
+    "migrateOut": "out/migrate",
+    "certCopy": "out/certification-real.json"
+  },
+  {
+    "id": "interest",
+    "programId": "INTEREST",
+    "source": "benchmark/modules/interest.cbl",
+    "imageTag": "legacymind/legacy-interest",
+    "diffConfig": "benchmark/configs/interest-diff-real.json",
+    "propConfig": "benchmark/configs/interest-prop-real.json",
+    "symConfig": "benchmark/configs/interest-sym-real.json",
+    "staticConfig": "benchmark/configs/interest-static.json",
+    "migrateOut": "out/bench/interest/migrate",
+    "certCopy": "out/certification-interest.json"
+  },
+  {
+    "id": "discount",
+    "programId": "DISCOUNT",
+    "source": "benchmark/modules/discount.cbl",
+    "imageTag": "legacymind/legacy-discount",
+    "diffConfig": "benchmark/configs/discount-diff-real.json",
+    "propConfig": "benchmark/configs/discount-prop-real.json",
+    "symConfig": "benchmark/configs/discount-sym-real.json",
+    "staticConfig": "benchmark/configs/discount-static.json",
+    "migrateOut": "out/bench/discount/migrate",
+    "certCopy": "out/certification-discount.json"
+  },
+  {
+    "id": "ledger",
+    "programId": "LEDGER",
+    "source": "benchmark/modules/ledger.cbl",
+    "imageTag": "legacymind/legacy-ledger",
+    "diffConfig": "benchmark/configs/ledger-diff-real.json",
+    "propConfig": "benchmark/configs/ledger-prop-real.json",
+    "symConfig": "benchmark/configs/ledger-sym-real.json",
+    "staticConfig": "benchmark/configs/ledger-static.json",
+    "migrateOut": "out/bench/ledger/migrate",
+    "certCopy": "out/certification-ledger.json"
+  }
+]

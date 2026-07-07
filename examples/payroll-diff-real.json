@@ -1,0 +1,20 @@
+{
+  "$comment": "Layer B against the REAL legacy binary: GnuCOBOL-compiled payroll.cbl running sandboxed in Docker (build with harness/build-legacy-image.ps1). Modern side is the migrated candidate A. This is the configuration certificates should be issued from.",
+  "legacy": {
+    "argv": ["docker", "run", "--rm", "-i", "--network", "none", "legacymind/legacy-payroll"],
+    "label": "COBOL 85 PAYROLL (GnuCOBOL via harness image legacymind/legacy-payroll)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../out/migrate/candidate-a", "Payroll"],
+    "label": "Java 21 payroll (migrated candidate A)"
+  },
+  "protocol": { "input": "stdin-lines", "output": "kv-lines" },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "cases": [
+    { "id": "regular-hours", "stdin": ["E00001", "38.50", "22.75"] },
+    { "id": "overtime", "stdin": ["E00002", "45.25", "18.00"] },
+    { "id": "zero-hours", "stdin": ["E00003", "0.00", "30.00"] },
+    { "id": "half-cent-tax-rounding", "stdin": ["E00004", "9.00", "5.00"] }
+  ]
+}

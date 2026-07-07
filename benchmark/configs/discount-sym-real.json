@@ -1,0 +1,19 @@
+{
+  "$comment": "Layer C for DISCOUNT vs the real GnuCOBOL harness image. Two source*constant ROUNDED computes (bulk and standard tiers): the standard tier is realizable by inverting gross = qty * price; the bulk tier's realization conflicts with its own path condition (qty must be both >= 100 and the unit factor), so it is expected UNREALIZED on that path — disclosed in the certificate.",
+  "legacy": {
+    "argv": ["docker", "run", "--rm", "-i", "--network", "none", "legacymind/legacy-discount"],
+    "label": "COBOL 85 DISCOUNT (GnuCOBOL via harness image legacymind/legacy-discount)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/discount/migrate/candidate-a", "Discount"],
+    "label": "Java 21 discount (migrated candidate A)"
+  },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "symbolic": {
+    "ir": "../../out/ir/DISCOUNT.ir.json",
+    "stdinFields": ["WS-ORDER-ID", "WS-QTY", "WS-UNIT-PRICE"],
+    "baseCase": ["ORD00001", "50", "19.99"],
+    "maxBoundarySolutions": 5
+  }
+}

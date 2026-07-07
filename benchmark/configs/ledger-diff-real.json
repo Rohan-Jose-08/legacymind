@@ -1,0 +1,22 @@
+{
+  "$comment": "Layer B selection cases for LEDGER vs the real GnuCOBOL harness image. Covers the withdrawal cap, the small-balance fee waiver, the fee cap, an exact half-cent fee (where HALF_UP and HALF_EVEN part ways), and an ADD that overflows PIC 9(7)V99.",
+  "legacy": {
+    "argv": ["docker", "run", "--rm", "-i", "--network", "none", "legacymind/legacy-ledger"],
+    "label": "COBOL 85 LEDGER (GnuCOBOL via harness image legacymind/legacy-ledger)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/ledger/migrate/candidate-a", "Ledger"],
+    "label": "Java 21 ledger (migrated candidate A)"
+  },
+  "protocol": { "input": "stdin-lines", "output": "kv-lines" },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "cases": [
+    { "id": "typical", "stdin": ["ACCT0001", "2500.00", "350.25", "125.50"] },
+    { "id": "fee-cap", "stdin": ["ACCT0002", "9000.00", "0.00", "0.00"] },
+    { "id": "small-waiver", "stdin": ["ACCT0003", "450.00", "0.00", "0.00"] },
+    { "id": "overdraw-cap", "stdin": ["ACCT0004", "100.00", "50.00", "500.00"] },
+    { "id": "half-cent-fee", "stdin": ["ACCT0005", "506.00", "0.00", "0.00"] },
+    { "id": "capacity-region", "stdin": ["ACCT0006", "9999999.99", "9999999.99", "0.00"] }
+  ]
+}

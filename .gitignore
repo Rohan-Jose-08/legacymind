@@ -1,0 +1,10 @@
+node_modules/
+dist/
+out/
+*.log
+# transient cache-miss stubs; recorded cache entries ARE committed
+transpiler/cache/*.request.json
+# derived knowledge graph (rebuild with /graphify; contains machine-specific paths)
+graphify-out/
+# compiled Java (the CLI recompiles verifier/javaflow on demand)
+*.class

@@ -1,0 +1,20 @@
+{
+  "$comment": "Layer B selection cases for INTEREST vs the real GnuCOBOL harness image. Includes the loyalty-rate branch, a zero term, and an input region where intermediate values exceed PICTURE capacity.",
+  "legacy": {
+    "argv": ["docker", "run", "--rm", "-i", "--network", "none", "legacymind/legacy-interest"],
+    "label": "COBOL 85 INTEREST (GnuCOBOL via harness image legacymind/legacy-interest)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/interest/migrate/candidate-a", "Interest"],
+    "label": "Java 21 interest (migrated candidate A)"
+  },
+  "protocol": { "input": "stdin-lines", "output": "kv-lines" },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "cases": [
+    { "id": "typical-term", "stdin": ["ACCT0001", "10000.00", "4.25", "3"] },
+    { "id": "loyalty-bonus", "stdin": ["ACCT0002", "5000.00", "3.10", "10"] },
+    { "id": "zero-term", "stdin": ["ACCT0003", "9999.99", "9.99", "0"] },
+    { "id": "capacity-region", "stdin": ["ACCT0004", "9999999.99", "50.00", "99"] }
+  ]
+}

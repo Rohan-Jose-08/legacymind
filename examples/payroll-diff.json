@@ -1,0 +1,20 @@
+{
+  "$comment": "Verifier layer B config for the payroll demo. argv paths resolve relative to this file's directory. The modern mock carries a seeded HALF_EVEN rounding defect; the half-cent-tax-rounding case must FAIL.",
+  "legacy": {
+    "argv": ["node", "mock/legacy-payroll.mjs"],
+    "label": "COBOL 85 PAYROLL (GnuCOBOL semantics, mock)"
+  },
+  "modern": {
+    "argv": ["node", "mock/modern-payroll.mjs"],
+    "label": "Java 21 payroll service (transpiled, mock)"
+  },
+  "protocol": { "input": "stdin-lines", "output": "kv-lines" },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 10000,
+  "cases": [
+    { "id": "regular-hours", "stdin": ["E00001", "38.50", "22.75"] },
+    { "id": "overtime", "stdin": ["E00002", "45.25", "18.00"] },
+    { "id": "zero-hours", "stdin": ["E00003", "0.00", "30.00"] },
+    { "id": "half-cent-tax-rounding", "stdin": ["E00004", "9.00", "5.00"] }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "$comment": "Verifier layer A config: property-based cases generated from PAYROLL's data division. Modern side is the MIGRATED candidate A — run `legacymind parse` and `legacymind migrate` first. Expected: all generated cases PASS.",
+  "legacy": {
+    "argv": ["node", "mock/legacy-payroll.mjs"],
+    "label": "COBOL 85 PAYROLL (GnuCOBOL semantics, mock)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../out/migrate/candidate-a", "Payroll"],
+    "label": "Java 21 payroll (migrated candidate A)"
+  },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 10000,
+  "generator": {
+    "ir": "../out/ir/PAYROLL.ir.json",
+    "stdinFields": ["WS-EMP-ID", "WS-HOURS-WORKED", "WS-HOURLY-RATE"],
+    "count": 200,
+    "seed": 20260705
+  }
+}

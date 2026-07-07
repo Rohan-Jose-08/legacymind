@@ -1,0 +1,25 @@
+{
+  "name": "@legacymind/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "LegacyMind CLI: parse legacy COBOL into IR and run the layer B differential-execution verifier.",
+  "bin": {
+    "legacymind": "dist/main.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "node scripts/validate-ir.mjs ../ir/schema.json ../ir/examples/calculate-pay.ir.json"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "ajv": "^8.17.0",
+    "typescript": "^5.5.0"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.110.0"
+  }
+}

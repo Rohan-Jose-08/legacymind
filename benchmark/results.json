@@ -1,0 +1,230 @@
+{
+  "tool": "legacymind benchmark",
+  "version": "0.1.0",
+  "generatedAt": "2026-07-07T14:52:22.341Z",
+  "toolchain": {
+    "parser": "proleap engine (ProLeap ANTLR4 COBOL85 grammar + reference-format preprocessor, JVM)",
+    "legacy": "GnuCOBOL 3.1.2 (debian:bookworm-slim, sandboxed: --network none, --rm)",
+    "modern": "Java 21 (javac --release 21), executed on host",
+    "transpiler": "claude-opus-4-8 via recorded replay cache (offline)"
+  },
+  "modules": [
+    {
+      "id": "payroll",
+      "programId": "PAYROLL",
+      "source": "examples/payroll.cbl",
+      "loc": 59,
+      "wallSeconds": 129.2,
+      "steps": {
+        "parse": true,
+        "image": "skipped",
+        "migrate": true,
+        "layerA": true,
+        "layerC": true,
+        "layerD": true,
+        "certify": true
+      },
+      "verdict": "CERTIFIED",
+      "winner": "a",
+      "candidates": 2,
+      "costUsd": 0,
+      "layerB": {
+        "curatedCases": 4
+      },
+      "layerA": {
+        "passed": 200,
+        "generated": 200,
+        "seed": 20260705
+      },
+      "layerC": {
+        "obligations": {
+          "total": 2,
+          "verified": 2,
+          "divergent": 0,
+          "unrealized": 0,
+          "notApplicable": 0
+        },
+        "paths": {
+          "total": 2,
+          "covered": 2,
+          "unknown": 0
+        }
+      },
+      "layerD": {
+        "keys": {
+          "total": 4,
+          "verified": 4,
+          "divergent": 0,
+          "unresolved": 0
+        },
+        "capacityWarnings": 0
+      },
+      "gaps": [
+        "layer C: 1 obligation-path combination(s) unrealized (see report)"
+      ]
+    },
+    {
+      "id": "interest",
+      "programId": "INTEREST",
+      "source": "benchmark/modules/interest.cbl",
+      "loc": 53,
+      "wallSeconds": 136.9,
+      "steps": {
+        "parse": true,
+        "image": "skipped",
+        "migrate": true,
+        "layerA": true,
+        "layerC": true,
+        "layerD": true,
+        "certify": true
+      },
+      "verdict": "CERTIFIED",
+      "winner": "a",
+      "candidates": 2,
+      "costUsd": 0,
+      "layerB": {
+        "curatedCases": 4
+      },
+      "layerA": {
+        "passed": 200,
+        "generated": 200,
+        "seed": 20260706
+      },
+      "layerC": {
+        "obligations": {
+          "total": 2,
+          "verified": 1,
+          "divergent": 0,
+          "unrealized": 1,
+          "notApplicable": 0
+        },
+        "paths": {
+          "total": 2,
+          "covered": 2,
+          "unknown": 0
+        }
+      },
+      "layerD": {
+        "keys": {
+          "total": 3,
+          "verified": 3,
+          "divergent": 0,
+          "unresolved": 0
+        },
+        "capacityWarnings": 0
+      },
+      "gaps": [
+        "layer C: 1 obligation(s) could not be realized as inputs (see report)"
+      ]
+    },
+    {
+      "id": "discount",
+      "programId": "DISCOUNT",
+      "source": "benchmark/modules/discount.cbl",
+      "loc": 54,
+      "wallSeconds": 193.9,
+      "steps": {
+        "parse": true,
+        "image": "skipped",
+        "migrate": true,
+        "layerA": true,
+        "layerC": true,
+        "layerD": true,
+        "certify": true
+      },
+      "verdict": "CERTIFIED",
+      "winner": "a",
+      "candidates": 2,
+      "costUsd": 0,
+      "layerB": {
+        "curatedCases": 5
+      },
+      "layerA": {
+        "passed": 200,
+        "generated": 200,
+        "seed": 20260706
+      },
+      "layerC": {
+        "obligations": {
+          "total": 3,
+          "verified": 3,
+          "divergent": 0,
+          "unrealized": 0,
+          "notApplicable": 0
+        },
+        "paths": {
+          "total": 2,
+          "covered": 2,
+          "unknown": 0
+        }
+      },
+      "layerD": {
+        "keys": {
+          "total": 4,
+          "verified": 4,
+          "divergent": 0,
+          "unresolved": 0
+        },
+        "capacityWarnings": 0
+      },
+      "gaps": [
+        "layer C: 2 obligation-path combination(s) unrealized (see report)"
+      ]
+    },
+    {
+      "id": "ledger",
+      "programId": "LEDGER",
+      "source": "benchmark/modules/ledger.cbl",
+      "loc": 72,
+      "wallSeconds": 178.1,
+      "steps": {
+        "parse": true,
+        "image": "skipped",
+        "migrate": true,
+        "layerA": true,
+        "layerC": true,
+        "layerD": true,
+        "certify": true
+      },
+      "verdict": "CERTIFIED",
+      "winner": "a",
+      "candidates": 2,
+      "costUsd": 0,
+      "layerB": {
+        "curatedCases": 6
+      },
+      "layerA": {
+        "passed": 200,
+        "generated": 200,
+        "seed": 20260707
+      },
+      "layerC": {
+        "obligations": {
+          "total": 5,
+          "verified": 4,
+          "divergent": 0,
+          "unrealized": 1,
+          "notApplicable": 0
+        },
+        "paths": {
+          "total": 6,
+          "covered": 4,
+          "unknown": 0
+        }
+      },
+      "layerD": {
+        "keys": {
+          "total": 4,
+          "verified": 4,
+          "divergent": 0,
+          "unresolved": 0
+        },
+        "capacityWarnings": 0
+      },
+      "gaps": [
+        "layer C: 1 obligation(s) could not be realized as inputs (see report)",
+        "layer C: 9 obligation-path combination(s) unrealized (see report)"
+      ]
+    }
+  ]
+}

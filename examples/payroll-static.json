@@ -1,0 +1,7 @@
+{
+  "$comment": "Verifier layer D config: static data-flow equivalence between PAYROLL's IR and the migrated candidate A. No execution — the javac-based extractor (verifier/javaflow) derives each output key's data flow and it is compared facet-by-facet against the IR's.",
+  "static": {
+    "ir": "../out/ir/PAYROLL.ir.json",
+    "modernJava": "../out/migrate/candidate-a/Payroll.java"
+  }
+}

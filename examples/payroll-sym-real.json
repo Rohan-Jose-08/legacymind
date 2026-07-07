@@ -1,0 +1,19 @@
+{
+  "$comment": "Layer C against the REAL legacy binary (sandboxed GnuCOBOL harness image).",
+  "legacy": {
+    "argv": ["docker", "run", "--rm", "-i", "--network", "none", "legacymind/legacy-payroll"],
+    "label": "COBOL 85 PAYROLL (GnuCOBOL via harness image legacymind/legacy-payroll)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../out/migrate/candidate-a", "Payroll"],
+    "label": "Java 21 payroll (migrated candidate A)"
+  },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "symbolic": {
+    "ir": "../out/ir/PAYROLL.ir.json",
+    "stdinFields": ["WS-EMP-ID", "WS-HOURS-WORKED", "WS-HOURLY-RATE"],
+    "baseCase": ["E00001", "38.50", "22.75"],
+    "maxBoundarySolutions": 5
+  }
+}

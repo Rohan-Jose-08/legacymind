@@ -1,0 +1,19 @@
+{
+  "$comment": "Layer A for DISCOUNT vs the real GnuCOBOL harness image.",
+  "legacy": {
+    "argv": ["docker", "run", "--rm", "-i", "--network", "none", "legacymind/legacy-discount"],
+    "label": "COBOL 85 DISCOUNT (GnuCOBOL via harness image legacymind/legacy-discount)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/discount/migrate/candidate-a", "Discount"],
+    "label": "Java 21 discount (migrated candidate A)"
+  },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "generator": {
+    "ir": "../../out/ir/DISCOUNT.ir.json",
+    "stdinFields": ["WS-ORDER-ID", "WS-QTY", "WS-UNIT-PRICE"],
+    "count": 200,
+    "seed": 20260706
+  }
+}

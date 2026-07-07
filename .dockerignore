@@ -1,0 +1,8 @@
+# keep docker build contexts small: only sources belong in an image
+**/node_modules
+**/.next
+**/dist
+out
+transpiler/cache
+**/.env
+**/.env*.local

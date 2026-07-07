@@ -1,0 +1,501 @@
+{
+  "tool": "legacymind parse-sweep",
+  "generatedAt": "2026-07-07T13:32:59.237Z",
+  "corpus": "C:/Users/Ender/AppData/Local/Temp/claude/C--Users-Ender-startup/7a40dc33-ad23-428b-805e-9e71bcc7aa45/scratchpad/proleap-cobol-parser",
+  "commit": "d1bfe75bdd6d480f70c74c6345bcc02610ac30d3",
+  "total": 759,
+  "stub": {
+    "parsed": 0,
+    "rate": 0,
+    "topReasons": [
+      {
+        "reason": "unsupported indicator character \"…\" in column 7",
+        "count": 404
+      },
+      {
+        "reason": "continuation lines are not supported by the stub parser",
+        "count": 200
+      },
+      {
+        "reason": "PROGRAM-ID not found in IDENTIFICATION DIVISION",
+        "count": 77
+      },
+      {
+        "reason": "code before IDENTIFICATION DIVISION",
+        "count": 61
+      },
+      {
+        "reason": "PROCEDURE DIVISION has no paragraphs",
+        "count": 5
+      },
+      {
+        "reason": "statement before the first paragraph header",
+        "count": 4
+      },
+      {
+        "reason": "multi-line data entries are not supported by the stub parser",
+        "count": 3
+      },
+      {
+        "reason": "FILLER items are not supported by the stub parser",
+        "count": 2
+      },
+      {
+        "reason": "unrecognized data entry: 01  FORT-Struktur.",
+        "count": 1
+      },
+      {
+        "reason": "FILE SECTION is not supported by the stub parser",
+        "count": 1
+      },
+      {
+        "reason": "unsupported data clause \"…\"",
+        "count": 1
+      }
+    ]
+  },
+  "proleap": {
+    "frontendAccepted": 737,
+    "frontendRate": 0.9710144927536232,
+    "irComplete": 7,
+    "irRate": 0.00922266139657444,
+    "formats": {
+      "FIXED": 547,
+      "TANDEM": 187,
+      "VARIABLE": 3
+    },
+    "topFrontendReasons": [
+      {
+        "reason": "CobolParserException: syntax error in mismatched input 'ENTIFICATION' expecting {<EOF>, ID, IDENTIFI",
+        "count": 3
+      },
+      {
+        "reason": "CobolPreprocessorException: Could not find copy book SomeCopyBook in directory of COBOL input file o",
+        "count": 3
+      },
+      {
+        "reason": "CobolParserException: syntax error in mismatched input 'WORKNGSTORAGE' expecting {<EOF>, COMMUNICATI",
+        "count": 2
+      },
+      {
+        "reason": "CobolParserException: syntax error in mismatched input 'ENTIFICATIONZ' expecting {<EOF>, ID, IDENTIF",
+        "count": 1
+      },
+      {
+        "reason": "CobolPreprocessorException: Could not find copy book abc.cpy in directory of COBOL input file or cop",
+        "count": 1
+      },
+      {
+        "reason": "CobolPreprocessorException: Could not find copy book CopyBook1INsomelib in directory of COBOL input ",
+        "count": 1
+      },
+      {
+        "reason": "CobolPreprocessorException: Could not find copy book MSG-IO-SELOF\"…\" in directory of COBOL input fil",
+        "count": 1
+      },
+      {
+        "reason": "CobolPreprocessorException: Could not find copy book CopyReplace1 in directory of COBOL input file o",
+        "count": 1
+      },
+      {
+        "reason": "CobolParserException: syntax error in mismatched input 'Display' expecting {<EOF>, ID, IDENTIFICATIO",
+        "count": 1
+      },
+      {
+        "reason": "CobolPreprocessorException: Could not find copy book LINKAGE in directory of COBOL input file or cop",
+        "count": 1
+      },
+      {
+        "reason": "CobolPreprocessorException: Could not find copy book CopyBook1IN'somelib' in directory of COBOL inpu",
+        "count": 1
+      },
+      {
+        "reason": "CobolPreprocessorException: Could not find copy book \"…\" in directory of COBOL input file or copy bo",
+        "count": 1
+      },
+      {
+        "reason": "StackOverflowError: null",
+        "count": 1
+      },
+      {
+        "reason": "CobolParserException: syntax error in mismatched input 'DATA' expecting {<EOF>, ABORT, ACCEPT, ADD, ",
+        "count": 1
+      },
+      {
+        "reason": "CobolParserException: syntax error in mismatched input '77' expecting DOT_FS",
+        "count": 1
+      },
+      {
+        "reason": "CobolParserException: syntax error in extraneous input '<EOF>' expecting {ACCEPT, ADD, ALTER, CALL, ",
+        "count": 1
+      },
+      {
+        "reason": "CobolParserException: syntax error in mismatched input 'WORKINGSTORAGE' expecting {<EOF>, COMMUNICAT",
+        "count": 1
+      }
+    ],
+    "topUnsupportedConstructs": [
+      {
+        "reason": "GO_TO statement",
+        "count": 18947
+      },
+      {
+        "reason": "PERFORM ... TIMES/UNTIL/VARYING",
+        "count": 4622
+      },
+      {
+        "reason": "REDEFINES",
+        "count": 4326
+      },
+      {
+        "reason": "MOVE target \"…\" (qualified/subscripted)",
+        "count": 3432
+      },
+      {
+        "reason": "PERFORM ... THRU",
+        "count": 2151
+      },
+      {
+        "reason": "WRITE statement",
+        "count": 1123
+      },
+      {
+        "reason": "CLOSE statement",
+        "count": 969
+      },
+      {
+        "reason": "OPEN statement",
+        "count": 966
+      },
+      {
+        "reason": "SET statement",
+        "count": 927
+      },
+      {
+        "reason": "READ statement",
+        "count": 767
+      },
+      {
+        "reason": "OCCURS",
+        "count": 555
+      },
+      {
+        "reason": "PERFORM target \"…\" is not a paragraph in this program",
+        "count": 482
+      },
+      {
+        "reason": "FILE SECTION",
+        "count": 432
+      },
+      {
+        "reason": "sections in the PROCEDURE DIVISION",
+        "count": 413
+      },
+      {
+        "reason": "PROCEDURE DIVISION has no paragraphs",
+        "count": 257
+      },
+      {
+        "reason": "ADD receiving field \"…\" (qualified/subscripted)",
+        "count": 230
+      },
+      {
+        "reason": "88-level condition name",
+        "count": 195
+      },
+      {
+        "reason": "START statement",
+        "count": 186
+      },
+      {
+        "reason": "data clause outside the IR subset (SIGN/JUSTIFIED/SYNC/BLANK/EXTERNAL/GLOBAL)",
+        "count": 184
+      },
+      {
+        "reason": "RETURN statement",
+        "count": 153
+      },
+      {
+        "reason": "SEARCH statement",
+        "count": 147
+      },
+      {
+        "reason": "PICTURE …: P scaling is not supported",
+        "count": 140
+      },
+      {
+        "reason": "DIVIDE ... ON SIZE ERROR",
+        "count": 114
+      },
+      {
+        "reason": "INSPECT statement",
+        "count": 111
+      },
+      {
+        "reason": "ALTER statement",
+        "count": 97
+      },
+      {
+        "reason": "EVALUATE statement",
+        "count": 95
+      },
+      {
+        "reason": "DECLARATIVES",
+        "count": 86
+      },
+      {
+        "reason": "ADD ... ON SIZE ERROR",
+        "count": 84
+      },
+      {
+        "reason": "REWRITE statement",
+        "count": 80
+      },
+      {
+        "reason": "SUBTRACT ... ON SIZE ERROR",
+        "count": 73
+      },
+      {
+        "reason": "SEND statement",
+        "count": 64
+      },
+      {
+        "reason": "CALL statement",
+        "count": 62
+      },
+      {
+        "reason": "MULTIPLY ... ON SIZE ERROR",
+        "count": 58
+      },
+      {
+        "reason": "ADD operand \"…\" (qualified/subscripted)",
+        "count": 57
+      },
+      {
+        "reason": "ACCEPT ... FROM",
+        "count": 54
+      },
+      {
+        "reason": "DIVIDE operand \"…\" (qualified/subscripted)",
+        "count": 48
+      },
+      {
+        "reason": "SUBTRACT operand \"…\" (qualified/subscripted)",
+        "count": 47
+      },
+      {
+        "reason": "MULTIPLY operand \"…\" (qualified/subscripted)",
+        "count": 44
+      },
+      {
+        "reason": "PICTURE …: unsupported symbol",
+        "count": 43
+      },
+      {
+        "reason": "RELEASE statement",
+        "count": 42
+      },
+      {
+        "reason": "data name \"…\" is not representable in the IR",
+        "count": 42
+      },
+      {
+        "reason": "SORT statement",
+        "count": 38
+      },
+      {
+        "reason": "CONTINUE statement",
+        "count": 38
+      },
+      {
+        "reason": "DATA DIVISION section outside WORKING-STORAGE",
+        "count": 36
+      },
+      {
+        "reason": "IF ... NEXT SENTENCE",
+        "count": 36
+      },
+      {
+        "reason": "UNSTRING statement",
+        "count": 35
+      },
+      {
+        "reason": "STRING statement",
+        "count": 34
+      },
+      {
+        "reason": "DELETE statement",
+        "count": 31
+      },
+      {
+        "reason": "EXIT PROGRAM statement",
+        "count": 31
+      },
+      {
+        "reason": "ENABLE statement",
+        "count": 29
+      },
+      {
+        "reason": "EXEC SQL data entry",
+        "count": 29
+      },
+      {
+        "reason": "66-level RENAMES",
+        "count": 27
+      },
+      {
+        "reason": "DISPLAY ... AT/UPON/WITH/ON EXCEPTION",
+        "count": 25
+      },
+      {
+        "reason": "MOVE CORRESPONDING",
+        "count": 24
+      },
+      {
+        "reason": "LINKAGE SECTION",
+        "count": 23
+      },
+      {
+        "reason": "PROCEDURE DIVISION USING/GIVING",
+        "count": 22
+      },
+      {
+        "reason": "preprocessor changed the line structure (COPY/REPLACE expansion?): span provenance cannot be mapped ",
+        "count": 21
+      },
+      {
+        "reason": "DISABLE statement",
+        "count": 19
+      },
+      {
+        "reason": "DIVIDE ... REMAINDER",
+        "count": 18
+      },
+      {
+        "reason": "GENERATE statement",
+        "count": 14
+      },
+      {
+        "reason": "RECEIVE statement",
+        "count": 13
+      },
+      {
+        "reason": "statement before the first paragraph header",
+        "count": 12
+      },
+      {
+        "reason": "USAGE INDEX",
+        "count": 11
+      },
+      {
+        "reason": "INITIALIZE statement",
+        "count": 11
+      },
+      {
+        "reason": "ADD CORRESPONDING",
+        "count": 11
+      },
+      {
+        "reason": "inline PERFORM",
+        "count": 10
+      },
+      {
+        "reason": "CANCEL statement",
+        "count": 10
+      },
+      {
+        "reason": "stacked/nested program units (2)",
+        "count": 10
+      },
+      {
+        "reason": "STOP STOP_RUN_AND_DISPLAY",
+        "count": 10
+      },
+      {
+        "reason": "SUBTRACT CORRESPONDING",
+        "count": 9
+      },
+      {
+        "reason": "ELSE NEXT SENTENCE",
+        "count": 8
+      },
+      {
+        "reason": "MERGE statement",
+        "count": 6
+      },
+      {
+        "reason": "INITIATE statement",
+        "count": 6
+      },
+      {
+        "reason": "TERMINATE statement",
+        "count": 6
+      },
+      {
+        "reason": "MULTIPLY receiving field \"…\" (qualified/subscripted)",
+        "count": 5
+      },
+      {
+        "reason": "DISPLAY operand \"…\" (qualified/subscripted)",
+        "count": 4
+      },
+      {
+        "reason": "COMPUTE ... ON SIZE ERROR",
+        "count": 4
+      },
+      {
+        "reason": "SUBTRACT receiving field \"…\" (qualified/subscripted)",
+        "count": 3
+      },
+      {
+        "reason": "arithmetic operand \"…\" is also one of several receiving fields (single-evaluation semantics)",
+        "count": 2
+      },
+      {
+        "reason": "LOCAL-STORAGE SECTION",
+        "count": 2
+      },
+      {
+        "reason": "PURGE statement",
+        "count": 1
+      },
+      {
+        "reason": "stacked/nested program units (4)",
+        "count": 1
+      },
+      {
+        "reason": "stacked/nested program units (3)",
+        "count": 1
+      },
+      {
+        "reason": "ACCEPT target \"…\" (qualified/subscripted)",
+        "count": 1
+      },
+      {
+        "reason": "DISPLAY operand \"…\"ABCD\"…\" (qualified/subscripted)",
+        "count": 1
+      },
+      {
+        "reason": "COMPUTE with multiple receiving fields",
+        "count": 1
+      },
+      {
+        "reason": "VALUE with multiple literals or THRU",
+        "count": 1
+      },
+      {
+        "reason": "USAGE DATE",
+        "count": 1
+      }
+    ],
+    "irCompleteFiles": [
+      "src/test/resources/io/proleap/cobol/asg/call/ParagraphCall.cbl",
+      "src/test/resources/io/proleap/cobol/asg/procedure/Paragraph.cbl",
+      "src/test/resources/io/proleap/cobol/asg/procedure/ParagraphRedefined.cbl",
+      "src/test/resources/io/proleap/cobol/asg/procedure/perform/PerformProcedure.cbl",
+      "src/test/resources/io/proleap/cobol/ast/tandem/Minimal.cbl",
+      "src/test/resources/io/proleap/cobol/ast/tandem/ParagraphWithoutDot.cbl",
+      "src/test/resources/io/proleap/cobol/preprocessor/tandem/Minimal.cbl"
+    ]
+  }
+}

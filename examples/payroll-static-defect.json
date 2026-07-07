@@ -1,0 +1,7 @@
+{
+  "$comment": "Layer D against the REJECTED candidate B: the HALF_EVEN tax rounding is caught STATICALLY — the rounding-mode facet diverges without running either program. Exit 1 is the point.",
+  "static": {
+    "ir": "../out/ir/PAYROLL.ir.json",
+    "modernJava": "../out/migrate/candidate-b/Payroll.java"
+  }
+}

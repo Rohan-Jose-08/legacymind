@@ -1,0 +1,25 @@
+{
+  "$comment": "Mock validation: the REAL GnuCOBOL binary as 'legacy' vs the Node mock as 'modern' — the harness verifies its own test double. Run with --layer B (curated cases) and --layer A (generated cases). Any divergence is a defect in the mock, and quantifies exactly how far mock-based results can be trusted on machines without Docker.",
+  "legacy": {
+    "argv": ["docker", "run", "--rm", "-i", "--network", "none", "legacymind/legacy-payroll"],
+    "label": "COBOL 85 PAYROLL (GnuCOBOL via harness image legacymind/legacy-payroll)"
+  },
+  "modern": {
+    "argv": ["node", "mock/legacy-payroll.mjs"],
+    "label": "legacy-payroll mock under validation"
+  },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "cases": [
+    { "id": "regular-hours", "stdin": ["E00001", "38.50", "22.75"] },
+    { "id": "overtime", "stdin": ["E00002", "45.25", "18.00"] },
+    { "id": "zero-hours", "stdin": ["E00003", "0.00", "30.00"] },
+    { "id": "half-cent-tax-rounding", "stdin": ["E00004", "9.00", "5.00"] }
+  ],
+  "generator": {
+    "ir": "../out/ir/PAYROLL.ir.json",
+    "stdinFields": ["WS-EMP-ID", "WS-HOURS-WORKED", "WS-HOURLY-RATE"],
+    "count": 200,
+    "seed": 20260705
+  }
+}
