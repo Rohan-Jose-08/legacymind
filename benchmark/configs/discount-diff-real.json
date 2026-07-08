@@ -1,21 +1,64 @@
 {
   "$comment": "Layer B selection cases for DISCOUNT vs the real GnuCOBOL harness image. Covers both discount tiers, the tier boundary, a capacity-overflow region, and a half-cent rounding input.",
   "legacy": {
-    "argv": ["docker", "run", "--rm", "-i", "--network", "none", "legacymind/legacy-discount"],
+    "image": "legacymind/legacy-discount",
     "label": "COBOL 85 DISCOUNT (GnuCOBOL via harness image legacymind/legacy-discount)"
   },
   "modern": {
-    "argv": ["java", "-cp", "../../out/bench/discount/migrate/candidate-a", "Discount"],
+    "argv": [
+      "java",
+      "-cp",
+      "../../out/bench/discount/migrate/candidate-a",
+      "Discount"
+    ],
     "label": "Java 21 discount (migrated candidate A)"
   },
-  "protocol": { "input": "stdin-lines", "output": "kv-lines" },
+  "protocol": {
+    "input": "stdin-lines",
+    "output": "kv-lines"
+  },
   "numericTolerance": 0.0001,
   "timeoutMs": 30000,
   "cases": [
-    { "id": "small-order", "stdin": ["ORD00001", "10", "19.99"] },
-    { "id": "bulk-boundary", "stdin": ["ORD00002", "100", "5.00"] },
-    { "id": "below-boundary", "stdin": ["ORD00003", "99", "5.00"] },
-    { "id": "capacity-region", "stdin": ["ORD00004", "99999", "99999.99"] },
-    { "id": "half-cent-discount", "stdin": ["ORD00005", "1", "0.25"] }
+    {
+      "id": "small-order",
+      "stdin": [
+        "ORD00001",
+        "10",
+        "19.99"
+      ]
+    },
+    {
+      "id": "bulk-boundary",
+      "stdin": [
+        "ORD00002",
+        "100",
+        "5.00"
+      ]
+    },
+    {
+      "id": "below-boundary",
+      "stdin": [
+        "ORD00003",
+        "99",
+        "5.00"
+      ]
+    },
+    {
+      "id": "capacity-region",
+      "stdin": [
+        "ORD00004",
+        "99999",
+        "99999.99"
+      ]
+    },
+    {
+      "id": "half-cent-discount",
+      "stdin": [
+        "ORD00005",
+        "1",
+        "0.25"
+      ]
+    }
   ]
 }

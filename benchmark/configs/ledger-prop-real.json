@@ -1,18 +1,28 @@
 {
   "$comment": "Layer A for LEDGER vs the real GnuCOBOL harness image.",
   "legacy": {
-    "argv": ["docker", "run", "--rm", "-i", "--network", "none", "legacymind/legacy-ledger"],
+    "image": "legacymind/legacy-ledger",
     "label": "COBOL 85 LEDGER (GnuCOBOL via harness image legacymind/legacy-ledger)"
   },
   "modern": {
-    "argv": ["java", "-cp", "../../out/bench/ledger/migrate/candidate-a", "Ledger"],
+    "argv": [
+      "java",
+      "-cp",
+      "../../out/bench/ledger/migrate/candidate-a",
+      "Ledger"
+    ],
     "label": "Java 21 ledger (migrated candidate A)"
   },
   "numericTolerance": 0.0001,
   "timeoutMs": 30000,
   "generator": {
     "ir": "../../out/ir/LEDGER.ir.json",
-    "stdinFields": ["WS-ACCT-ID", "WS-BALANCE", "WS-DEPOSITS", "WS-WITHDRAWALS"],
+    "stdinFields": [
+      "WS-ACCT-ID",
+      "WS-BALANCE",
+      "WS-DEPOSITS",
+      "WS-WITHDRAWALS"
+    ],
     "count": 200,
     "seed": 20260707
   }

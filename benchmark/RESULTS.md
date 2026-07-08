@@ -1,6 +1,6 @@
 # LegacyMind benchmark results
 
-Generated 2026-07-08T09:29:40.241Z by `node benchmark/run-benchmark.mjs`.
+Generated 2026-07-08T12:43:10.089Z by `node benchmark/run-benchmark.mjs`.
 
 Every module below was parsed to IR, migrated to Java 21 by the
 transpiler (two prompt-variant candidates, replayed from the committed
@@ -11,11 +11,11 @@ selected candidate; every disclosed gap is listed in the certificate.
 
 | Module | COBOL lines | Winner | Layer B | Layer A (seeded) | Layer C obligations | Paths | Layer D keys | Verdict | LLM cost | Wall time |
 |---|---|---|---|---|---|---|---|---|---|---|
-| PAYROLL | 59 | candidate a of 2 | 4 cases | 200/200 (seed 20260705) | 2✓ 0✗ 0 unrealized | 2/2 | 4/4 static | **CERTIFIED** | $0.0000 | 135.7s |
-| INTEREST | 53 | candidate a of 2 | 4 cases | 200/200 (seed 20260706) | 2✓ 0✗ 0 unrealized | 2/2 | 3/3 static | **CERTIFIED** | $0.0000 | 160.9s |
-| DISCOUNT | 54 | candidate a of 2 | 5 cases | 200/200 (seed 20260706) | 3✓ 0✗ 0 unrealized | 2/2 | 4/4 static | **CERTIFIED** | $0.0000 | 224.7s |
-| LEDGER | 72 | candidate a of 2 | 6 cases | 200/200 (seed 20260707) | 5✓ 0✗ 0 unrealized | 4/4 (+2 dead) | 4/4 static | **CERTIFIED** | $0.0000 | 162.6s |
-| COMPOUND | 52 | candidate a of 2 | 5 cases | 200/200 (seed 20260707) | 2✓ 0✗ 0 unrealized | 10/10 (+4 dead) | 3/3 static | **CERTIFIED** | $0.0000 | 214.3s |
+| PAYROLL | 59 | candidate a of 2 | 4 cases | 200/200 (seed 20260705) | 2✓ 0✗ 0 unrealized | 2/2 | 4/4 static | **CERTIFIED** | $0.0000 | 60.2s |
+| INTEREST | 53 | candidate a of 2 | 4 cases | 200/200 (seed 20260706) | 2✓ 0✗ 0 unrealized | 2/2 | 3/3 static | **CERTIFIED** | $0.0000 | 62.8s |
+| DISCOUNT | 54 | candidate a of 2 | 5 cases | 200/200 (seed 20260706) | 3✓ 0✗ 0 unrealized | 2/2 | 4/4 static | **CERTIFIED** | $0.0000 | 58.5s |
+| LEDGER | 72 | candidate a of 2 | 6 cases | 200/200 (seed 20260707) | 5✓ 0✗ 0 unrealized | 4/4 (+2 dead) | 4/4 static | **CERTIFIED** | $0.0000 | 70.9s |
+| COMPOUND | 52 | candidate a of 2 | 5 cases | 200/200 (seed 20260707) | 2✓ 0✗ 0 unrealized | 10/10 (+4 dead) | 3/3 static | **CERTIFIED** | $0.0000 | 65.6s |
 
 ## Disclosed gaps per certificate
 

@@ -1,18 +1,27 @@
 {
   "$comment": "Layer A against the REAL legacy binary (sandboxed GnuCOBOL harness image) — same seed as payroll-prop.json so results are directly comparable with the mock-based run.",
   "legacy": {
-    "argv": ["docker", "run", "--rm", "-i", "--network", "none", "legacymind/legacy-payroll"],
+    "image": "legacymind/legacy-payroll",
     "label": "COBOL 85 PAYROLL (GnuCOBOL via harness image legacymind/legacy-payroll)"
   },
   "modern": {
-    "argv": ["java", "-cp", "../out/migrate/candidate-a", "Payroll"],
+    "argv": [
+      "java",
+      "-cp",
+      "../out/migrate/candidate-a",
+      "Payroll"
+    ],
     "label": "Java 21 payroll (migrated candidate A)"
   },
   "numericTolerance": 0.0001,
   "timeoutMs": 30000,
   "generator": {
     "ir": "../out/ir/PAYROLL.ir.json",
-    "stdinFields": ["WS-EMP-ID", "WS-HOURS-WORKED", "WS-HOURLY-RATE"],
+    "stdinFields": [
+      "WS-EMP-ID",
+      "WS-HOURS-WORKED",
+      "WS-HOURLY-RATE"
+    ],
     "count": 200,
     "seed": 20260705
   }

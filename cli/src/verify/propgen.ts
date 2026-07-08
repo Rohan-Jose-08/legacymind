@@ -28,6 +28,8 @@ import {
   loadConfig,
   runCase,
   artifactHash,
+  sideLabel,
+  sideRef,
   type DiffCase,
   type DiffConfig,
   type FieldDiff,
@@ -151,8 +153,8 @@ export function runPropGen(
     .map(({ i }) => i);
 
   console.log(`legacymind verify (layer A: property-based, seed=${seed}, count=${count})`);
-  console.log(`  legacy: ${config.legacy.label ?? config.legacy.argv.join(" ")}`);
-  console.log(`  modern: ${config.modern.label ?? config.modern.argv.join(" ")}`);
+  console.log(`  legacy: ${sideLabel(config.legacy)}`);
+  console.log(`  modern: ${sideLabel(config.modern)}`);
   console.log(`  domain: ${fields.map((f) => `${f.name} PIC ${f.type?.category}`).join(", ")}`);
   console.log("");
 
@@ -238,8 +240,8 @@ export function runPropGen(
       numericTolerance: config.numericTolerance ?? 0,
     },
     artifacts: {
-      legacy: { label: config.legacy.label ?? null, argv: config.legacy.argv, sha256: artifactHash(config.legacy, baseDir) },
-      modern: { label: config.modern.label ?? null, argv: config.modern.argv, sha256: artifactHash(config.modern, baseDir) },
+      legacy: { label: config.legacy.label ?? null, ...sideRef(config.legacy), sha256: artifactHash(config.legacy, baseDir) },
+      modern: { label: config.modern.label ?? null, ...sideRef(config.modern), sha256: artifactHash(config.modern, baseDir) },
     },
     failures: results
       .filter((r) => r.status !== "PASS")

@@ -29,7 +29,16 @@ import { dirname, isAbsolute, resolve } from "node:path";
 export class DiffExecError extends Error {}
 
 export interface SideConfig {
-  argv: string[];
+  /** One-shot command per case (spawned directly). Optional when `image` is set. */
+  argv?: string[];
+  /**
+   * Persistent-container mode: run the image's own entrypoint via
+   * `docker exec` inside one long-lived `--network none` container shared
+   * by every case of this process — same binary, same sandbox, without
+   * paying container startup (~0.9s) per case. The container starts
+   * lazily and is removed when the process exits.
+   */
+  image?: string;
   label?: string;
   /** Extra environment variables merged over the parent environment. */
   env?: Record<string, string>;
@@ -139,8 +148,10 @@ export function loadConfig(configPath: string): DiffConfig {
   const c = parsed as DiffConfig;
   for (const side of ["legacy", "modern"] as const) {
     const s = c[side];
-    if (!s || !Array.isArray(s.argv) || s.argv.length === 0 || s.argv.some((a) => typeof a !== "string")) {
-      throw new DiffExecError(`config: "${side}.argv" must be a non-empty array of strings`);
+    const argvOk = Array.isArray(s?.argv) && s.argv.length > 0 && s.argv.every((a) => typeof a === "string");
+    const imageOk = typeof s?.image === "string" && s.image.length > 0;
+    if (!s || (!argvOk && !imageOk)) {
+      throw new DiffExecError(`config: "${side}" needs a non-empty "argv" array or a persistent-container "image"`);
     }
   }
   const cases = c.cases ?? [];
@@ -156,14 +167,92 @@ export function loadConfig(configPath: string): DiffConfig {
   return c;
 }
 
+// --- persistent containers ------------------------------------------------------
+//
+// One `sleep infinity` container per image, shared by every case this
+// process runs; each case is a `docker exec -i` of the image's own
+// entrypoint. Same compiled binary, same `--network none` sandbox — minus
+// the per-case container startup. Containers are labeled and removed on
+// process exit; a crashed process can leave one behind, removable with
+//   docker rm -f $(docker ps -q --filter label=legacymind-harness)
+
+interface PersistentContainer {
+  id: string;
+  command: string[];
+}
+
+const persistentContainers = new Map<string, PersistentContainer>();
+let cleanupHooked = false;
+
+function dockerOrFail(args: string[], what: string): string {
+  const res = spawnSync("docker", args, { encoding: "utf8", windowsHide: true });
+  if (res.status !== 0 || res.error) {
+    throw new DiffExecError(`harness: ${what} failed: ${(res.stderr || String(res.error || "")).trim()}`);
+  }
+  return res.stdout.trim();
+}
+
+function persistentContainer(image: string): PersistentContainer {
+  const existing = persistentContainers.get(image);
+  if (existing) return existing;
+  const raw = dockerOrFail(
+    ["inspect", "--format", "{{json .Config.Entrypoint}}\t{{json .Config.Cmd}}", image],
+    `docker inspect ${image}`,
+  );
+  const [epRaw, cmdRaw] = raw.split("\t");
+  const command: string[] = [...(JSON.parse(epRaw ?? "null") ?? []), ...(JSON.parse(cmdRaw ?? "null") ?? [])];
+  if (command.length === 0) {
+    throw new DiffExecError(`harness: image ${image} has no entrypoint/cmd to exec per case`);
+  }
+  const id = dockerOrFail(
+    ["run", "-d", "--rm", "--network", "none", "--label", "legacymind-harness=1", "--entrypoint", "sleep", image, "infinity"],
+    `starting persistent container for ${image}`,
+  );
+  const container = { id, command };
+  persistentContainers.set(image, container);
+  if (!cleanupHooked) {
+    cleanupHooked = true;
+    process.on("exit", stopPersistentContainers);
+  }
+  return container;
+}
+
+/** Human-readable side description for logs. */
+export function sideLabel(side: SideConfig): string {
+  return side.label ?? (side.image ? `persistent container of ${side.image}` : side.argv!.join(" "));
+}
+
+/** Artifact reference for reports: how the side was invoked. */
+export function sideRef(side: SideConfig): { argv: string[] | null; image: string | null } {
+  return { argv: side.argv ?? null, image: side.image ?? null };
+}
+
+export function stopPersistentContainers(): void {
+  for (const { id } of persistentContainers.values()) {
+    spawnSync("docker", ["rm", "-f", id], { encoding: "utf8", windowsHide: true });
+  }
+  persistentContainers.clear();
+}
+
 export function runSide(side: SideConfig, stdinLines: string[], baseDir: string, timeoutMs: number): RunResult {
   const started = Date.now();
-  const res = spawnSync(side.argv[0]!, side.argv.slice(1), {
+  let argv0: string;
+  let argvRest: string[];
+  if (side.image) {
+    const c = persistentContainer(side.image);
+    const envFlags = Object.entries(side.env ?? {}).flatMap(([k, v]) => ["-e", `${k}=${v}`]);
+    argv0 = "docker";
+    argvRest = ["exec", "-i", ...envFlags, c.id, ...c.command];
+  } else {
+    argv0 = side.argv![0]!;
+    argvRest = side.argv!.slice(1);
+  }
+  const res = spawnSync(argv0, argvRest, {
     cwd: baseDir,
     input: stdinLines.join("\n") + "\n",
     encoding: "utf8",
     timeout: timeoutMs,
-    env: { ...process.env, ...(side.env ?? {}) },
+    env: { ...process.env, ...(side.image ? {} : side.env ?? {}) },
     windowsHide: true,
     shell: false,
   });
@@ -295,8 +384,25 @@ export function runDiffCases(
 }
 
 /** SHA-256 of the first argv entry (after index 0) that resolves to a file — pins mock scripts, jars, binaries. */
+const imageIdCache = new Map<string, string | null>();
+
 export function artifactHash(side: SideConfig, baseDir: string): string | null {
-  for (const a of side.argv.slice(1)) {
+  if (side.image) {
+    // The docker image ID is the artifact identity: it covers the compiled
+    // binary AND its runtime, which is stronger provenance than hashing a
+    // command string.
+    let id = imageIdCache.get(side.image);
+    if (id === undefined) {
+      const res = spawnSync("docker", ["inspect", "--format", "{{.Id}}", side.image], {
+        encoding: "utf8",
+        windowsHide: true,
+      });
+      id = res.status === 0 ? res.stdout.trim().replace(/^sha256:/, "") : null;
+      imageIdCache.set(side.image, id);
+    }
+    return id;
+  }
+  for (const a of (side.argv ?? []).slice(1)) {
     const p = isAbsolute(a) ? a : resolve(baseDir, a);
     if (existsSync(p)) {
       try {
@@ -352,12 +458,12 @@ export function runDiffExec(configPath: string, outPath: string): number {
     artifacts: {
       legacy: {
         label: config.legacy.label ?? null,
-        argv: config.legacy.argv,
+        ...sideRef(config.legacy),
         sha256: artifactHash(config.legacy, baseDir),
       },
       modern: {
         label: config.modern.label ?? null,
-        argv: config.modern.argv,
+        ...sideRef(config.modern),
         sha256: artifactHash(config.modern, baseDir),
       },
     },
@@ -368,8 +474,8 @@ export function runDiffExec(configPath: string, outPath: string): number {
   writeFileSync(outPath, JSON.stringify(report, null, 2) + "\n");
 
   console.log(`legacymind verify (layer B: differential execution)`);
-  console.log(`  legacy: ${config.legacy.label ?? config.legacy.argv.join(" ")}`);
-  console.log(`  modern: ${config.modern.label ?? config.modern.argv.join(" ")}`);
+  console.log(`  legacy: ${sideLabel(config.legacy)}`);
+  console.log(`  modern: ${sideLabel(config.modern)}`);
   console.log("");
   printCaseResults(results);
   console.log("");

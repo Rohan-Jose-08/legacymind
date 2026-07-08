@@ -1,19 +1,34 @@
 {
   "$comment": "Layer C for INTEREST vs the real GnuCOBOL harness image. The ROUNDED interest expression is a three-factor product with a division — beyond the prototype's source*constant solver, so the rounding obligation is expected UNREALIZED (disclosed in the certificate).",
   "legacy": {
-    "argv": ["docker", "run", "--rm", "-i", "--network", "none", "legacymind/legacy-interest"],
+    "image": "legacymind/legacy-interest",
     "label": "COBOL 85 INTEREST (GnuCOBOL via harness image legacymind/legacy-interest)"
   },
   "modern": {
-    "argv": ["java", "-cp", "../../out/bench/interest/migrate/candidate-a", "Interest"],
+    "argv": [
+      "java",
+      "-cp",
+      "../../out/bench/interest/migrate/candidate-a",
+      "Interest"
+    ],
     "label": "Java 21 interest (migrated candidate A)"
   },
   "numericTolerance": 0.0001,
   "timeoutMs": 30000,
   "symbolic": {
     "ir": "../../out/ir/INTEREST.ir.json",
-    "stdinFields": ["WS-ACCT-ID", "WS-PRINCIPAL", "WS-RATE-PCT", "WS-TERM-YEARS"],
-    "baseCase": ["ACCT0001", "10000.00", "4.25", "3"],
+    "stdinFields": [
+      "WS-ACCT-ID",
+      "WS-PRINCIPAL",
+      "WS-RATE-PCT",
+      "WS-TERM-YEARS"
+    ],
+    "baseCase": [
+      "ACCT0001",
+      "10000.00",
+      "4.25",
+      "3"
+    ],
     "maxBoundarySolutions": 5
   }
 }

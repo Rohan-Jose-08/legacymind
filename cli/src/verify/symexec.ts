@@ -46,6 +46,8 @@ import {
   loadConfig,
   runCase,
   artifactHash,
+  sideLabel,
+  sideRef,
   type CaseResult,
   type DiffConfig,
 } from "./diffexec.js";
@@ -1037,8 +1039,8 @@ export function runSymExec(configPath: string, outPath: string): number {
   const paths = states.map((st, i) => ({ id: i, state: st }));
 
   console.log(`legacymind verify (layer C: path-sensitive symbolic engine)`);
-  console.log(`  legacy: ${config.legacy.label ?? config.legacy.argv.join(" ")}`);
-  console.log(`  modern: ${config.modern.label ?? config.modern.argv.join(" ")}`);
+  console.log(`  legacy: ${sideLabel(config.legacy)}`);
+  console.log(`  modern: ${sideLabel(config.modern)}`);
   console.log(`  paths enumerated: ${paths.length}; money pattern: /${moneyRe.source}/`);
   console.log("");
 
@@ -1578,8 +1580,8 @@ export function runSymExec(configPath: string, outPath: string): number {
       numericTolerance: config.numericTolerance ?? 0,
     },
     artifacts: {
-      legacy: { label: config.legacy.label ?? null, argv: config.legacy.argv, sha256: artifactHash(config.legacy, baseDir) },
-      modern: { label: config.modern.label ?? null, argv: config.modern.argv, sha256: artifactHash(config.modern, baseDir) },
+      legacy: { label: config.legacy.label ?? null, ...sideRef(config.legacy), sha256: artifactHash(config.legacy, baseDir) },
+      modern: { label: config.modern.label ?? null, ...sideRef(config.modern), sha256: artifactHash(config.modern, baseDir) },
     },
   };
 

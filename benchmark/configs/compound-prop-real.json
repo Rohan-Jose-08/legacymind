@@ -1,18 +1,28 @@
 {
   "$comment": "Layer A for COMPOUND vs the real GnuCOBOL harness image. WS-TERM is PIC 9, so generated terms sweep every loop depth 0-9 including the zero-iteration edge.",
   "legacy": {
-    "argv": ["docker", "run", "--rm", "-i", "--network", "none", "legacymind/legacy-compound"],
+    "image": "legacymind/legacy-compound",
     "label": "COBOL 85 COMPOUND (GnuCOBOL via harness image legacymind/legacy-compound)"
   },
   "modern": {
-    "argv": ["java", "-cp", "../../out/bench/compound/migrate/candidate-a", "Compound"],
+    "argv": [
+      "java",
+      "-cp",
+      "../../out/bench/compound/migrate/candidate-a",
+      "Compound"
+    ],
     "label": "Java 21 compound (migrated candidate A)"
   },
   "numericTolerance": 0.0001,
   "timeoutMs": 30000,
   "generator": {
     "ir": "../../out/ir/COMPOUND.ir.json",
-    "stdinFields": ["WS-ACCT-ID", "WS-BALANCE", "WS-RATE-PCT", "WS-TERM"],
+    "stdinFields": [
+      "WS-ACCT-ID",
+      "WS-BALANCE",
+      "WS-RATE-PCT",
+      "WS-TERM"
+    ],
     "count": 200,
     "seed": 20260707
   }

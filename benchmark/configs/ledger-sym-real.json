@@ -1,19 +1,34 @@
 {
   "$comment": "Layer C for LEDGER vs the real GnuCOBOL harness image. The fee is a source*constant ROUNDED form (WS-BALANCE * 0.0025), so half-boundary solving applies; the waiver branch (WS-BALANCE < 500) is a literal branch boundary. WS-BALANCE is an accumulator (self-referential ADD/SUBTRACT chain), so obligations the prototype's inversion cannot realize are disclosed per path.",
   "legacy": {
-    "argv": ["docker", "run", "--rm", "-i", "--network", "none", "legacymind/legacy-ledger"],
+    "image": "legacymind/legacy-ledger",
     "label": "COBOL 85 LEDGER (GnuCOBOL via harness image legacymind/legacy-ledger)"
   },
   "modern": {
-    "argv": ["java", "-cp", "../../out/bench/ledger/migrate/candidate-a", "Ledger"],
+    "argv": [
+      "java",
+      "-cp",
+      "../../out/bench/ledger/migrate/candidate-a",
+      "Ledger"
+    ],
     "label": "Java 21 ledger (migrated candidate A)"
   },
   "numericTolerance": 0.0001,
   "timeoutMs": 30000,
   "symbolic": {
     "ir": "../../out/ir/LEDGER.ir.json",
-    "stdinFields": ["WS-ACCT-ID", "WS-BALANCE", "WS-DEPOSITS", "WS-WITHDRAWALS"],
-    "baseCase": ["ACCT0001", "2500.00", "350.25", "125.50"],
+    "stdinFields": [
+      "WS-ACCT-ID",
+      "WS-BALANCE",
+      "WS-DEPOSITS",
+      "WS-WITHDRAWALS"
+    ],
+    "baseCase": [
+      "ACCT0001",
+      "2500.00",
+      "350.25",
+      "125.50"
+    ],
     "maxBoundarySolutions": 5
   }
 }

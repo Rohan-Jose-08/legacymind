@@ -4,21 +4,32 @@
 
 Runs the *real* legacy toolchain inside Docker so verification evidence
 stops being conditional on mock fidelity. The GnuCOBOL image compiles the
-legacy module at build time; every verification case then executes it via
+legacy module at build time; verification cases execute it in one of two
+modes:
 
-```
-docker run --rm -i --network none legacymind/legacy-payroll
-```
-
-which the diff-exec harness treats as just another argv — no verifier code
-knows Docker exists.
+- **Persistent-container mode** (the default in every real config):
+  `"legacy": { "image": "legacymind/legacy-payroll" }` — the harness
+  starts one long-lived `--network none` container per image (entrypoint
+  overridden to `sleep infinity`, labeled `legacymind-harness=1`) and
+  runs each case as a `docker exec -i` of the image's own entrypoint.
+  Same compiled binary, same sandbox, ~5x faster per case (~0.15s vs
+  ~0.9s) because container startup is paid once per process, not per
+  case. Containers are removed when the verifying process exits; after
+  a crash, clean up leftovers with
+  `docker rm -f $(docker ps -q --filter label=legacymind-harness)`.
+  The report's legacy artifact hash in this mode is the **docker image
+  ID** — it covers the binary and its runtime.
+- **One-shot argv mode**:
+  `docker run --rm -i --network none legacymind/legacy-payroll`
+  as a plain argv — fully ephemeral, one container per case; the
+  fallback when a case must not share anything with its neighbors.
 
 ## Sandbox properties
 
 | Requirement (founding spec) | Status |
 |---|---|
-| No network | `--network none` on every run |
-| Ephemeral filesystem | `--rm`; nothing mounted, nothing persists between cases |
+| No network | `--network none` on every run (both modes) |
+| Ephemeral filesystem | `--rm`; nothing mounted. One-shot mode persists nothing between cases; persistent mode shares a container filesystem across cases of one process — our programs write nothing, but modules with file I/O must use one-shot mode |
 | Deterministic clock | libfaketime baked into the image; inject per-side via the verify config's `env` (`LD_PRELOAD` + `FAKETIME`). Not exercised by payroll (time-free). |
 | No credentials / host mounts | The program is compiled into the image; configs carry no paths |
 
