@@ -1,6 +1,6 @@
 # LegacyMind benchmark results
 
-Generated 2026-07-08T14:08:17.312Z by `node benchmark/run-benchmark.mjs`.
+Generated 2026-07-08T18:59:00.066Z by `node benchmark/run-benchmark.mjs`.
 
 Every module below was parsed to IR, migrated to Java 21 by the
 transpiler (two prompt-variant candidates, replayed from the committed
@@ -14,11 +14,12 @@ tampered or wrongly-signed certificate would fail the benchmark.
 
 | Module | COBOL lines | Winner | Layer B | Layer A (seeded) | Layer C obligations | Paths | Layer D keys | Verdict | Signed | LLM cost | Wall time |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| PAYROLL | 59 | candidate a of 2 | 4 cases | 200/200 (seed 20260705) | 2✓ 0✗ 0 unrealized | 2/2 | 4/4 static | **CERTIFIED** | ✓ `9b70a354efb9feab` | $0.0000 | 68.8s |
-| INTEREST | 53 | candidate a of 2 | 4 cases | 200/200 (seed 20260706) | 2✓ 0✗ 0 unrealized | 2/2 | 3/3 static | **CERTIFIED** | ✓ `9b70a354efb9feab` | $0.0000 | 66.2s |
-| DISCOUNT | 54 | candidate a of 2 | 5 cases | 200/200 (seed 20260706) | 3✓ 0✗ 0 unrealized | 2/2 | 4/4 static | **CERTIFIED** | ✓ `9b70a354efb9feab` | $0.0000 | 64.6s |
-| LEDGER | 72 | candidate a of 2 | 6 cases | 200/200 (seed 20260707) | 5✓ 0✗ 0 unrealized | 4/4 (+2 dead) | 4/4 static | **CERTIFIED** | ✓ `9b70a354efb9feab` | $0.0000 | 71.8s |
-| COMPOUND | 52 | candidate a of 2 | 5 cases | 200/200 (seed 20260707) | 2✓ 0✗ 0 unrealized | 10/10 (+4 dead) | 3/3 static | **CERTIFIED** | ✓ `9b70a354efb9feab` | $0.0000 | 68.8s |
+| PAYROLL | 59 | candidate a of 2 | 4 cases | 200/200 (seed 20260705) | 2✓ 0✗ 0 unrealized | 2/2 | 4/4 static | **CERTIFIED** | ✓ `9b70a354efb9feab` | $0.0000 | 71.1s |
+| INTEREST | 53 | candidate a of 2 | 4 cases | 200/200 (seed 20260706) | 2✓ 0✗ 0 unrealized | 2/2 | 3/3 static | **CERTIFIED** | ✓ `9b70a354efb9feab` | $0.0000 | 71.2s |
+| DISCOUNT | 54 | candidate a of 2 | 5 cases | 200/200 (seed 20260706) | 3✓ 0✗ 0 unrealized | 2/2 | 4/4 static | **CERTIFIED** | ✓ `9b70a354efb9feab` | $0.0000 | 69.6s |
+| LEDGER | 72 | candidate a of 2 | 6 cases | 200/200 (seed 20260707) | 5✓ 0✗ 0 unrealized | 4/4 (+2 dead) | 4/4 static | **CERTIFIED** | ✓ `9b70a354efb9feab` | $0.0000 | 71.3s |
+| COMPOUND | 52 | candidate a of 2 | 5 cases | 200/200 (seed 20260707) | 2✓ 0✗ 0 unrealized | 10/10 (+4 dead) | 3/3 static | **CERTIFIED** | ✓ `9b70a354efb9feab` | $0.0000 | 77.8s |
+| TAXCALC | 58 | candidate a of 2 | 5 cases | 200/200 (seed 20260708) | 3✓ 0✗ 0 unrealized | 1/1 | 3/3 static | **CERTIFIED** | ✓ `9b70a354efb9feab` | $0.0000 | 72.1s |
 
 ## Disclosed gaps per certificate
 
@@ -35,6 +36,8 @@ tampered or wrongly-signed certificate would fail the benchmark.
 
 **COMPOUND**
 
+**TAXCALC**
+
 ## Parser coverage against an external corpus
 
 Corpus: C:/Users/Ender/AppData/Local/Temp/claude/C--Users-Ender-startup/7a40dc33-ad23-428b-805e-9e71bcc7aa45/scratchpad/proleap-cobol-parser (commit d1bfe75bdd6d), 759 files.
@@ -43,7 +46,7 @@ Corpus: C:/Users/Ender/AppData/Local/Temp/claude/C--Users-Ender-startup/7a40dc33
 |---|---|---|---|
 | stub | parsed | 0 | 0.0% |
 | proleap | front-end accepted (grammar + preprocessor) | 737 | 97.1% |
-| proleap | IR-complete (every construct lowered) | 7 | 0.9% |
+| proleap | IR-complete (every construct lowered) | 8 | 1.1% |
 
 Front-end acceptance is what the production grammar and its
 reference-format preprocessor handle; IR-complete is the stricter
@@ -57,7 +60,6 @@ histogram below is the prioritized lowering backlog.
 | GO_TO statement | 18947 |
 | REDEFINES | 4326 |
 | MOVE target "…" (qualified/subscripted) | 3432 |
-| PERFORM ... THRU | 2273 |
 | WRITE statement | 1123 |
 | CLOSE statement | 969 |
 | OPEN statement | 966 |
@@ -69,6 +71,7 @@ histogram below is the prioritized lowering backlog.
 | sections in the PROCEDURE DIVISION | 413 |
 | PROCEDURE DIVISION has no paragraphs | 257 |
 | ADD receiving field "…" (qualified/subscripted) | 230 |
+| 88-level condition name | 195 |
 
 ## Reproduction
 

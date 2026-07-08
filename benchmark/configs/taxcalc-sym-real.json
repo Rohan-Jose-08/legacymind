@@ -1,0 +1,19 @@
+{
+  "$comment": "Layer C for TAXCALC vs the real GnuCOBOL harness image. The PERFORM CALC-STATE THRU CALC-LOCAL range is inlined, so all three ROUNDED withholding computes (each WS-GROSS * rate / 100) appear on the single path and each yields a source*constant rounding half-boundary obligation solved by congruence.",
+  "legacy": {
+    "image": "legacymind/legacy-taxcalc",
+    "label": "COBOL 85 TAXCALC (GnuCOBOL via harness image legacymind/legacy-taxcalc)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/taxcalc/migrate/candidate-a", "Taxcalc"],
+    "label": "Java 21 taxcalc (migrated candidate A)"
+  },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "symbolic": {
+    "ir": "../../out/ir/TAXCALC.ir.json",
+    "stdinFields": ["WS-EMP-ID", "WS-GROSS"],
+    "baseCase": ["EMP00001", "5000.00"],
+    "maxBoundarySolutions": 5
+  }
+}

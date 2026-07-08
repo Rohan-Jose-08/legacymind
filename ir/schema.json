@@ -148,6 +148,11 @@
         "children": { "type": "array", "items": { "$ref": "#/$defs/dataItem" } }
       }
     },
+    "performThru": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9-]*$",
+      "description": "PERFORM <target> THRU <thru>: the last paragraph of the range. The performed body is the contiguous source-order paragraph range [target..thru] inclusive. The range is forward-contiguous; backward or non-adjacent ranges are rejected by the parser, never mis-lowered."
+    },
     "operandExpr": {
       "type": "object",
       "description": "Stub-level expression: raw normalized text plus the declared data items it references. A full expression AST replaces this when the ProLeap parser lands; refs already enable Layer D data-flow diffing.",
@@ -237,6 +242,7 @@
           "properties": {
             "kind": { "const": "perform" },
             "target": { "type": "string" },
+            "thru": { "$ref": "#/$defs/performThru" },
             "text": { "type": "string" },
             "span": { "$ref": "#/$defs/span" }
           }
@@ -302,6 +308,7 @@
           "properties": {
             "kind": { "const": "perform-times" },
             "target": { "type": "string" },
+            "thru": { "$ref": "#/$defs/performThru" },
             "times": { "$ref": "#/$defs/operandExpr" },
             "text": { "type": "string" },
             "span": { "$ref": "#/$defs/span" }
@@ -315,6 +322,7 @@
           "properties": {
             "kind": { "const": "perform-until" },
             "target": { "type": "string" },
+            "thru": { "$ref": "#/$defs/performThru" },
             "condition": { "$ref": "#/$defs/operandExpr" },
             "text": { "type": "string" },
             "span": { "$ref": "#/$defs/span" }
@@ -328,6 +336,7 @@
           "properties": {
             "kind": { "const": "perform-varying" },
             "target": { "type": "string" },
+            "thru": { "$ref": "#/$defs/performThru" },
             "varying": {
               "type": "object",
               "required": ["var", "from", "by"],

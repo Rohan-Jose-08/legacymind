@@ -63,19 +63,20 @@ export type Statement =
   | { kind: "move"; from: OperandExpr; to: string[]; text: string; span: Span }
   | { kind: "compute"; target: string; rounded: boolean; expression: OperandExpr; text: string; span: Span }
   | { kind: "if"; condition: OperandExpr; then: Statement[]; else?: Statement[]; text: string; span: Span }
-  | { kind: "perform"; target: string; text: string; span: Span }
+  | { kind: "perform"; target: string; thru?: string; text: string; span: Span }
   | { kind: "display"; operands: DisplayOperand[]; text: string; span: Span }
   | { kind: "accept"; target: string; text: string; span: Span }
   | { kind: "stop-run"; text: string; span: Span }
   | { kind: "goback"; text: string; span: Span }
   /** EXIT: no-op paragraph terminator (proleap engine only; flow-neutral in every layer). */
   | { kind: "exit"; text: string; span: Span }
-  /** PERFORM loops (proleap engine only; TEST BEFORE semantics). */
-  | { kind: "perform-times"; target: string; times: OperandExpr; text: string; span: Span }
-  | { kind: "perform-until"; target: string; condition: OperandExpr; text: string; span: Span }
+  /** PERFORM loops (proleap engine only; TEST BEFORE semantics). `thru` marks a THRU paragraph range. */
+  | { kind: "perform-times"; target: string; thru?: string; times: OperandExpr; text: string; span: Span }
+  | { kind: "perform-until"; target: string; thru?: string; condition: OperandExpr; text: string; span: Span }
   | {
       kind: "perform-varying";
       target: string;
+      thru?: string;
       varying: { var: string; from: OperandExpr; by: OperandExpr };
       condition: OperandExpr;
       text: string;

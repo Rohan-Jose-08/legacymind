@@ -1,0 +1,21 @@
+{
+  "$comment": "Layer B selection cases for TAXCALC vs the real GnuCOBOL harness image. The THRU range (state+federal+local withholding) means a single-PERFORM mistranslation withholds only state; every non-zero gross catches it. Includes a half-cent ROUNDED case, a zero, and the PIC 9(7)V99 wrap region.",
+  "legacy": {
+    "image": "legacymind/legacy-taxcalc",
+    "label": "COBOL 85 TAXCALC (GnuCOBOL via harness image legacymind/legacy-taxcalc)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/taxcalc/migrate/candidate-a", "Taxcalc"],
+    "label": "Java 21 taxcalc (migrated candidate A)"
+  },
+  "protocol": { "input": "stdin-lines", "output": "kv-lines" },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "cases": [
+    { "id": "typical", "stdin": ["EMP00001", "5000.00"] },
+    { "id": "half-cent", "stdin": ["EMP00002", "100.10"] },
+    { "id": "zero", "stdin": ["EMP00003", "0.00"] },
+    { "id": "small", "stdin": ["EMP00005", "37.50"] },
+    { "id": "capacity-region", "stdin": ["EMP00004", "9999999.99"] }
+  ]
+}

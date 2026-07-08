@@ -1,6 +1,6 @@
 {
   "tool": "legacymind parse-sweep",
-  "generatedAt": "2026-07-08T09:20:52.559Z",
+  "generatedAt": "2026-07-08T18:57:58.931Z",
   "corpus": "C:/Users/Ender/AppData/Local/Temp/claude/C--Users-Ender-startup/7a40dc33-ad23-428b-805e-9e71bcc7aa45/scratchpad/proleap-cobol-parser",
   "commit": "d1bfe75bdd6d480f70c74c6345bcc02610ac30d3",
   "total": 759,
@@ -57,8 +57,8 @@
   "proleap": {
     "frontendAccepted": 737,
     "frontendRate": 0.9710144927536232,
-    "irComplete": 7,
-    "irRate": 0.00922266139657444,
+    "irComplete": 8,
+    "irRate": 0.010540184453227932,
     "formats": {
       "FIXED": 547,
       "TANDEM": 187,
@@ -146,10 +146,6 @@
       {
         "reason": "MOVE target \"…\" (qualified/subscripted)",
         "count": 3432
-      },
-      {
-        "reason": "PERFORM ... THRU",
-        "count": 2273
       },
       {
         "reason": "WRITE statement",
@@ -288,6 +284,10 @@
         "count": 43
       },
       {
+        "reason": "PERFORM VARYING ... AFTER (nested control variables)",
+        "count": 43
+      },
+      {
         "reason": "RELEASE statement",
         "count": 42
       },
@@ -297,10 +297,6 @@
       },
       {
         "reason": "SORT statement",
-        "count": 38
-      },
-      {
-        "reason": "PERFORM VARYING ... AFTER (nested control variables)",
         "count": 38
       },
       {
@@ -440,6 +436,10 @@
         "count": 4
       },
       {
+        "reason": "PERFORM ... WITH TEST AFTER",
+        "count": 4
+      },
+      {
         "reason": "COMPUTE ... ON SIZE ERROR",
         "count": 4
       },
@@ -448,7 +448,19 @@
         "count": 3
       },
       {
+        "reason": "PERFORM VARYING ... WITH TEST AFTER",
+        "count": 3
+      },
+      {
+        "reason": "PERFORM TIMES operand \"…\" (qualified/subscripted)",
+        "count": 2
+      },
+      {
         "reason": "arithmetic operand \"…\" is also one of several receiving fields (single-evaluation semantics)",
+        "count": 2
+      },
+      {
+        "reason": "PERFORM TEST-7-1 THRU TEST-7-4 is a backward or non-contiguous range",
         "count": 2
       },
       {
@@ -460,11 +472,63 @@
         "count": 1
       },
       {
+        "reason": "PERFORM PROC-117-PFM-A-10 THRU PROC-119-PFM-C-10 is a backward or non-contiguous range",
+        "count": 1
+      },
+      {
+        "reason": "PERFORM PROC-117-PFM-A-10 THRU PROC-120-PFM-D-10 is a backward or non-contiguous range",
+        "count": 1
+      },
+      {
+        "reason": "PERFORM PROC-118-PFM-B-10 THRU PROC-119-PFM-C-10 is a backward or non-contiguous range",
+        "count": 1
+      },
+      {
+        "reason": "PERFORM PROC-139-PFM-A-11 THRU PROC-139-PFM-C-11 is a backward or non-contiguous range",
+        "count": 1
+      },
+      {
+        "reason": "PERFORM PROC-139-PFM-A-11 THRU PROC-140-PFM-D-11 is a backward or non-contiguous range",
+        "count": 1
+      },
+      {
+        "reason": "PERFORM PROC-140-PFM-B-11 THRU PROC-139-PFM-C-11 is a backward or non-contiguous range",
+        "count": 1
+      },
+      {
+        "reason": "PERFORM PROC-213-PFM-G-15 THRU PROC-217-PFM-B-15 is a backward or non-contiguous range",
+        "count": 1
+      },
+      {
         "reason": "stacked/nested program units (4)",
         "count": 1
       },
       {
         "reason": "stacked/nested program units (3)",
+        "count": 1
+      },
+      {
+        "reason": "PERFORM PFM-A-F1-7 THRU PFM-C-F1-7 is a backward or non-contiguous range",
+        "count": 1
+      },
+      {
+        "reason": "PERFORM PFM-A-F1-7 THRU PFM-D-F1-7 is a backward or non-contiguous range",
+        "count": 1
+      },
+      {
+        "reason": "PERFORM PFM-B-F1-7 THRU PFM-C-F1-7 is a backward or non-contiguous range",
+        "count": 1
+      },
+      {
+        "reason": "PERFORM PFM-A-F2-4 THRU PFM-C-F2-4 is a backward or non-contiguous range",
+        "count": 1
+      },
+      {
+        "reason": "PERFORM PFM-A-F2-4 THRU PFM-D-F2-4 is a backward or non-contiguous range",
+        "count": 1
+      },
+      {
+        "reason": "PERFORM PFM-G-F1-10 THRU PFM-B-F1-10 is a backward or non-contiguous range",
         "count": 1
       },
       {
@@ -476,19 +540,19 @@
         "count": 1
       },
       {
-        "reason": "PERFORM TIMES operand \"…\" (qualified/subscripted)",
-        "count": 1
-      },
-      {
-        "reason": "PERFORM ... WITH TEST AFTER",
-        "count": 1
-      },
-      {
         "reason": "PERFORM VARYING control variable \"…\" (qualified/subscripted)",
         "count": 1
       },
       {
         "reason": "COMPUTE with multiple receiving fields",
+        "count": 1
+      },
+      {
+        "reason": "PERFORM P4501 THRU P0003 is a backward or non-contiguous range",
+        "count": 1
+      },
+      {
+        "reason": "PERFORM 45A THRU 45B is a backward or non-contiguous range",
         "count": 1
       },
       {
@@ -505,6 +569,7 @@
       "src/test/resources/io/proleap/cobol/asg/procedure/Paragraph.cbl",
       "src/test/resources/io/proleap/cobol/asg/procedure/ParagraphRedefined.cbl",
       "src/test/resources/io/proleap/cobol/asg/procedure/perform/PerformProcedure.cbl",
+      "src/test/resources/io/proleap/cobol/asg/procedure/perform/PerformProcedureThrough.cbl",
       "src/test/resources/io/proleap/cobol/ast/tandem/Minimal.cbl",
       "src/test/resources/io/proleap/cobol/ast/tandem/ParagraphWithoutDot.cbl",
       "src/test/resources/io/proleap/cobol/preprocessor/tandem/Minimal.cbl"

@@ -36,7 +36,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { DataItem, ModuleIR, Statement } from "../parse/parser.js";
 import { DiffExecError } from "./diffexec.js";
-import { inlineStatements } from "./symexec.js";
+import { inlineStatements, rangeNames, rangeStatements } from "./symexec.js";
 import { findItem } from "./propgen.js";
 
 export interface StaticConfig {
@@ -192,8 +192,8 @@ export function extractLegacyFlows(ir: ModuleIR): { outputs: Map<string, FlowRec
             flow.shifts.push(...e.shifts);
           }
         }
-        const body = paras.get(s.target);
-        if (body) walk(inlineStatements(body.statements, paras, [s.target]));
+        const names = rangeNames(s.target, s.thru, paras);
+        walk(inlineStatements(rangeStatements(names, paras), paras, names));
       } else if (s.kind === "display") {
         let pendingKey: string | null = null;
         for (const op of s.operands) {

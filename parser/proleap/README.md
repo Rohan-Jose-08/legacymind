@@ -87,10 +87,23 @@ module, certified against real GnuCOBOL):
   ProLeap's grammar requires the `BY` phrase, so BY-less VARYING is a
   front-end rejection (counted in the sweep, never guessed at).
 
+## Lowering wave 3 (2026-07-08)
+
+- **PERFORM `<a>` THRU `<b>`** — a paragraph *range*. ProLeap resolves a
+  valid forward range into the full ordered paragraph list; the frontend
+  accepts it only when those calls are exactly the contiguous
+  source-order slice starting at the target, and records `thru` on the
+  perform statement (plain or looped). A backward or non-adjacent range
+  comes back as two non-contiguous endpoints and is rejected, not
+  mis-lowered. The verifiers inline the range `[target..thru]` as one
+  body (Layer C over the flattened path, Layer D as a flow union). Proven
+  by the TAXCALC benchmark module, whose candidate B mistranslates the
+  THRU range as a single `PERFORM` and is caught.
+
 ## Backlog
 
-- GO TO — unstructured jumps need CFG-level reasoning that bounded
-  unrolling does not cover; PERFORM ... THRU likewise.
+- GO TO — unstructured jumps need CFG-level reasoning that range
+  flattening does not cover.
 - REDEFINES (storage aliasing), qualified/subscripted references,
   OCCURS.
 - File I/O statement family (OPEN/READ/WRITE/CLOSE) — arrives with the

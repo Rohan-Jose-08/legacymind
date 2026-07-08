@@ -1,7 +1,7 @@
 {
   "tool": "legacymind benchmark",
   "version": "0.1.0",
-  "generatedAt": "2026-07-08T14:08:17.312Z",
+  "generatedAt": "2026-07-08T18:59:00.066Z",
   "toolchain": {
     "parser": "proleap engine (ProLeap ANTLR4 COBOL85 grammar + reference-format preprocessor, JVM)",
     "legacy": "GnuCOBOL 3.1.2 (debian:bookworm-slim, sandboxed: --network none, --rm)",
@@ -14,7 +14,7 @@
       "programId": "PAYROLL",
       "source": "examples/payroll.cbl",
       "loc": 59,
-      "wallSeconds": 68.8,
+      "wallSeconds": 71.1,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -75,7 +75,7 @@
       "programId": "INTEREST",
       "source": "benchmark/modules/interest.cbl",
       "loc": 53,
-      "wallSeconds": 66.2,
+      "wallSeconds": 71.2,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -134,7 +134,7 @@
       "programId": "DISCOUNT",
       "source": "benchmark/modules/discount.cbl",
       "loc": 54,
-      "wallSeconds": 64.6,
+      "wallSeconds": 69.6,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -195,7 +195,7 @@
       "programId": "LEDGER",
       "source": "benchmark/modules/ledger.cbl",
       "loc": 72,
-      "wallSeconds": 71.8,
+      "wallSeconds": 71.3,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -256,7 +256,7 @@
       "programId": "COMPOUND",
       "source": "benchmark/modules/compound.cbl",
       "loc": 52,
-      "wallSeconds": 68.8,
+      "wallSeconds": 77.8,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -292,6 +292,65 @@
           "covered": 10,
           "unknown": 0,
           "infeasible": 4
+        }
+      },
+      "layerD": {
+        "keys": {
+          "total": 3,
+          "verified": 3,
+          "divergent": 0,
+          "unresolved": 0
+        },
+        "capacityWarnings": 0
+      },
+      "gaps": [],
+      "signature": {
+        "algorithm": "ed25519",
+        "keyId": "9b70a354efb9feab",
+        "verified": true
+      }
+    },
+    {
+      "id": "taxcalc",
+      "programId": "TAXCALC",
+      "source": "benchmark/modules/taxcalc.cbl",
+      "loc": 58,
+      "wallSeconds": 72.1,
+      "steps": {
+        "parse": true,
+        "image": "skipped",
+        "migrate": true,
+        "layerA": true,
+        "layerC": true,
+        "layerD": true,
+        "certify": true,
+        "verifyCert": true
+      },
+      "verdict": "CERTIFIED",
+      "winner": "a",
+      "candidates": 2,
+      "costUsd": 0,
+      "layerB": {
+        "curatedCases": 5
+      },
+      "layerA": {
+        "passed": 200,
+        "generated": 200,
+        "seed": 20260708
+      },
+      "layerC": {
+        "obligations": {
+          "total": 3,
+          "verified": 3,
+          "divergent": 0,
+          "unrealized": 0,
+          "notApplicable": 0
+        },
+        "paths": {
+          "total": 1,
+          "covered": 1,
+          "unknown": 0,
+          "infeasible": 0
         }
       },
       "layerD": {

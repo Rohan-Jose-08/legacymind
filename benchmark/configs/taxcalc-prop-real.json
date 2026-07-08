@@ -1,0 +1,19 @@
+{
+  "$comment": "Layer A for TAXCALC vs the real GnuCOBOL harness image.",
+  "legacy": {
+    "image": "legacymind/legacy-taxcalc",
+    "label": "COBOL 85 TAXCALC (GnuCOBOL via harness image legacymind/legacy-taxcalc)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/taxcalc/migrate/candidate-a", "Taxcalc"],
+    "label": "Java 21 taxcalc (migrated candidate A)"
+  },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "generator": {
+    "ir": "../../out/ir/TAXCALC.ir.json",
+    "stdinFields": ["WS-EMP-ID", "WS-GROSS"],
+    "count": 200,
+    "seed": 20260708
+  }
+}

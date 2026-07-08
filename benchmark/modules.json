@@ -58,5 +58,17 @@
     "staticConfig": "benchmark/configs/compound-static.json",
     "migrateOut": "out/bench/compound/migrate",
     "certCopy": "out/certification-compound.json"
+  },
+  {
+    "id": "taxcalc",
+    "programId": "TAXCALC",
+    "source": "benchmark/modules/taxcalc.cbl",
+    "imageTag": "legacymind/legacy-taxcalc",
+    "diffConfig": "benchmark/configs/taxcalc-diff-real.json",
+    "propConfig": "benchmark/configs/taxcalc-prop-real.json",
+    "symConfig": "benchmark/configs/taxcalc-sym-real.json",
+    "staticConfig": "benchmark/configs/taxcalc-static.json",
+    "migrateOut": "out/bench/taxcalc/migrate",
+    "certCopy": "out/certification-taxcalc.json"
   }
 ]

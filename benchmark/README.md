@@ -26,6 +26,16 @@ TEST BEFORE loop as an "idiomatic" do-while — the classic off-by-one
 loop-count migration bug — and the curated zero-term case (which must
 accrue nothing) rejects it deterministically.
 
+The TAXCALC module proves the wave-3 PERFORM THRU range lowering:
+combined payroll withholding (state + federal + local) computed by
+`PERFORM CALC-STATE THRU CALC-LOCAL`, a range of three ROUNDED
+paragraphs. The verifiers inline the whole range, so layer C sees all
+three withholding computes on one path and solves each half-cent
+rounding boundary. Its candidate B mistranslates the THRU range as a
+single `PERFORM CALC-STATE`, withholding only the state portion — the
+classic range-misread migration bug — and fails the curated cases on
+every non-zero gross.
+
 ## Running
 
 ```

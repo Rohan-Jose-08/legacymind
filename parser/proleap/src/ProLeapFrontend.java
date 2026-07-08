@@ -224,6 +224,8 @@ public class ProLeapFrontend {
 		final List<String> warnings = new ArrayList<>();
 		final Set<String> declared = new LinkedHashSet<>();
 		final Set<String> paragraphNames = new LinkedHashSet<>();
+		/** Paragraph names in source order — the domain for PERFORM THRU ranges. */
+		final List<String> paragraphOrder = new ArrayList<>();
 
 		/** preprocessed line number (1-based) -> original line number; null when inexact. */
 		int[] lineMap;
@@ -414,7 +416,9 @@ public class ProLeapFrontend {
 					reject(stray.getCtx(), "statement before the first paragraph header");
 				}
 				for (final Paragraph p : pd.getParagraphs()) {
-					paragraphNames.add(p.getParagraphName().getName().toUpperCase());
+					final String name = p.getParagraphName().getName().toUpperCase();
+					paragraphNames.add(name);
+					paragraphOrder.add(name);
 				}
 				for (final Paragraph p : pd.getParagraphs()) {
 					paragraphs.add(lowerParagraph(p));
@@ -1143,16 +1147,46 @@ public class ProLeapFrontend {
 				return null;
 			}
 			final PerformProcedureStatement pp = s.getPerformProcedureStatement();
-			if (pp.getCalls().size() != 1) {
-				reject(ctx, "PERFORM ... THRU");
+			final List<io.proleap.cobol.asg.metamodel.call.Call> calls = pp.getCalls();
+			if (calls.isEmpty()) {
+				reject(ctx, "PERFORM with no procedure target");
 				return null;
 			}
-			final String target = pp.getCalls().get(0).getName().toUpperCase();
+			final String target = calls.get(0).getName().toUpperCase();
+			// PERFORM <a> THRU <b>: ProLeap resolves a valid forward range into
+			// the full ordered paragraph list. Accept only when the returned
+			// calls are exactly the contiguous source-order slice starting at
+			// the target; a backward or non-adjacent range comes back as two
+			// non-contiguous endpoints and is rejected, not mis-lowered.
+			String thru = null;
+			if (calls.size() > 1) {
+				final List<String> names = new ArrayList<>();
+				for (final io.proleap.cobol.asg.metamodel.call.Call c : calls) {
+					names.add(c.getName().toUpperCase());
+				}
+				final String last = names.get(names.size() - 1);
+				if (!last.equals(target)) { // A THRU A resolves to a plain PERFORM of A
+					final int fromIdx = paragraphOrder.indexOf(target);
+					boolean contiguous = fromIdx >= 0;
+					for (int i = 0; i < names.size() && contiguous; i++) {
+						final int want = fromIdx + i;
+						contiguous = want < paragraphOrder.size() && paragraphOrder.get(want).equals(names.get(i));
+					}
+					if (!contiguous) {
+						reject(ctx, "PERFORM " + target + " THRU " + last + " is a backward or non-contiguous range");
+						return null;
+					}
+					thru = last;
+				}
+			}
 			final io.proleap.cobol.asg.metamodel.procedure.perform.PerformType pt = pp.getPerformType();
 			final Map<String, Object> out = new LinkedHashMap<>();
 			if (pt == null) {
 				out.put("kind", "perform");
 				out.put("target", target);
+				if (thru != null) {
+					out.put("thru", thru);
+				}
 				out.put("text", textOf(ctx));
 				out.put("span", span(ctx));
 				return out;
@@ -1168,6 +1202,9 @@ public class ProLeapFrontend {
 				}
 				out.put("kind", "perform-times");
 				out.put("target", target);
+				if (thru != null) {
+					out.put("thru", thru);
+				}
 				out.put("times", operandExpr(times));
 				break;
 			}
@@ -1180,6 +1217,9 @@ public class ProLeapFrontend {
 				}
 				out.put("kind", "perform-until");
 				out.put("target", target);
+				if (thru != null) {
+					out.put("thru", thru);
+				}
 				out.put("condition", operandExpr(textOf(u.getCondition().getCtx())));
 				break;
 			}
@@ -1213,6 +1253,9 @@ public class ProLeapFrontend {
 				}
 				out.put("kind", "perform-varying");
 				out.put("target", target);
+				if (thru != null) {
+					out.put("thru", thru);
+				}
 				final Map<String, Object> varying = new LinkedHashMap<>();
 				varying.put("var", var);
 				varying.put("from", operandExpr(from));

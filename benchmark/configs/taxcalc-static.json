@@ -1,0 +1,7 @@
+{
+  "$comment": "Layer D for TAXCALC: static data-flow equivalence between the IR and migrated candidate A. The THRU range body contributes its three withholding flows once (flow-insensitive union) on the legacy side, mirrored by the Java-side extractor.",
+  "static": {
+    "ir": "../../out/ir/TAXCALC.ir.json",
+    "modernJava": "../../out/bench/taxcalc/migrate/candidate-a/Taxcalc.java"
+  }
+}

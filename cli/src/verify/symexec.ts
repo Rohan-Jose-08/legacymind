@@ -414,16 +414,44 @@ interface PathState {
   notes: string[];
 }
 
+/**
+ * Ordered paragraph names of a PERFORM [target..thru] range, in source
+ * order (the paras Map is built in source order, so its keys are that
+ * order). Without `thru` the range is the single target paragraph.
+ */
+export function rangeNames(target: string, thru: string | undefined, paras: Map<string, Paragraph>): string[] {
+  if (!thru) return [target];
+  const order = [...paras.keys()];
+  const i = order.indexOf(target);
+  const j = order.indexOf(thru);
+  if (i < 0 || j < 0 || j < i) {
+    throw new DiffExecError(`layer C: PERFORM ${target} THRU ${thru} is not a valid forward paragraph range`);
+  }
+  return order.slice(i, j + 1);
+}
+
+/** Concatenated statements of the range's paragraphs, in range order. */
+export function rangeStatements(names: string[], paras: Map<string, Paragraph>): Statement[] {
+  const out: Statement[] = [];
+  for (const n of names) {
+    const p = paras.get(n);
+    if (p) out.push(...p.statements);
+  }
+  return out;
+}
+
 /** Inline PERFORMed paragraphs so paths are enumerated over one statement tree. */
 export function inlineStatements(stmts: Statement[], paras: Map<string, Paragraph>, stack: string[]): Statement[] {
   const out: Statement[] = [];
   for (const s of stmts) {
     if (s.kind === "perform") {
-      if (stack.includes(s.target)) {
-        throw new DiffExecError(`layer C: PERFORM cycle through ${s.target}; loops need fixpoint machinery`);
+      const names = rangeNames(s.target, s.thru, paras);
+      if (names.some((n) => stack.includes(n))) {
+        throw new DiffExecError(
+          `layer C: PERFORM cycle through ${s.target}${s.thru ? ` THRU ${s.thru}` : ""}; loops need fixpoint machinery`,
+        );
       }
-      const p = paras.get(s.target);
-      if (p) out.push(...inlineStatements(p.statements, paras, [...stack, s.target]));
+      out.push(...inlineStatements(rangeStatements(names, paras), paras, [...stack, ...names]));
     } else if (s.kind === "if") {
       out.push({
         ...s,
@@ -456,18 +484,19 @@ function exprCtxFor(state: PathState, ctx: ExecCtx): ExprCtx {
 
 type LoopStmt = Extract<Statement, { kind: "perform-times" | "perform-until" | "perform-varying" }>;
 
-function loopBody(ctx: ExecCtx, target: string): Statement[] {
-  let body = ctx.loopBodies.get(target);
+/** The inlined body of a PERFORM loop — its [target..thru] paragraph range. */
+function loopBody(ctx: ExecCtx, s: LoopStmt): Statement[] {
+  const names = rangeNames(s.target, s.thru, ctx.paras);
+  const key = names.join("|");
+  let body = ctx.loopBodies.get(key);
   if (!body) {
-    const p = ctx.paras.get(target);
-    if (!p) throw new DiffExecError(`layer C: PERFORM loop target ${target} not found`);
-    body = inlineStatements(p.statements, ctx.paras, [target]);
-    if (containsAccept(body, ctx, new Set([target]))) {
+    body = inlineStatements(rangeStatements(names, ctx.paras), ctx.paras, [...names]);
+    if (containsAccept(body, ctx, new Set(names))) {
       throw new DiffExecError(
-        `layer C: ACCEPT inside PERFORM loop body ${target} — stdin positions become iteration-dependent (needs the record protocol)`,
+        `layer C: ACCEPT inside PERFORM loop body ${key} — stdin positions become iteration-dependent (needs the record protocol)`,
       );
     }
-    ctx.loopBodies.set(target, body);
+    ctx.loopBodies.set(key, body);
   }
   return body;
 }
@@ -479,10 +508,12 @@ function containsAccept(stmts: Statement[], ctx: ExecCtx, seen: Set<string>): bo
       if (containsAccept(s.then, ctx, seen) || containsAccept(s.else ?? [], ctx, seen)) return true;
     }
     if (s.kind === "perform-times" || s.kind === "perform-until" || s.kind === "perform-varying") {
-      if (!seen.has(s.target)) {
-        seen.add(s.target);
-        const p = ctx.paras.get(s.target);
-        if (p && containsAccept(inlineStatements(p.statements, ctx.paras, [s.target]), ctx, seen)) return true;
+      const names = rangeNames(s.target, s.thru, ctx.paras);
+      if (!names.some((n) => seen.has(n))) {
+        names.forEach((n) => seen.add(n));
+        if (containsAccept(inlineStatements(rangeStatements(names, ctx.paras), ctx.paras, names), ctx, seen)) {
+          return true;
+        }
       }
     }
   }
@@ -493,7 +524,7 @@ function containsAccept(stmts: Statement[], ctx: ExecCtx, seen: Set<string>): bo
 function loopWrites(ctx: ExecCtx, s: LoopStmt): Set<string> {
   const out = new Set<string>();
   if (s.kind === "perform-varying") out.add(s.varying.var);
-  collectWrites(loopBody(ctx, s.target), out, ctx, new Set([s.target]));
+  collectWrites(loopBody(ctx, s), out, ctx, new Set(rangeNames(s.target, s.thru, ctx.paras)));
   return out;
 }
 
@@ -507,10 +538,10 @@ function collectWrites(stmts: Statement[], out: Set<string>, ctx: ExecCtx, seen:
       collectWrites(s.else ?? [], out, ctx, seen);
     } else if (s.kind === "perform-times" || s.kind === "perform-until" || s.kind === "perform-varying") {
       if (s.kind === "perform-varying") out.add(s.varying.var);
-      if (!seen.has(s.target)) {
-        seen.add(s.target);
-        const p = ctx.paras.get(s.target);
-        if (p) collectWrites(inlineStatements(p.statements, ctx.paras, [s.target]), out, ctx, seen);
+      const names = rangeNames(s.target, s.thru, ctx.paras);
+      if (!names.some((n) => seen.has(n))) {
+        names.forEach((n) => seen.add(n));
+        collectWrites(inlineStatements(rangeStatements(names, ctx.paras), ctx.paras, names), out, ctx, seen);
       }
     }
   }
@@ -688,7 +719,7 @@ function execute(stmts: Statement[], state: PathState, ctx: ExecCtx, out: PathSt
 // ---------------------------------------------------------------------------
 
 function executeLoop(s: LoopStmt, state: PathState, rest: Statement[], ctx: ExecCtx, out: PathState[]): void {
-  const body = loopBody(ctx, s.target);
+  loopBody(ctx, s); // prime the body cache and run its ACCEPT check once
   // VARYING: var := from happens before the first test.
   if (s.kind === "perform-varying") {
     const from = parseExpression(s.varying.from.text, exprCtxFor(state, ctx));
@@ -762,7 +793,7 @@ function unrollLoop(
     return;
   }
   const bodyOut: PathState[] = [];
-  execute(loopBody(ctx, s.target), iter, ctx, bodyOut);
+  execute(loopBody(ctx, s), iter, ctx, bodyOut);
   for (const bs of bodyOut) {
     if (s.kind === "perform-varying") {
       const next = parseExpression(`${s.varying.var} + ${s.varying.by.text}`, exprCtxFor(bs, ctx));
