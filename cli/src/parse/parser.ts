@@ -69,7 +69,18 @@ export type Statement =
   | { kind: "stop-run"; text: string; span: Span }
   | { kind: "goback"; text: string; span: Span }
   /** EXIT: no-op paragraph terminator (proleap engine only; flow-neutral in every layer). */
-  | { kind: "exit"; text: string; span: Span };
+  | { kind: "exit"; text: string; span: Span }
+  /** PERFORM loops (proleap engine only; TEST BEFORE semantics). */
+  | { kind: "perform-times"; target: string; times: OperandExpr; text: string; span: Span }
+  | { kind: "perform-until"; target: string; condition: OperandExpr; text: string; span: Span }
+  | {
+      kind: "perform-varying";
+      target: string;
+      varying: { var: string; from: OperandExpr; by: OperandExpr };
+      condition: OperandExpr;
+      text: string;
+      span: Span;
+    };
 
 export interface Paragraph {
   name: string;

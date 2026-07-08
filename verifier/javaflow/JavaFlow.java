@@ -1,6 +1,9 @@
 import com.sun.source.tree.AssignmentTree;
 import com.sun.source.tree.BinaryTree;
 import com.sun.source.tree.BlockTree;
+import com.sun.source.tree.DoWhileLoopTree;
+import com.sun.source.tree.ForLoopTree;
+import com.sun.source.tree.WhileLoopTree;
 import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.ConditionalExpressionTree;
@@ -179,9 +182,22 @@ public final class JavaFlow {
             } else if (st instanceof IfTree ifSt) {
                 walkBranch(ifSt.getThenStatement());
                 if (ifSt.getElseStatement() != null) walkBranch(ifSt.getElseStatement());
+            } else if (st instanceof ForLoopTree loop) {
+                // Flow-insensitive union: initializer, body, and update are
+                // each walked once — mirroring how the legacy extractor
+                // treats PERFORM loop bodies.
+                walkStatements(loop.getInitializer());
+                walkBranch(loop.getStatement());
+                walkStatements(loop.getUpdate());
+            } else if (st instanceof WhileLoopTree loop) {
+                walkBranch(loop.getStatement());
+            } else if (st instanceof DoWhileLoopTree loop) {
+                walkBranch(loop.getStatement());
+            } else {
+                // No hidden failures: an unmodeled statement kind must
+                // surface, not silently drop whatever it fed.
+                fileUnresolved.add("statement form not analyzed: " + st.getKind());
             }
-            // other statement kinds (try, loops) do not occur in the
-            // generated subset; anything they fed shows up unresolved.
         }
     }
 
@@ -318,6 +334,13 @@ public final class JavaFlow {
                 else for (ExpressionTree arg : n.getArguments()) flow.mergeFrom(flowOf(arg, bindings, depth + 1));
             }
             case MethodInvocationTree call -> flowOfCall(call, bindings, flow, depth);
+            case MemberSelectTree sel -> {
+                // BigDecimal.ZERO is the initialization sentinel (mirrors a
+                // COBOL VALUE ZERO initializer): it contributes no flow.
+                if (!isTrivialReturn(sel)) {
+                    flow.unresolved.add("expression form not analyzed: " + expr.getKind());
+                }
+            }
             default -> flow.unresolved.add("expression form not analyzed: " + expr.getKind());
         }
         return flow;

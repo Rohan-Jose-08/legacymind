@@ -1,0 +1,7 @@
+{
+  "$comment": "Layer D for COMPOUND: static data-flow equivalence between the IR and migrated candidate A. The PERFORM loop body contributes its flows once (flow-insensitive union) on the legacy side, mirrored by the Java-side extractor's treatment of the for-loop.",
+  "static": {
+    "ir": "../../out/ir/COMPOUND.ir.json",
+    "modernJava": "../../out/bench/compound/migrate/candidate-a/Compound.java"
+  }
+}

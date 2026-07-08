@@ -16,6 +16,16 @@ banker's-rounding defect — the "idiomatic Java default" that silently
 breaks COBOL ROUNDED — and the curated selection cases include an exact
 half-cent fee (balance 506.00 → fee 1.265) that kills it deterministically.
 
+The COMPOUND module is loop-shaped (compound interest over
+`PERFORM ... VARYING ... UNTIL`, term 0–9 years) and proves the wave-2
+loop lowering: layer C unrolls the loop so every feasible depth 0–9 is
+a covered path (depths beyond the single-digit term's domain are proven
+infeasible), and the year-1 accrual's half-cent boundary is solved by
+witness-fixed product linearization. Its candidate B translates the
+TEST BEFORE loop as an "idiomatic" do-while — the classic off-by-one
+loop-count migration bug — and the curated zero-term case (which must
+accrue nothing) rejects it deterministically.
+
 ## Running
 
 ```

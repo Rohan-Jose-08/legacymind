@@ -74,11 +74,23 @@ module, certified against real GnuCOBOL):
 - **FILLER** — storage-only items with parser-synthesized names
   (`FILLER-n`, `filler: true`), never entered into the declared set.
 
+## Lowering wave 2 (2026-07-08)
+
+- **PERFORM loops** — `n TIMES`, `UNTIL cond`, and
+  `VARYING var FROM a BY b UNTIL cond` lower to structured IR statement
+  kinds with **TEST BEFORE semantics only** (the COBOL 85 default).
+  TEST AFTER and `VARYING ... AFTER` (nested control variables) are
+  rejected loudly — a one-iteration semantic difference is exactly the
+  class of defect the harness exists to catch, and the COMPOUND
+  benchmark module's candidate B demonstrates it. Layer C verifies
+  loops by bounded unrolling; layer D unions the loop body's flows.
+  ProLeap's grammar requires the `BY` phrase, so BY-less VARYING is a
+  front-end rejection (counted in the sweep, never guessed at).
+
 ## Backlog
 
-- Control flow head of the histogram: GO TO, PERFORM
-  TIMES/UNTIL/VARYING/THRU — these need the path-sensitive verifier
-  engine (loops break layer C's path enumeration), not just parsing.
+- GO TO — unstructured jumps need CFG-level reasoning that bounded
+  unrolling does not cover; PERFORM ... THRU likewise.
 - REDEFINES (storage aliasing), qualified/subscripted references,
   OCCURS.
 - File I/O statement family (OPEN/READ/WRITE/CLOSE) — arrives with the

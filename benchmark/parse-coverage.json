@@ -1,6 +1,6 @@
 {
   "tool": "legacymind parse-sweep",
-  "generatedAt": "2026-07-07T13:32:59.237Z",
+  "generatedAt": "2026-07-08T09:20:52.559Z",
   "corpus": "C:/Users/Ender/AppData/Local/Temp/claude/C--Users-Ender-startup/7a40dc33-ad23-428b-805e-9e71bcc7aa45/scratchpad/proleap-cobol-parser",
   "commit": "d1bfe75bdd6d480f70c74c6345bcc02610ac30d3",
   "total": 759,
@@ -140,10 +140,6 @@
         "count": 18947
       },
       {
-        "reason": "PERFORM ... TIMES/UNTIL/VARYING",
-        "count": 4622
-      },
-      {
         "reason": "REDEFINES",
         "count": 4326
       },
@@ -153,7 +149,7 @@
       },
       {
         "reason": "PERFORM ... THRU",
-        "count": 2151
+        "count": 2273
       },
       {
         "reason": "WRITE statement",
@@ -181,7 +177,7 @@
       },
       {
         "reason": "PERFORM target \"…\" is not a paragraph in this program",
-        "count": 482
+        "count": 500
       },
       {
         "reason": "FILE SECTION",
@@ -301,6 +297,10 @@
       },
       {
         "reason": "SORT statement",
+        "count": 38
+      },
+      {
+        "reason": "PERFORM VARYING ... AFTER (nested control variables)",
         "count": 38
       },
       {
@@ -473,6 +473,18 @@
       },
       {
         "reason": "DISPLAY operand \"…\"ABCD\"…\" (qualified/subscripted)",
+        "count": 1
+      },
+      {
+        "reason": "PERFORM TIMES operand \"…\" (qualified/subscripted)",
+        "count": 1
+      },
+      {
+        "reason": "PERFORM ... WITH TEST AFTER",
+        "count": 1
+      },
+      {
+        "reason": "PERFORM VARYING control variable \"…\" (qualified/subscripted)",
         "count": 1
       },
       {

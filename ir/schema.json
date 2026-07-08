@@ -293,6 +293,55 @@
             "text": { "type": "string" },
             "span": { "$ref": "#/$defs/span" }
           }
+        },
+        {
+          "type": "object",
+          "description": "PERFORM <paragraph> <n> TIMES. The body executes exactly n times (n evaluated once, before the first iteration).",
+          "required": ["kind", "target", "times", "text", "span"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "const": "perform-times" },
+            "target": { "type": "string" },
+            "times": { "$ref": "#/$defs/operandExpr" },
+            "text": { "type": "string" },
+            "span": { "$ref": "#/$defs/span" }
+          }
+        },
+        {
+          "type": "object",
+          "description": "PERFORM <paragraph> UNTIL <cond>, TEST BEFORE semantics only (the COBOL 85 default): the condition is checked before each iteration, so zero iterations are possible. TEST AFTER is rejected by the parser, never mis-lowered.",
+          "required": ["kind", "target", "condition", "text", "span"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "const": "perform-until" },
+            "target": { "type": "string" },
+            "condition": { "$ref": "#/$defs/operandExpr" },
+            "text": { "type": "string" },
+            "span": { "$ref": "#/$defs/span" }
+          }
+        },
+        {
+          "type": "object",
+          "description": "PERFORM <paragraph> VARYING <var> FROM <from> BY <by> UNTIL <cond>, TEST BEFORE: var := from; while not cond: body; var := var + by. Single control variable (VARYING ... AFTER is rejected).",
+          "required": ["kind", "target", "varying", "condition", "text", "span"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "const": "perform-varying" },
+            "target": { "type": "string" },
+            "varying": {
+              "type": "object",
+              "required": ["var", "from", "by"],
+              "additionalProperties": false,
+              "properties": {
+                "var": { "type": "string" },
+                "from": { "$ref": "#/$defs/operandExpr" },
+                "by": { "$ref": "#/$defs/operandExpr" }
+              }
+            },
+            "condition": { "$ref": "#/$defs/operandExpr" },
+            "text": { "type": "string" },
+            "span": { "$ref": "#/$defs/span" }
+          }
         }
       ]
     }

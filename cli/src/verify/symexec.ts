@@ -398,6 +398,10 @@ interface SymCompute {
   stmt: ComputeStmt;
   /** Expression value at the execution point, before the store. */
   exprVal: SymVal;
+  /** Environment snapshot at the execution point — factor values for
+   *  product linearization must come from here, not the path's end state
+   *  (inside a loop they differ by every later iteration). */
+  env: Map<string, SymVal>;
 }
 
 interface PathState {
@@ -437,6 +441,77 @@ interface ExecCtx {
   acceptOrder: string[]; // ACCEPT targets in source order = stdin positions
   /** PICTURE scale of each input variable (by stdin position). */
   inputScales: number[];
+  paras: Map<string, Paragraph>;
+  /** Max iterations to unroll per PERFORM loop. */
+  maxUnroll: number;
+  /** Cache of inlined loop bodies by target paragraph. */
+  loopBodies: Map<string, Statement[]>;
+}
+
+function exprCtxFor(state: PathState, ctx: ExecCtx): ExprCtx {
+  return { env: state.env, items: ctx.items, assigned: ctx.assigned, inputSpec: (i) => i };
+}
+
+type LoopStmt = Extract<Statement, { kind: "perform-times" | "perform-until" | "perform-varying" }>;
+
+function loopBody(ctx: ExecCtx, target: string): Statement[] {
+  let body = ctx.loopBodies.get(target);
+  if (!body) {
+    const p = ctx.paras.get(target);
+    if (!p) throw new DiffExecError(`layer C: PERFORM loop target ${target} not found`);
+    body = inlineStatements(p.statements, ctx.paras, [target]);
+    if (containsAccept(body, ctx, new Set([target]))) {
+      throw new DiffExecError(
+        `layer C: ACCEPT inside PERFORM loop body ${target} — stdin positions become iteration-dependent (needs the record protocol)`,
+      );
+    }
+    ctx.loopBodies.set(target, body);
+  }
+  return body;
+}
+
+function containsAccept(stmts: Statement[], ctx: ExecCtx, seen: Set<string>): boolean {
+  for (const s of stmts) {
+    if (s.kind === "accept") return true;
+    if (s.kind === "if") {
+      if (containsAccept(s.then, ctx, seen) || containsAccept(s.else ?? [], ctx, seen)) return true;
+    }
+    if (s.kind === "perform-times" || s.kind === "perform-until" || s.kind === "perform-varying") {
+      if (!seen.has(s.target)) {
+        seen.add(s.target);
+        const p = ctx.paras.get(s.target);
+        if (p && containsAccept(inlineStatements(p.statements, ctx.paras, [s.target]), ctx, seen)) return true;
+      }
+    }
+  }
+  return false;
+}
+
+/** Every name the loop can write (body recursively, plus the control var). */
+function loopWrites(ctx: ExecCtx, s: LoopStmt): Set<string> {
+  const out = new Set<string>();
+  if (s.kind === "perform-varying") out.add(s.varying.var);
+  collectWrites(loopBody(ctx, s.target), out, ctx, new Set([s.target]));
+  return out;
+}
+
+function collectWrites(stmts: Statement[], out: Set<string>, ctx: ExecCtx, seen: Set<string>): void {
+  for (const s of stmts) {
+    if (s.kind === "move") for (const t of s.to) out.add(t);
+    else if (s.kind === "compute") out.add(s.target);
+    else if (s.kind === "accept") out.add(s.target);
+    else if (s.kind === "if") {
+      collectWrites(s.then, out, ctx, seen);
+      collectWrites(s.else ?? [], out, ctx, seen);
+    } else if (s.kind === "perform-times" || s.kind === "perform-until" || s.kind === "perform-varying") {
+      if (s.kind === "perform-varying") out.add(s.varying.var);
+      if (!seen.has(s.target)) {
+        seen.add(s.target);
+        const p = ctx.paras.get(s.target);
+        if (p) collectWrites(inlineStatements(p.statements, ctx.paras, [s.target]), out, ctx, seen);
+      }
+    }
+  }
 }
 
 function cloneState(s: PathState): PathState {
@@ -538,12 +613,7 @@ function parseCondition(
 }
 
 function execute(stmts: Statement[], state: PathState, ctx: ExecCtx, out: PathState[]): void {
-  const exprCtx = (): ExprCtx => ({
-    env: state.env,
-    items: ctx.items,
-    assigned: ctx.assigned,
-    inputSpec: (i) => i,
-  });
+  const exprCtx = (): ExprCtx => exprCtxFor(state, ctx);
   for (let si = 0; si < stmts.length; si++) {
     const s = stmts[si]!;
     switch (s.kind) {
@@ -564,7 +634,7 @@ function execute(stmts: Statement[], state: PathState, ctx: ExecCtx, out: PathSt
       }
       case "compute": {
         const v = parseExpression(s.expression.text, exprCtx());
-        state.computes.push({ stmt: s, exprVal: v });
+        state.computes.push({ stmt: s, exprVal: v, env: new Map(state.env) });
         store(state, ctx, s.target, v, s.rounded);
         break;
       }
@@ -589,6 +659,12 @@ function execute(stmts: Statement[], state: PathState, ctx: ExecCtx, out: PathSt
         }
         return; // both forks continued with the rest of the statements
       }
+      case "perform-times":
+      case "perform-until":
+      case "perform-varying": {
+        executeLoop(s, state, stmts.slice(si + 1), ctx, out);
+        return; // every fork continued with the rest of the statements
+      }
       case "display":
       case "exit":
       case "stop-run":
@@ -603,6 +679,136 @@ function execute(stmts: Statement[], state: PathState, ctx: ExecCtx, out: PathSt
     }
   }
   out.push(state);
+}
+
+// ---------------------------------------------------------------------------
+// PERFORM loop unrolling (TEST BEFORE semantics).
+// ---------------------------------------------------------------------------
+
+function executeLoop(s: LoopStmt, state: PathState, rest: Statement[], ctx: ExecCtx, out: PathState[]): void {
+  const body = loopBody(ctx, s.target);
+  // VARYING: var := from happens before the first test.
+  if (s.kind === "perform-varying") {
+    const from = parseExpression(s.varying.from.text, exprCtxFor(state, ctx));
+    store(state, ctx, s.varying.var, from, false);
+  }
+  // TIMES: the count is evaluated once, before the first iteration —
+  // snapshot it so a body that writes the count operand cannot skew it.
+  const timesVal = s.kind === "perform-times" ? parseExpression(s.times.text, exprCtxFor(state, ctx)) : null;
+  unrollLoop(s, timesVal, state, rest, ctx, out, 0);
+}
+
+/** A constraint with a drift-free constant decision value that fails is a
+ *  contradiction — the branch it guards cannot execute. */
+function provablyFalse(c: Constraint): boolean {
+  return (
+    c.diff.terms.size === 0 &&
+    rIsZero(c.diff.fuzz) &&
+    (!c.exact || c.exact.rounds.length === 0) &&
+    constraintHolds(c, []) === false
+  );
+}
+
+function unrollLoop(
+  s: LoopStmt,
+  timesVal: SymVal | null,
+  state: PathState,
+  rest: Statement[],
+  ctx: ExecCtx,
+  out: PathState[],
+  depth: number,
+): void {
+  // --- exit branch: TEST BEFORE, leaving after `depth` iterations ---
+  const exitState = cloneState(state);
+  pushLoopCond(s, timesVal, exitState, ctx, depth, true);
+  // Eager pruning: a constant-false exit (e.g. `3 TIMES` at depth 1) would
+  // multiply enumerated-but-dead paths; drop it here, provably.
+  const exitDead = exitState.constraints.length > 0 && provablyFalse(exitState.constraints[exitState.constraints.length - 1]!);
+  if (!exitDead) {
+    execute(rest, exitState, ctx, out);
+    if (out.length > MAX_PATHS) {
+      throw new DiffExecError(`layer C: more than ${MAX_PATHS} paths; lower maxLoopUnroll or split the module`);
+    }
+  }
+
+  // --- unroll bound reached: the deeper input region is disclosed, never
+  //     dropped — an unknown-coverage path with poisoned loop writes.
+  if (depth >= ctx.maxUnroll) {
+    const trunc = cloneState(state);
+    trunc.conds.push({
+      text: `${s.text} exceeds the unroll bound of ${ctx.maxUnroll} iteration(s)`,
+      taken: true,
+      diff: null,
+      exact: null,
+    });
+    for (const name of loopWrites(ctx, s)) {
+      trunc.env.set(name, { kind: "opaque", reason: `written beyond the loop unroll bound (${s.text})` });
+    }
+    trunc.notes.push(
+      `${s.text}: the input region needing more than ${ctx.maxUnroll} iterations is not enumerated symbolically`,
+    );
+    execute(rest, trunc, ctx, out);
+    return;
+  }
+
+  // --- iterate branch: condition says continue; run the body once ---
+  const iter = cloneState(state);
+  pushLoopCond(s, timesVal, iter, ctx, depth, false);
+  // Constant-false continue (e.g. `3 TIMES` at depth 3) terminates the
+  // unroll exactly — no deeper dead forks.
+  if (iter.constraints.length > 0 && provablyFalse(iter.constraints[iter.constraints.length - 1]!)) {
+    return;
+  }
+  const bodyOut: PathState[] = [];
+  execute(loopBody(ctx, s.target), iter, ctx, bodyOut);
+  for (const bs of bodyOut) {
+    if (s.kind === "perform-varying") {
+      const next = parseExpression(`${s.varying.var} + ${s.varying.by.text}`, exprCtxFor(bs, ctx));
+      store(bs, ctx, s.varying.var, next, false);
+    }
+    unrollLoop(s, timesVal, bs, rest, ctx, out, depth + 1);
+  }
+}
+
+/** Push the loop's continue/exit decision for iteration `depth` as a
+ *  constraint (TIMES: count = / > depth; UNTIL/VARYING: the condition in
+ *  the current environment). */
+function pushLoopCond(
+  s: LoopStmt,
+  timesVal: SymVal | null,
+  st: PathState,
+  ctx: ExecCtx,
+  depth: number,
+  exit: boolean,
+): void {
+  if (s.kind === "perform-times") {
+    const label = `${s.text}: iteration count ${exit ? "=" : ">"} ${depth}`;
+    if (timesVal?.kind === "affine") {
+      const depthConst = { affine: affineConst(rat(BigInt(depth), 1n)), rounds: [] as RoundTerm[] };
+      const diff = affineCombine(timesVal.a, depthConst.affine, -1);
+      const ex = exactOf(timesVal);
+      const exact = ex ? exactCombine(ex, depthConst, -1) : null;
+      st.conds.push({ text: label, taken: true, diff, exact });
+      st.constraints.push({ diff, op: exit ? "=" : ">", taken: true, text: label, exact });
+    } else {
+      st.conds.push({ text: label, taken: true, diff: null, exact: null });
+      st.notes.push(`TIMES count "${s.times.text}" is not analyzable; loop constraints incomplete`);
+    }
+  } else {
+    const parsed = parseCondition(s.condition.text, exprCtxFor(st, ctx));
+    st.conds.push({ text: s.condition.text, taken: exit, diff: parsed?.diff ?? null, exact: parsed?.exact ?? null });
+    if (parsed) {
+      st.constraints.push({
+        diff: parsed.diff,
+        op: parsed.op,
+        taken: exit,
+        text: `${s.condition.text} (${exit ? `exit after ${depth} iteration(s)` : `iteration ${depth + 1}`})`,
+        exact: parsed.exact,
+      });
+    } else {
+      st.notes.push(`loop condition "${s.condition.text}" is not affine; path constraints incomplete`);
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -790,6 +996,7 @@ export function runSymExec(configPath: string, outPath: string): number {
       if (s.kind === "move") for (const t of s.to) assigned.add(t);
       else if (s.kind === "compute") assigned.add(s.target);
       else if (s.kind === "accept") assigned.add(s.target);
+      else if (s.kind === "perform-varying") assigned.add(s.varying.var);
       else if (s.kind === "if") {
         collectAssigned(s.then);
         collectAssigned(s.else ?? []);
@@ -816,7 +1023,15 @@ export function runSymExec(configPath: string, outPath: string): number {
   };
   collectAccepts(tree);
 
-  const ctx: ExecCtx = { items, assigned, acceptOrder, inputScales: inputs.map((s) => s.scale) };
+  const ctx: ExecCtx = {
+    items,
+    assigned,
+    acceptOrder,
+    inputScales: inputs.map((s) => s.scale),
+    paras,
+    maxUnroll: sym.maxLoopUnroll ?? 12,
+    loopBodies: new Map(),
+  };
   const states: PathState[] = [];
   execute(tree, { env: new Map(), constraints: [], conds: [], computes: [], notes: [] }, ctx, states);
   const paths = states.map((st, i) => ({ id: i, state: st }));
@@ -836,17 +1051,38 @@ export function runSymExec(configPath: string, outPath: string): number {
     x.map((v, i) => (v === null ? sym.baseCase[i]! : ratToDecimal(v, inputs[i]!.scale) ?? sym.baseCase[i]!));
 
   // --- 2. infeasible paths (proved, not guessed) -------------------------------
-  // A constraint whose decision value is a drift-free constant that fails
-  // is a contradiction: the path cannot execute for any input. Only that
-  // shape is treated as proof; a failed witness search alone is not.
+  // Two proof shapes, both exact; a failed witness search alone is never
+  // treated as proof:
+  //   (a) a drift-free constant decision value that fails — a contradiction;
+  //   (b) a single-variable decision value whose required sign is
+  //       unachievable anywhere in that input's PICTURE domain [0, max].
+  const opAchievableInRange = (c: Constraint, lo: Rat, hi: Rat): boolean => {
+    switch (c.op) {
+      case ">": return c.taken ? rCmp(hi, R0) > 0 : rCmp(lo, R0) <= 0;
+      case "<": return c.taken ? rCmp(lo, R0) < 0 : rCmp(hi, R0) >= 0;
+      case ">=": return c.taken ? rCmp(hi, R0) >= 0 : rCmp(lo, R0) < 0;
+      case "<=": return c.taken ? rCmp(lo, R0) <= 0 : rCmp(hi, R0) > 0;
+      case "=": return c.taken ? rCmp(lo, R0) <= 0 && rCmp(hi, R0) >= 0 : !(rIsZero(lo) && rIsZero(hi));
+      case "<>": return c.taken ? !(rIsZero(lo) && rIsZero(hi)) : rCmp(lo, R0) <= 0 && rCmp(hi, R0) >= 0;
+    }
+  };
   const infeasible = paths.map((p) =>
-    p.state.constraints.some(
-      (c) =>
-        c.diff.terms.size === 0 &&
-        rIsZero(c.diff.fuzz) &&
-        (!c.exact || c.exact.rounds.length === 0) &&
-        constraintHolds(c, zeroAssign) === false,
-    ),
+    p.state.constraints.some((c) => {
+      if (!rIsZero(c.diff.fuzz) || (c.exact && c.exact.rounds.length > 0)) return false;
+      if (c.diff.terms.size === 0) {
+        return constraintHolds(c, zeroAssign) === false;
+      }
+      if (c.diff.terms.size === 1) {
+        const [j, k] = [...c.diff.terms.entries()][0]!;
+        const spec = inputs[j];
+        if (!spec?.numeric) return false;
+        const atMax = rAdd(c.diff.c, rMul(k, spec.max));
+        const lo = rCmp(k, R0) > 0 ? c.diff.c : atMax;
+        const hi = rCmp(k, R0) > 0 ? atMax : c.diff.c;
+        return !opAchievableInRange(c, lo, hi);
+      }
+      return false;
+    }),
   );
 
   // --- 3. path witnesses (solved first: their assignments seed the
@@ -860,13 +1096,16 @@ export function runSymExec(configPath: string, outPath: string): number {
   }
   const witnesses: Witness[] = paths.map((p) => {
     if (infeasible[p.id]) {
-      return { path: p.id, stdin: null, assign: null, note: "path is infeasible (a constant constraint fails); dead code" };
+      return { path: p.id, stdin: null, assign: null, note: "path is proven infeasible (a constraint cannot hold over the input domain); dead code" };
     }
     if (p.state.conds.some((c) => !c.diff)) {
       return { path: p.id, stdin: null, assign: null, note: "path has a non-affine condition; witness selection is not sound" };
     }
     const tried: Assignment[] = [...fixedCandidates];
-    for (let round = 0; round < 6; round++) {
+    // Budget scales with the unroll bound: reaching a depth-k loop path
+    // takes ~k single-constraint repairs interleaved with dead ends.
+    const maxRounds = Math.max(8, 4 + 2 * ctx.maxUnroll);
+    for (let round = 0; round < maxRounds; round++) {
       const x = tried.shift();
       if (!x) break;
       if (x.some((v, i) => inputs[i]!.numeric && v === null)) continue;
@@ -874,24 +1113,33 @@ export function runSymExec(configPath: string, outPath: string): number {
       if (ok === true) {
         return { path: p.id, stdin: toStdin(x), assign: x, note: `witness for path #${p.id}` };
       }
-      // Find the first violated/marginal branch constraint and push the
-      // decision value beyond its boundary (fuzz + 1ulp margin).
+      // Find the first violated/marginal constraint and repair just that
+      // one, queuing the result UNVALIDATED — the outer loop re-checks
+      // everything and repairs the next violation, so constraint chains
+      // (one loop iteration per step) are walked out incrementally.
       for (const c of p.state.constraints) {
         if (constraintHolds(c, x) === true) continue;
         const scales = [...c.diff.terms.keys()].map((i) => inputs[i]?.scale ?? 0);
         const ulp = ulpOf(scales.length > 0 ? Math.max(...scales) : 0);
         const margin = rAdd(c.diff.fuzz, ulp);
+        const exact = rIsZero(c.diff.fuzz);
+        // Closest satisfying decision value: a drift-free non-strict
+        // requirement is satisfied AT the boundary; overshooting it by a
+        // margin would jump over equality-sandwiched regions (term = k).
         let target: Rat;
         if ((c.op === "=" && c.taken) || (c.op === "<>" && !c.taken)) {
           target = R0;
         } else if (c.op === ">" || c.op === ">=") {
-          target = c.taken ? margin : rNeg(margin);
+          // taken: need diff > 0 (strict for ">") / >= 0; not-taken: mirrored below zero
+          if (c.taken) target = c.op === ">=" && exact ? R0 : margin;
+          else target = c.op === ">" && exact ? R0 : rNeg(margin);
         } else if (c.op === "<" || c.op === "<=") {
-          target = c.taken ? rNeg(margin) : margin;
+          if (c.taken) target = c.op === "<=" && exact ? R0 : rNeg(margin);
+          else target = c.op === "<" && exact ? R0 : margin;
         } else {
           target = margin; // "=" not-taken / "<>" taken
         }
-        const solved = solveEquality(c.diff, target, inputs, [x], p.state.constraints);
+        const solved = solveEquality(c.diff, target, inputs, [x], []);
         if (solved) tried.push(solved);
         break;
       }
@@ -1015,7 +1263,7 @@ export function runSymExec(configPath: string, outPath: string): number {
   // degenerate (constant) on another, so realization is chosen per path.
   interface RoundedSite {
     cmp: ComputeStmt;
-    perPath: Map<number, SymVal>;
+    perPath: Map<number, SymCompute>;
   }
   const roundedSites = new Map<string, RoundedSite>();
   for (const path of paths) {
@@ -1033,7 +1281,9 @@ export function runSymExec(configPath: string, outPath: string): number {
         site = { cmp, perPath: new Map() };
         roundedSites.set(cmp.text, site);
       }
-      if (!site.perPath.has(path.id)) site.perPath.set(path.id, sc.exprVal);
+      // First occurrence per path = the earliest loop iteration, where the
+      // expression is least drifted and most solvable.
+      if (!site.perPath.has(path.id)) site.perPath.set(path.id, sc);
     }
   }
 
@@ -1134,7 +1384,8 @@ export function runSymExec(configPath: string, outPath: string): number {
       return realizedOnPath ? "realized" : "failed";
     };
 
-    for (const [pathId, exprVal] of site.perPath) {
+    for (const [pathId, siteCompute] of site.perPath) {
+      const exprVal = siteCompute.exprVal;
       const path = paths[pathId]!;
       if (exprVal.kind === "affine" && rIsZero(exprVal.a.fuzz) && exprVal.a.terms.size > 0) {
         anySolvable = true;
@@ -1159,8 +1410,9 @@ export function runSymExec(configPath: string, outPath: string): number {
       }
       // Nonlinear (variable × variable): linearize by fixing all factors
       // but one at this path's witness values, which satisfy the path
-      // constraints by construction.
-      const linear = linearizeProduct(cmp, path.state, inputs, witnesses[pathId]?.assign ?? baseAssign, items, assigned);
+      // constraints by construction. Factor values come from the compute
+      // point's environment snapshot.
+      const linear = linearizeProduct(cmp, siteCompute.env, inputs, witnesses[pathId]?.assign ?? baseAssign, items, assigned);
       if (linear) {
         anySolvable = true;
         const r = tryCongruence(linear.a, pathId, [linear.fixed], ` via ${linear.desc}`);
@@ -1398,7 +1650,7 @@ function solveThroughRounding(
  */
 function linearizeProduct(
   cmp: ComputeStmt,
-  state: PathState,
+  env: Map<string, SymVal>,
   inputs: InputVar[],
   fixed: Assignment,
   items: DataItem[],
@@ -1426,7 +1678,7 @@ function linearizeProduct(
   if (factors.length < 2) return null;
   // Value of each factor on this path: env affine (drift-free) or constant.
   const factorAffine = (name: string): Affine | null => {
-    const v = state.env.get(name);
+    const v = env.get(name);
     if (v?.kind === "affine" && rIsZero(v.a.fuzz)) return v.a;
     if (v) return null;
     const item = findItem(items, name);

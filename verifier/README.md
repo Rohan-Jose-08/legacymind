@@ -129,12 +129,24 @@ deterministic: same IR, same obligations, same cases, every run.
      still cannot be realized is reported **UNREALIZED, per path** and
      flows into the certificate's gaps.
 5. **Path witnesses and proven infeasibility** — each path's constraint
-   system is solved outright, so coverage is a first-class result.
-   A path with a failing *constant* constraint is proven infeasible
-   (dead code) and reported as such — proof, not a failed search.
-   Witnesses are solved before obligations so their assignments seed the
-   obligation solver with in-path fixing points.
-6. Every realized case runs through the shared differential harness.
+   system is solved outright, so coverage is a first-class result. A
+   path is proven infeasible (dead code) when a constraint's decision
+   value is a failing drift-free constant, or a single-variable form
+   whose required sign is unachievable anywhere in that input's PICTURE
+   domain — proofs, never a failed search. Witnesses are solved before
+   obligations so their assignments seed the obligation solver with
+   in-path fixing points.
+6. **PERFORM loops by bounded unrolling** — each exit depth k becomes a
+   path whose constraints pin the iteration count exactly (a VARYING
+   control variable is affine in the depth, so `UNTIL var > LIMIT`
+   yields `LIMIT = k` per path). TIMES counts are snapshotted at loop
+   entry, per COBOL's evaluate-once rule; constant counts prune to a
+   single path eagerly. The input region needing more than
+   `maxLoopUnroll` iterations (default 12) becomes an unknown-coverage
+   path with every loop-written variable poisoned — disclosed, never
+   dropped. ACCEPT inside a loop body is rejected (stdin positions
+   would become iteration-dependent).
+7. Every realized case runs through the shared differential harness.
 
 ### Config
 
@@ -157,8 +169,9 @@ deterministic: same IR, same obligations, same cases, every run.
   product of a product) fall back to the v1 heuristic or stay
   UNREALIZED. Deeper nesting needs recursive inversion — a proper SMT
   encoding — and every such case is disclosed per path.
-- Loops (GO TO, PERFORM UNTIL/VARYING) need fixpoint/unrolling machinery;
-  the parser rejects them upstream today.
+- PERFORM loops are verified only up to the unroll bound; the deeper
+  region is an explicit unknown-coverage path. GO TO (unstructured
+  jumps) remains rejected upstream by the parser.
 - An obligation VERIFIED on one path may be UNREALIZED on another; the
   per-path gap is in the report and the certificate.
 - Paths containing a non-affine condition cannot have a sound witness;

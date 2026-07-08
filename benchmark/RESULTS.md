@@ -1,6 +1,6 @@
 # LegacyMind benchmark results
 
-Generated 2026-07-07T19:59:48.136Z by `node benchmark/run-benchmark.mjs`.
+Generated 2026-07-08T09:29:40.241Z by `node benchmark/run-benchmark.mjs`.
 
 Every module below was parsed to IR, migrated to Java 21 by the
 transpiler (two prompt-variant candidates, replayed from the committed
@@ -11,10 +11,11 @@ selected candidate; every disclosed gap is listed in the certificate.
 
 | Module | COBOL lines | Winner | Layer B | Layer A (seeded) | Layer C obligations | Paths | Layer D keys | Verdict | LLM cost | Wall time |
 |---|---|---|---|---|---|---|---|---|---|---|
-| PAYROLL | 59 | candidate a of 2 | 4 cases | 200/200 (seed 20260705) | 2✓ 0✗ 0 unrealized | 2/2 | 4/4 static | **CERTIFIED** | $0.0000 | 135.5s |
-| INTEREST | 53 | candidate a of 2 | 4 cases | 200/200 (seed 20260706) | 2✓ 0✗ 0 unrealized | 2/2 | 3/3 static | **CERTIFIED** | $0.0000 | 170.4s |
-| DISCOUNT | 54 | candidate a of 2 | 5 cases | 200/200 (seed 20260706) | 3✓ 0✗ 0 unrealized | 2/2 | 4/4 static | **CERTIFIED** | $0.0000 | 215.1s |
-| LEDGER | 72 | candidate a of 2 | 6 cases | 200/200 (seed 20260707) | 5✓ 0✗ 0 unrealized | 4/4 (+2 dead) | 4/4 static | **CERTIFIED** | $0.0000 | 242.5s |
+| PAYROLL | 59 | candidate a of 2 | 4 cases | 200/200 (seed 20260705) | 2✓ 0✗ 0 unrealized | 2/2 | 4/4 static | **CERTIFIED** | $0.0000 | 135.7s |
+| INTEREST | 53 | candidate a of 2 | 4 cases | 200/200 (seed 20260706) | 2✓ 0✗ 0 unrealized | 2/2 | 3/3 static | **CERTIFIED** | $0.0000 | 160.9s |
+| DISCOUNT | 54 | candidate a of 2 | 5 cases | 200/200 (seed 20260706) | 3✓ 0✗ 0 unrealized | 2/2 | 4/4 static | **CERTIFIED** | $0.0000 | 224.7s |
+| LEDGER | 72 | candidate a of 2 | 6 cases | 200/200 (seed 20260707) | 5✓ 0✗ 0 unrealized | 4/4 (+2 dead) | 4/4 static | **CERTIFIED** | $0.0000 | 162.6s |
+| COMPOUND | 52 | candidate a of 2 | 5 cases | 200/200 (seed 20260707) | 2✓ 0✗ 0 unrealized | 10/10 (+4 dead) | 3/3 static | **CERTIFIED** | $0.0000 | 214.3s |
 
 ## Disclosed gaps per certificate
 
@@ -28,6 +29,8 @@ selected candidate; every disclosed gap is listed in the certificate.
 
 **LEDGER**
 - layer C: 3 obligation-path combination(s) unrealized (see report)
+
+**COMPOUND**
 
 ## Parser coverage against an external corpus
 
@@ -49,20 +52,20 @@ histogram below is the prioritized lowering backlog.
 | Construct outside the IR subset | Occurrences |
 |---|---|
 | GO_TO statement | 18947 |
-| PERFORM ... TIMES/UNTIL/VARYING | 4622 |
 | REDEFINES | 4326 |
 | MOVE target "…" (qualified/subscripted) | 3432 |
-| PERFORM ... THRU | 2151 |
+| PERFORM ... THRU | 2273 |
 | WRITE statement | 1123 |
 | CLOSE statement | 969 |
 | OPEN statement | 966 |
 | SET statement | 927 |
 | READ statement | 767 |
 | OCCURS | 555 |
-| PERFORM target "…" is not a paragraph in this program | 482 |
+| PERFORM target "…" is not a paragraph in this program | 500 |
 | FILE SECTION | 432 |
 | sections in the PROCEDURE DIVISION | 413 |
 | PROCEDURE DIVISION has no paragraphs | 257 |
+| ADD receiving field "…" (qualified/subscripted) | 230 |
 
 ## Reproduction
 

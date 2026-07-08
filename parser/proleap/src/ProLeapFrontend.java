@@ -1143,21 +1143,95 @@ public class ProLeapFrontend {
 				return null;
 			}
 			final PerformProcedureStatement pp = s.getPerformProcedureStatement();
-			if (pp.getPerformType() != null) {
-				reject(ctx, "PERFORM ... TIMES/UNTIL/VARYING");
-				return null;
-			}
 			if (pp.getCalls().size() != 1) {
 				reject(ctx, "PERFORM ... THRU");
 				return null;
 			}
 			final String target = pp.getCalls().get(0).getName().toUpperCase();
+			final io.proleap.cobol.asg.metamodel.procedure.perform.PerformType pt = pp.getPerformType();
 			final Map<String, Object> out = new LinkedHashMap<>();
-			out.put("kind", "perform");
-			out.put("target", target);
+			if (pt == null) {
+				out.put("kind", "perform");
+				out.put("target", target);
+				out.put("text", textOf(ctx));
+				out.put("span", span(ctx));
+				return out;
+			}
+			// Loop forms: TEST BEFORE semantics only (the COBOL 85 default).
+			// TEST AFTER changes iteration count by one and is rejected, not
+			// mis-lowered; VARYING ... AFTER (nested control variables) too.
+			switch (pt.getPerformTypeType()) {
+			case TIMES: {
+				final String times = arithOperand(pt.getTimes().getTimesValueStmt().getCtx(), ctx, "PERFORM TIMES");
+				if (times == null) {
+					return null;
+				}
+				out.put("kind", "perform-times");
+				out.put("target", target);
+				out.put("times", operandExpr(times));
+				break;
+			}
+			case UNTIL: {
+				final io.proleap.cobol.asg.metamodel.procedure.perform.Until u = pt.getUntil();
+				if (u.getTestClause() != null && u.getTestClause()
+						.getTestClauseType() == io.proleap.cobol.asg.metamodel.procedure.perform.TestClause.TestClauseType.AFTER) {
+					reject(ctx, "PERFORM ... WITH TEST AFTER");
+					return null;
+				}
+				out.put("kind", "perform-until");
+				out.put("target", target);
+				out.put("condition", operandExpr(textOf(u.getCondition().getCtx())));
+				break;
+			}
+			default: { // VARYING
+				final io.proleap.cobol.asg.metamodel.procedure.perform.Varying v = pt.getVarying();
+				if (v.getTestClause() != null && v.getTestClause()
+						.getTestClauseType() == io.proleap.cobol.asg.metamodel.procedure.perform.TestClause.TestClauseType.AFTER) {
+					reject(ctx, "PERFORM VARYING ... WITH TEST AFTER");
+					return null;
+				}
+				final io.proleap.cobol.asg.metamodel.procedure.perform.VaryingClause vc = v.getVaryingClause();
+				if (!vc.getAfters().isEmpty()) {
+					reject(ctx, "PERFORM VARYING ... AFTER (nested control variables)");
+					return null;
+				}
+				final io.proleap.cobol.asg.metamodel.procedure.perform.VaryingPhrase ph = vc.getVaryingPhrase();
+				final String var = textOf(ph.getVaryingValueStmt().getCtx());
+				if (!ID_ONLY.matcher(var).matches()) {
+					reject(ctx, "PERFORM VARYING control variable \"" + var + "\" (qualified/subscripted)");
+					return null;
+				}
+				final String from = arithOperand(ph.getFrom().getFromValueStmt().getCtx(), ctx, "PERFORM VARYING FROM");
+				if (from == null) {
+					return null;
+				}
+				// BY defaults to 1 when absent (COBOL 85).
+				final String by = ph.getBy() == null ? "1"
+						: arithOperand(ph.getBy().getByValueStmt().getCtx(), ctx, "PERFORM VARYING BY");
+				if (by == null) {
+					return null;
+				}
+				out.put("kind", "perform-varying");
+				out.put("target", target);
+				final Map<String, Object> varying = new LinkedHashMap<>();
+				varying.put("var", var);
+				varying.put("from", operandExpr(from));
+				varying.put("by", operandExpr(by));
+				out.put("varying", varying);
+				out.put("condition", operandExpr(textOf(ph.getUntil().getCondition().getCtx())));
+				break;
+			}
+			}
 			out.put("text", textOf(ctx));
 			out.put("span", span(ctx));
 			return out;
+		}
+
+		Map<String, Object> operandExpr(final String text) {
+			final Map<String, Object> e = new LinkedHashMap<>();
+			e.put("text", text);
+			e.put("refs", refsIn(text));
+			return e;
 		}
 
 		Map<String, Object> lowerDisplay(final DisplayStatement s) {
@@ -1213,10 +1287,13 @@ public class ProLeapFrontend {
 			return out;
 		}
 
+		static final Set<String> PERFORM_KINDS = new LinkedHashSet<>(
+				Arrays.asList("perform", "perform-times", "perform-until", "perform-varying"));
+
 		void collectPerformEdges(final List<?> statements, final String from, final List<Object> edges) {
 			for (final Object so : statements) {
 				final Map<?, ?> stmt = (Map<?, ?>) so;
-				if ("perform".equals(stmt.get("kind"))) {
+				if (PERFORM_KINDS.contains(stmt.get("kind"))) {
 					final String target = (String) stmt.get("target");
 					if (!paragraphNames.contains(target)) {
 						unsupported.add("PERFORM target \"" + target + "\" is not a paragraph in this program (line "

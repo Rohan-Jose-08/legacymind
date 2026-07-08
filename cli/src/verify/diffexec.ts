@@ -62,6 +62,12 @@ export interface SymbolicConfig {
   annotations?: string[];
   /** Max solutions to derive per rounding-boundary congruence. Default 5. */
   maxBoundarySolutions?: number;
+  /**
+   * Max PERFORM-loop iterations to unroll per loop (default 12). Input
+   * regions needing more iterations are surfaced as unknown-coverage
+   * paths, never silently dropped.
+   */
+  maxLoopUnroll?: number;
 }
 
 export interface DiffConfig {

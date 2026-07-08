@@ -1,0 +1,20 @@
+{
+  "$comment": "Layer C for COMPOUND vs the real GnuCOBOL harness image. The PERFORM VARYING loop is unrolled: each exit depth k pins WS-TERM = k exactly (the control variable is affine in the iteration index), so every feasible loop depth 0-9 is a solvable path; depths beyond PIC 9's domain are provably infeasible. The year-1 accrual is a source*constant ROUNDED form solvable by congruence; deeper accruals sit behind the year-1 rounded store and are disclosed where the exact form runs out.",
+  "legacy": {
+    "argv": ["docker", "run", "--rm", "-i", "--network", "none", "legacymind/legacy-compound"],
+    "label": "COBOL 85 COMPOUND (GnuCOBOL via harness image legacymind/legacy-compound)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/compound/migrate/candidate-a", "Compound"],
+    "label": "Java 21 compound (migrated candidate A)"
+  },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "symbolic": {
+    "ir": "../../out/ir/COMPOUND.ir.json",
+    "stdinFields": ["WS-ACCT-ID", "WS-BALANCE", "WS-RATE-PCT", "WS-TERM"],
+    "baseCase": ["ACCT0001", "1000.00", "5.00", "3"],
+    "maxBoundarySolutions": 5,
+    "maxLoopUnroll": 12
+  }
+}

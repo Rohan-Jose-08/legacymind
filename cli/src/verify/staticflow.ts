@@ -93,6 +93,7 @@ function collectAssigned(stmts: Statement[], out: Set<string>): void {
     if (s.kind === "move") for (const t of s.to) out.add(t);
     else if (s.kind === "compute") out.add(s.target);
     else if (s.kind === "accept") out.add(s.target);
+    else if (s.kind === "perform-varying") out.add(s.varying.var);
     else if (s.kind === "if") {
       collectAssigned(s.then, out);
       collectAssigned(s.else ?? [], out);
@@ -149,6 +150,8 @@ export function extractLegacyFlows(ir: ModuleIR): { outputs: Map<string, FlowRec
     return flow;
   };
 
+  const paras = new Map(ir.procedureDivision.paragraphs.map((p) => [p.name, p]));
+
   let stdinCounter = 0;
   const walk = (stmts: Statement[]): void => {
     for (const s of stmts) {
@@ -176,6 +179,21 @@ export function extractLegacyFlows(ir: ModuleIR): { outputs: Map<string, FlowRec
         // flow-insensitive union, mirroring the Java-side extractor
         walk(s.then);
         walk(s.else ?? []);
+      } else if (s.kind === "perform-times" || s.kind === "perform-until" || s.kind === "perform-varying") {
+        // Loop body contributes its flows once (union) — counts are never
+        // compared, so iteration count is irrelevant to this layer, and
+        // this mirrors the Java-side extractor's treatment of loops.
+        if (s.kind === "perform-varying") {
+          const flow = merged(s.varying.var);
+          for (const operand of [s.varying.from, s.varying.by]) {
+            const e = exprFlow(operand.text, operand.refs);
+            flow.sources = new Set([...flow.sources, ...e.sources]);
+            for (const c of e.constants) flow.constants.add(c);
+            flow.shifts.push(...e.shifts);
+          }
+        }
+        const body = paras.get(s.target);
+        if (body) walk(inlineStatements(body.statements, paras, [s.target]));
       } else if (s.kind === "display") {
         let pendingKey: string | null = null;
         for (const op of s.operands) {
@@ -193,7 +211,6 @@ export function extractLegacyFlows(ir: ModuleIR): { outputs: Map<string, FlowRec
     }
   };
 
-  const paras = new Map(ir.procedureDivision.paragraphs.map((p) => [p.name, p]));
   const entry = paras.get(ir.controlFlow.entry);
   if (!entry) throw new DiffExecError(`layer D: entry paragraph ${ir.controlFlow.entry} not found`);
   walk(inlineStatements(entry.statements, paras, [ir.controlFlow.entry]));

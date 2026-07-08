@@ -46,5 +46,17 @@
     "staticConfig": "benchmark/configs/ledger-static.json",
     "migrateOut": "out/bench/ledger/migrate",
     "certCopy": "out/certification-ledger.json"
+  },
+  {
+    "id": "compound",
+    "programId": "COMPOUND",
+    "source": "benchmark/modules/compound.cbl",
+    "imageTag": "legacymind/legacy-compound",
+    "diffConfig": "benchmark/configs/compound-diff-real.json",
+    "propConfig": "benchmark/configs/compound-prop-real.json",
+    "symConfig": "benchmark/configs/compound-sym-real.json",
+    "staticConfig": "benchmark/configs/compound-static.json",
+    "migrateOut": "out/bench/compound/migrate",
+    "certCopy": "out/certification-compound.json"
   }
 ]
