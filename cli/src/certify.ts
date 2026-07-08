@@ -13,9 +13,11 @@
  * a mock standing in for the legacy binary. No hidden failures: the gaps
  * section is the contract, not a disclaimer.
  *
- * The certificate carries an integrity hash (SHA-256 over its own body).
- * Cryptographic signing with an org key/PKI is planned; the hash makes
- * tampering detectable, not impossible — and says so.
+ * The certificate is signed (Ed25519) over the canonical form of its own
+ * body: any later edit breaks the signature, and `legacymind verify-cert`
+ * both checks the signature (integrity) and pins the signer's public key
+ * (provenance). The demo key ships in keys/; production signs with a
+ * KMS-held key via --signing-key. See cli/src/sign.ts.
  *
  * `legacymind report` renders the certificate as human-readable Markdown.
  */
@@ -23,6 +25,7 @@
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
+import { signBody } from "./sign.js";
 
 export class CertifyError extends Error {}
 
@@ -56,6 +59,8 @@ export function runCertify(opts: {
   layerCPath?: string;
   layerDPath?: string;
   outPath: string;
+  /** PEM private key for production signing; omitted uses the committed demo key. */
+  signingKeyPath?: string;
 }): number {
   const selection = readJson(opts.selectionPath, "selection.json");
   if (!selection.winner) {
@@ -181,14 +186,9 @@ export function runCertify(opts: {
     },
   };
 
-  const certificate = {
-    ...body,
-    integrity: {
-      algorithm: "sha256-content-hash",
-      hash: createHash("sha256").update(JSON.stringify(body)).digest("hex"),
-      note: "hash of the certificate body excluding this field; org-key/PKI signing planned",
-    },
-  };
+  const signingKeyPath = opts.signingKeyPath ?? process.env.LEGACYMIND_SIGNING_KEY;
+  const { integrity, source: keySource } = signBody(body, signingKeyPath);
+  const certificate = { ...body, integrity };
 
   mkdirSync(dirname(resolve(opts.outPath)), { recursive: true });
   writeFileSync(opts.outPath, JSON.stringify(certificate, null, 2) + "\n");
@@ -203,6 +203,7 @@ export function runCertify(opts: {
   for (const g of gaps) console.log(`    - ${g}`);
   console.log("");
   console.log(`  verdict: ${verdict}`);
+  console.log(`  signed: ed25519, key ${integrity.keyId} (${keySource})`);
   console.log(`  certificate: ${opts.outPath}`);
   return verdict === "CERTIFIED" ? 0 : 1;
 }
@@ -245,7 +246,12 @@ export function runReport(certPath: string, outPath?: string): number {
   push(`| Transpiler model | ${cert.target?.model} (candidate ${cert.target?.candidate}) |`);
   push(`| Candidates evaluated | ${cert.selection?.candidatesEvaluated} |`);
   push(`| LLM cost (this migration) | $${Number(cert.selection?.totalCostUsd ?? 0).toFixed(4)} |`);
-  push(`| Integrity hash | \`${short(cert.integrity?.hash)}\` (${cert.integrity?.algorithm}) |`);
+  const integ = cert.integrity ?? {};
+  const sig =
+    integ.algorithm === "ed25519"
+      ? `Ed25519, key \`${integ.keyId}\` — check with \`legacymind verify-cert\``
+      : `${integ.algorithm ?? "unsigned"}`;
+  push(`| Signature | ${sig} |`);
   push();
   push(`## Verification layers`);
   push();

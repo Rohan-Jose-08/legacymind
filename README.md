@@ -14,7 +14,8 @@ the product; the LLM behind the transpiler is a swappable commodity.
 | Directory | Purpose | Status |
 |---|---|---|
 | `ir/` | The intermediate representation: `schema.json` (the contract between parser, transpiler, and all verifier layers) plus worked examples | **built** |
-| `cli/` | The `legacymind` command — all six stages: `parse`, `plan`, `migrate`, `verify` (layers A+B+C), `certify`, `report` | **built** |
+| `cli/` | The `legacymind` command — `parse`, `plan`, `migrate`, `verify` (layers A–D), `certify` (Ed25519-signed), `verify-cert`, `report` | **built** |
+| `keys/` | Certificate signing material: a committed, clearly-labeled **demo** Ed25519 key so signing is reproducible offline; production keys stay out of the repo. See `keys/README.md` | **built** |
 | `verifier/` | The moat: all four verification layers implemented — A (property-based + shrinking), B (differential execution), C (symbolic-execution prototype), D (static data-flow equivalence via the javac-based `verifier/javaflow` extractor); see `verifier/README.md` | **all four layers built** |
 | `transpiler/` | LLM modernization behind a driver-agnostic `ModelClient`: hashed replay cache, two prompt-variant candidates per module, `javac` compile, verifier-driven selection | **built (MVP)** |
 | `examples/` | Demo corpus: `payroll.cbl`, mock legacy/modern executables, diff-exec and property-gen configs | **built** |
@@ -48,9 +49,10 @@ node cli/dist/main.js verify --layer A --config examples/payroll-prop.json --out
 #    rounding half-boundaries; the unrealizable overtime path is disclosed
 node cli/dist/main.js verify --layer C --config examples/payroll-sym.json --out out/symexec-report.json
 
-# 6. Certify: aggregate A+B+C evidence into the sellable artifact,
-#    then render it human-readable
+# 6. Certify: aggregate A+B+C evidence into the sellable artifact (signed
+#    with the demo key), verify the signature, then render it human-readable
 node cli/dist/main.js certify --selection out/migrate/selection.json --layer-a out/property-report.json --layer-c out/symexec-report.json --out out/certification.json
+node cli/dist/main.js verify-cert out/certification.json
 node cli/dist/main.js report out/certification.json --out out/certification.md
 
 # (defect demos) layers A and C pointed at the REJECTED candidate B —
@@ -114,8 +116,17 @@ node cli/dist/main.js verify --config examples/payroll-diff-fixed.json --out out
    obligations — remaining per-path disclosures are values nested through
    two rounded stores or nonlinear producers, which need recursive
    inversion (a full SMT encoding) and are listed in each certificate.
-10. **The certificate's integrity hash is not a cryptographic signature**
-    (and says so in the artifact). Org-key/PKI signing is planned.
+10. **Certificates are Ed25519-signed and independently verifiable.**
+    `certify` signs the canonical certificate body; `verify-cert` checks
+    the signature (tamper-evidence) and pins the signer's public key
+    (provenance), exiting non-zero on any edit or unknown signer. The
+    benchmark re-verifies every certificate it issues. Signing uses a
+    committed **demo** key (`keys/`, clearly labeled, grants access to
+    nothing) so the demo is reproducible offline; production passes a
+    KMS-held key via `--signing-key`. The signature covers a sorted-key
+    canonical form, so a certificate can be re-serialized and still
+    verify. (Dashboard-side signature verification is the remaining
+    follow-on.)
 11. **Dashboard v1 uses WorkOS AuthKit** (founder decision, 2026-07-05) in
     secure-by-default middleware mode — every route except the OAuth
     callback requires a session. It is a read-only viewer over the

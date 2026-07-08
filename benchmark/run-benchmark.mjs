@@ -53,7 +53,7 @@ for (const m of modules) {
   for (const p of [propOut, symOut, staticOut, certOut, `${m.migrateOut}/selection.json`]) {
     rmSync(join(ROOT, p), { force: true });
   }
-  const steps = { parse: null, image: null, migrate: null, layerA: null, layerC: null, layerD: null, certify: null };
+  const steps = { parse: null, image: null, migrate: null, layerA: null, layerC: null, layerD: null, certify: null, verifyCert: null };
 
   steps.parse = run(
     ["node", "cli/dist/main.js", "parse", m.source, "--out", "out/ir/", "--engine", ENGINE],
@@ -88,6 +88,9 @@ for (const m of modules) {
     "certify",
   );
   run(["node", "cli/dist/main.js", "report", certOut, "--out", `${benchDir}/certification.md`], "report");
+  // Prove the certificate is signed and tamper-evident against the trusted
+  // key — every run re-verifies the artifact it just produced.
+  steps.verifyCert = run(["node", "cli/dist/main.js", "verify-cert", certOut], "verify-cert (Ed25519 signature)");
   if (existsSync(join(ROOT, certOut))) copyFileSync(join(ROOT, certOut), join(ROOT, m.certCopy));
 
   // gather the row from the artifacts themselves
@@ -115,6 +118,11 @@ for (const m of modules) {
     row.layerD = { keys: stat.summary?.keys, capacityWarnings: stat.summary?.capacityWarnings };
     row.gaps = cert.coverageEnvelope?.gaps ?? [];
     row.verdict = cert.verdict;
+    row.signature = {
+      algorithm: cert.integrity?.algorithm ?? null,
+      keyId: cert.integrity?.keyId ?? null,
+      verified: steps.verifyCert?.ok ?? false,
+    };
   } catch (e) {
     row.error = `artifact collection failed: ${e.message}`;
   }
@@ -151,9 +159,12 @@ lines.push("cache), and verified **against the real GnuCOBOL 3.1.2 binary runnin
 lines.push("sandboxed in Docker** — no mocks anywhere in this table. CERTIFIED");
 lines.push("means layer B plus every other run layer (A, C, D) passed on the");
 lines.push("selected candidate; every disclosed gap is listed in the certificate.");
+lines.push("Each certificate is Ed25519-signed and re-verified against the trusted");
+lines.push("key in the same run — the **Signed** column is that check, so a");
+lines.push("tampered or wrongly-signed certificate would fail the benchmark.");
 lines.push("");
-lines.push("| Module | COBOL lines | Winner | Layer B | Layer A (seeded) | Layer C obligations | Paths | Layer D keys | Verdict | LLM cost | Wall time |");
-lines.push("|---|---|---|---|---|---|---|---|---|---|---|");
+lines.push("| Module | COBOL lines | Winner | Layer B | Layer A (seeded) | Layer C obligations | Paths | Layer D keys | Verdict | Signed | LLM cost | Wall time |");
+lines.push("|---|---|---|---|---|---|---|---|---|---|---|---|");
 for (const r of rows) {
   const b = r.layerB ? `${r.layerB.curatedCases} cases` : "—";
   const a = r.layerA ? `${r.layerA.passed}/${r.layerA.generated} (seed ${r.layerA.seed})` : "—";
@@ -168,8 +179,9 @@ for (const r of rows) {
     ? `${r.layerD.keys.verified}/${r.layerD.keys.total} static` +
       (r.layerD.capacityWarnings ? ` (${r.layerD.capacityWarnings} warn)` : "")
     : "—";
+  const sig = r.signature?.verified ? `✓ \`${r.signature.keyId}\`` : "✗";
   lines.push(
-    `| ${r.programId} | ${r.loc} | candidate ${r.winner ?? "—"} of ${r.candidates ?? "—"} | ${b} | ${a} | ${o} | ${p} | ${d} | **${r.verdict}** | $${(r.costUsd ?? 0).toFixed(4)} | ${r.wallSeconds}s |`,
+    `| ${r.programId} | ${r.loc} | candidate ${r.winner ?? "—"} of ${r.candidates ?? "—"} | ${b} | ${a} | ${o} | ${p} | ${d} | **${r.verdict}** | ${sig} | $${(r.costUsd ?? 0).toFixed(4)} | ${r.wallSeconds}s |`,
   );
 }
 lines.push("");
@@ -224,7 +236,9 @@ lines.push("report. Certificates and layer reports land in `out/bench/<module>/`
 lines.push("");
 writeFileSync(join(ROOT, "benchmark/RESULTS.md"), lines.join("\n"));
 
-console.log(`\nbenchmark complete: ${rows.filter((r) => r.verdict === "CERTIFIED").length}/${rows.length} modules certified`);
+const certifiedCount = rows.filter((r) => r.verdict === "CERTIFIED").length;
+const signedCount = rows.filter((r) => r.signature?.verified).length;
+console.log(`\nbenchmark complete: ${certifiedCount}/${rows.length} modules certified, ${signedCount}/${rows.length} signatures verified`);
 console.log("  benchmark/RESULTS.md");
 console.log("  benchmark/results.json");
-process.exit(rows.every((r) => r.verdict === "CERTIFIED") ? 0 : 1);
+process.exit(rows.every((r) => r.verdict === "CERTIFIED" && r.signature?.verified) ? 0 : 1);

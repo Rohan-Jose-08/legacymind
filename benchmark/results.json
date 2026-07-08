@@ -1,7 +1,7 @@
 {
   "tool": "legacymind benchmark",
   "version": "0.1.0",
-  "generatedAt": "2026-07-08T12:43:10.089Z",
+  "generatedAt": "2026-07-08T14:08:17.312Z",
   "toolchain": {
     "parser": "proleap engine (ProLeap ANTLR4 COBOL85 grammar + reference-format preprocessor, JVM)",
     "legacy": "GnuCOBOL 3.1.2 (debian:bookworm-slim, sandboxed: --network none, --rm)",
@@ -14,7 +14,7 @@
       "programId": "PAYROLL",
       "source": "examples/payroll.cbl",
       "loc": 59,
-      "wallSeconds": 60.2,
+      "wallSeconds": 68.8,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -22,7 +22,8 @@
         "layerA": true,
         "layerC": true,
         "layerD": true,
-        "certify": true
+        "certify": true,
+        "verifyCert": true
       },
       "verdict": "CERTIFIED",
       "winner": "a",
@@ -62,14 +63,19 @@
       },
       "gaps": [
         "layer C: 1 obligation-path combination(s) unrealized (see report)"
-      ]
+      ],
+      "signature": {
+        "algorithm": "ed25519",
+        "keyId": "9b70a354efb9feab",
+        "verified": true
+      }
     },
     {
       "id": "interest",
       "programId": "INTEREST",
       "source": "benchmark/modules/interest.cbl",
       "loc": 53,
-      "wallSeconds": 62.8,
+      "wallSeconds": 66.2,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -77,7 +83,8 @@
         "layerA": true,
         "layerC": true,
         "layerD": true,
-        "certify": true
+        "certify": true,
+        "verifyCert": true
       },
       "verdict": "CERTIFIED",
       "winner": "a",
@@ -115,14 +122,19 @@
         },
         "capacityWarnings": 0
       },
-      "gaps": []
+      "gaps": [],
+      "signature": {
+        "algorithm": "ed25519",
+        "keyId": "9b70a354efb9feab",
+        "verified": true
+      }
     },
     {
       "id": "discount",
       "programId": "DISCOUNT",
       "source": "benchmark/modules/discount.cbl",
       "loc": 54,
-      "wallSeconds": 58.5,
+      "wallSeconds": 64.6,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -130,7 +142,8 @@
         "layerA": true,
         "layerC": true,
         "layerD": true,
-        "certify": true
+        "certify": true,
+        "verifyCert": true
       },
       "verdict": "CERTIFIED",
       "winner": "a",
@@ -170,14 +183,19 @@
       },
       "gaps": [
         "layer C: 2 obligation-path combination(s) unrealized (see report)"
-      ]
+      ],
+      "signature": {
+        "algorithm": "ed25519",
+        "keyId": "9b70a354efb9feab",
+        "verified": true
+      }
     },
     {
       "id": "ledger",
       "programId": "LEDGER",
       "source": "benchmark/modules/ledger.cbl",
       "loc": 72,
-      "wallSeconds": 70.9,
+      "wallSeconds": 71.8,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -185,7 +203,8 @@
         "layerA": true,
         "layerC": true,
         "layerD": true,
-        "certify": true
+        "certify": true,
+        "verifyCert": true
       },
       "verdict": "CERTIFIED",
       "winner": "a",
@@ -225,14 +244,19 @@
       },
       "gaps": [
         "layer C: 3 obligation-path combination(s) unrealized (see report)"
-      ]
+      ],
+      "signature": {
+        "algorithm": "ed25519",
+        "keyId": "9b70a354efb9feab",
+        "verified": true
+      }
     },
     {
       "id": "compound",
       "programId": "COMPOUND",
       "source": "benchmark/modules/compound.cbl",
       "loc": 52,
-      "wallSeconds": 65.6,
+      "wallSeconds": 68.8,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -240,7 +264,8 @@
         "layerA": true,
         "layerC": true,
         "layerD": true,
-        "certify": true
+        "certify": true,
+        "verifyCert": true
       },
       "verdict": "CERTIFIED",
       "winner": "a",
@@ -278,7 +303,12 @@
         },
         "capacityWarnings": 0
       },
-      "gaps": []
+      "gaps": [],
+      "signature": {
+        "algorithm": "ed25519",
+        "keyId": "9b70a354efb9feab",
+        "verified": true
+      }
     }
   ]
 }

@@ -23,6 +23,7 @@ import { runStaticFlow } from "./verify/staticflow.js";
 import { MigrateError, runMigrate } from "./transpile/transpile.js";
 import { ModelError } from "./model/client.js";
 import { CertifyError, runCertify, runReport } from "./certify.js";
+import { SignError, verifyCertificate } from "./sign.js";
 import { runPlan } from "./plan.js";
 
 const DEFAULT_MODEL = "claude-opus-4-8";
@@ -63,9 +64,18 @@ usage:
 
   legacymind certify --selection <selection.json> --out <certification.json>
                      [--layer-a <r.json>] [--layer-c <r.json>] [--layer-d <r.json>]
+                     [--signing-key <ed25519.pem>]
       Aggregate the winner's layer B report plus provided layer A/C/D
       reports into certification.json: per-layer verdicts, coverage
-      envelope, every gap listed, integrity hash. Exit 1 if NOT_CERTIFIED.
+      envelope, every gap listed, Ed25519 signature. Exit 1 if
+      NOT_CERTIFIED. Signs with the committed demo key unless
+      --signing-key (or $LEGACYMIND_SIGNING_KEY) gives a production key.
+
+  legacymind verify-cert <certification.json> [--trusted-key <ed25519.pub.pem>]
+      Verify a certificate's Ed25519 signature (integrity) and pin the
+      signer against the trusted public key (provenance). Exit 0 only if
+      the signature is valid AND the signer is trusted; any tampering or
+      unknown signer exits 1, loudly. Defaults to the committed demo key.
 
   legacymind report <certification.json> [--out <file.md>]
       Render a certificate as human-readable Markdown (stdout by default).
@@ -240,12 +250,41 @@ switch (command) {
           layerCPath: str(flags, "layer-c"),
           layerDPath: str(flags, "layer-d"),
           outPath: out,
+          signingKeyPath: str(flags, "signing-key"),
         }),
       );
     } catch (e) {
-      if (e instanceof CertifyError) fail(`certify: ${e.message}`, 2);
+      if (e instanceof CertifyError || e instanceof SignError) fail(`certify: ${e.message}`, 2);
       throw e;
     }
+    break;
+  }
+  case "verify-cert": {
+    const { positional, flags } = parseArgs(rest);
+    const certPath = positional[0];
+    if (!certPath) fail("verify-cert: missing <certification.json>", 2);
+    let cert: unknown;
+    try {
+      cert = JSON.parse(readFileSync(certPath, "utf8"));
+    } catch (e) {
+      fail(`verify-cert: cannot read ${certPath}: ${(e as Error).message}`, 2);
+    }
+    const result = verifyCertificate(cert, str(flags, "trusted-key"));
+    console.log(`legacymind verify-cert — ${certPath}`);
+    console.log(`  signature: ${result.signatureValid ? "VALID" : "INVALID"}`);
+    console.log(`  content hash: ${result.contentHashValid ? "matches" : "MISMATCH"}`);
+    console.log(
+      `  signer key: ${result.keyId}` +
+        (result.keyTrusted === true
+          ? " (trusted)"
+          : result.keyTrusted === false
+            ? ` (UNTRUSTED — trusted is ${result.trustedKeyId})`
+            : " (no trusted key to pin against)"),
+    );
+    for (const r of result.reasons) console.log(`  - ${r}`);
+    console.log("");
+    console.log(`  result: ${result.ok ? "VERIFIED" : "REJECTED"}`);
+    process.exit(result.ok ? 0 : 1);
     break;
   }
   case "report": {
