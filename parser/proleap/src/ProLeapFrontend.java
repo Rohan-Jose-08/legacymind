@@ -806,6 +806,55 @@ public class ProLeapFrontend {
 				out.add(m);
 				return;
 			}
+			case SET: {
+				// SET condition-name TO TRUE is the write side of 88-levels: pure
+				// sugar for MOVE <the 88's VALUE> TO <its parent item> (the read
+				// side, IF condition-name, is expanded elsewhere). Only this form
+				// is in the subset; SET UP/DOWN BY (index), SET ... TO a
+				// value/ON/OFF/FALSE, and SET on a non-condition target are
+				// rejected. Multiple condition names in one SET emit one MOVE each.
+				final io.proleap.cobol.asg.metamodel.procedure.set.SetStatement set =
+						(io.proleap.cobol.asg.metamodel.procedure.set.SetStatement) s;
+				if (set.getSetType() != io.proleap.cobol.asg.metamodel.procedure.set.SetStatement.SetType.TO) {
+					reject(ctx, "SET ... UP/DOWN BY (index adjustment, outside the subset)");
+					return;
+				}
+				final List<Map<String, Object>> moves = new ArrayList<>();
+				for (final io.proleap.cobol.asg.metamodel.procedure.set.SetTo st : set.getSetTos()) {
+					final List<io.proleap.cobol.asg.metamodel.procedure.set.Value> vals = st.getValues();
+					if (vals.size() != 1 || vals.get(0).getValueStmt() == null
+							|| !"TRUE".equals(textOf(vals.get(0).getValueStmt().getCtx()))) {
+						reject(ctx, "SET target(s) TO a value other than TRUE (only SET condition-name TO TRUE is supported)");
+						return;
+					}
+					for (final io.proleap.cobol.asg.metamodel.procedure.set.To to : st.getTos()) {
+						final Call call = to.getToCall();
+						final String cn = call != null && call.getName() != null ? call.getName().toUpperCase() : null;
+						final String[] parentValue = cn != null ? conditionNames.get(cn) : null;
+						if (parentValue == null) {
+							reject(ctx, "SET " + (cn != null ? cn : "target")
+									+ " TO TRUE where it is not an 88-level condition name in this program");
+							return;
+						}
+						final Map<String, Object> mv = new LinkedHashMap<>();
+						mv.put("kind", "move");
+						final Map<String, Object> from = new LinkedHashMap<>();
+						from.put("text", parentValue[1]);
+						from.put("refs", refsIn(parentValue[1]));
+						mv.put("from", from);
+						final List<Object> toList = new ArrayList<>();
+						toList.add(parentValue[0]);
+						mv.put("to", toList);
+						mv.put("text", textOf(ctx));
+						mv.put("span", span(ctx));
+						moves.add(mv);
+					}
+				}
+				for (final Map<String, Object> mv : moves) {
+					out.add(mv);
+				}
+				return;
+			}
 			default:
 				reject(ctx, type + " statement");
 			}

@@ -1,0 +1,7 @@
+{
+  "$comment": "Layer D for SENIOR: static data-flow equivalence between the IR and migrated candidate A. SENIOR derives from the flag constants {0,1} (MOVE 0 init + SET SENIOR TO TRUE lowered to MOVE 1), DISCOUNT from WS-AMOUNT with constant 15 and a decimal shift of 2, rounded half-up; the flag/discount guard is control flow, unioned flow-insensitively on both sides.",
+  "static": {
+    "ir": "../../out/ir/SENIOR.ir.json",
+    "modernJava": "../../out/bench/senior/migrate/candidate-a/Senior.java"
+  }
+}

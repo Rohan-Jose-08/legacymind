@@ -1,0 +1,22 @@
+{
+  "$comment": "Layer B selection cases for SENIOR vs the real GnuCOBOL harness image. The SET SENIOR TO TRUE flag write is gated by WS-AGE >= 65; a candidate that reads the boundary as > 65 misses the exactly-65 senior, so the age-65 case flips both SENIOR and DISCOUNT and catches it. Cases cover a clear senior, the 65 boundary, just-under, a half-cent ROUNDED discount, a young non-senior, and a senior with zero amount.",
+  "legacy": {
+    "image": "legacymind/legacy-senior",
+    "label": "COBOL 85 SENIOR (GnuCOBOL via harness image legacymind/legacy-senior)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/senior/migrate/candidate-a", "Senior"],
+    "label": "Java 21 senior (migrated candidate A)"
+  },
+  "protocol": { "input": "stdin-lines", "output": "kv-lines" },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "cases": [
+    { "id": "senior", "stdin": ["70", "200.00"] },
+    { "id": "boundary-65", "stdin": ["65", "200.00"] },
+    { "id": "just-under", "stdin": ["64", "200.00"] },
+    { "id": "half-cent", "stdin": ["65", "100.10"] },
+    { "id": "young", "stdin": ["30", "5000.00"] },
+    { "id": "senior-zero", "stdin": ["65", "0.00"] }
+  ]
+}

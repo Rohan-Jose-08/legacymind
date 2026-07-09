@@ -1,0 +1,19 @@
+{
+  "$comment": "Layer C for SENIOR vs the real GnuCOBOL harness image. SET SENIOR TO TRUE lowers to MOVE 1 TO WS-STATUS, so the flag is a constant on each path; Layer C enumerates the age>=65 and age<65 paths and proves the two impossible flag/discount combinations infeasible. It verifies the WS-AGE >= 65 branch boundary and the discount rounding half-boundary (WS-AMOUNT * 15 / 100) on the senior path.",
+  "legacy": {
+    "image": "legacymind/legacy-senior",
+    "label": "COBOL 85 SENIOR (GnuCOBOL via harness image legacymind/legacy-senior)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/senior/migrate/candidate-a", "Senior"],
+    "label": "Java 21 senior (migrated candidate A)"
+  },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "symbolic": {
+    "ir": "../../out/ir/SENIOR.ir.json",
+    "stdinFields": ["WS-AGE", "WS-AMOUNT"],
+    "baseCase": ["70", "200.00"],
+    "maxBoundarySolutions": 5
+  }
+}

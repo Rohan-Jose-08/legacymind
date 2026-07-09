@@ -65,6 +65,20 @@ early exit is load-bearing, and candidate B is the demonstration: it
 unconditionally, overpaying every capped sale by 50.00 — caught by
 layer B against the real binary on each capped case.
 
+The SENIOR module proves the write side of 88-level condition names:
+`SET condition-name TO TRUE`. A status flag `WS-STATUS PIC 9` carries
+`88 SENIOR VALUE 1`; `SET SENIOR TO TRUE` (lowered to `MOVE 1 TO
+WS-STATUS`) marks the customer senior when age >= 65, and `IF SENIOR`
+(the read side from the 88-level stage, expanded to `WS-STATUS = 1`)
+gates a 15% ROUNDED discount. With the flag set to a constant on each
+path, layer C enumerates the senior and non-senior paths, proves the two
+impossible flag/discount combinations infeasible, and verifies the age
+boundary and the discount rounding, disclosing the flag-read condition
+itself as unrealized (a constant on every feasible path, no input
+boundary to drive, covered dynamically by layers A and B). Candidate B
+reads the age threshold as a strict `> 65` instead of `>= 65`, so the
+exactly-65 senior is missed; layer B catches it on the age-65 boundary.
+
 ## Running
 
 ```

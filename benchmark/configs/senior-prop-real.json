@@ -1,0 +1,19 @@
+{
+  "$comment": "Layer A for SENIOR vs the real GnuCOBOL harness image. Generated ages span both sides of the 65 threshold and amounts span the PIC 9(7)V99 range, so the SET-flag gate and the discount rounding are exercised by seeded random inputs alone.",
+  "legacy": {
+    "image": "legacymind/legacy-senior",
+    "label": "COBOL 85 SENIOR (GnuCOBOL via harness image legacymind/legacy-senior)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/senior/migrate/candidate-a", "Senior"],
+    "label": "Java 21 senior (migrated candidate A)"
+  },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "generator": {
+    "ir": "../../out/ir/SENIOR.ir.json",
+    "stdinFields": ["WS-AGE", "WS-AMOUNT"],
+    "count": 200,
+    "seed": 20260709
+  }
+}
