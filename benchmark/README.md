@@ -30,13 +30,14 @@ The GRADE module proves the 88-level condition-name lowering: a
 pass/fail-with-bonus routine where `88 PASSING VALUE 1` names the
 pass flag and `IF PASSING` reads it (expanded to `WS-PASS-FLAG = 1`
 before any verifier sees it). Layer C verifies the `score >= 60`
-boundary and proves the impossible flag/score combinations infeasible;
-it honestly discloses two obligations it cannot symbolically realize
-(the derived boolean flag has no input boundary, and the bonus
-half-cent falls below the passing-score constraint where the congruence
-solver's first solutions cannot reach) — both covered dynamically by
-layers A and B. Candidate B carries a `>` off-by-one at the pass mark,
-caught by the curated score-60 case.
+boundary and the bonus half-cent boundary (its congruence search is
+seeded above the passing-score constraint, so it derives the odd
+passing scores 61, 63, … that land the bonus on a half-cent), and
+proves the impossible flag/score combinations infeasible. It discloses
+one obligation it cannot symbolically realize — the derived boolean
+`PASSING` flag has no input boundary to drive — which layers A and B
+cover dynamically. Candidate B carries a `>` off-by-one at the pass
+mark, caught by the curated score-60 case.
 
 The TAXCALC module proves the wave-3 PERFORM THRU range lowering:
 combined payroll withholding (state + federal + local) computed by

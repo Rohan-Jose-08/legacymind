@@ -1,7 +1,7 @@
 {
   "tool": "legacymind benchmark",
   "version": "0.1.0",
-  "generatedAt": "2026-07-09T08:54:45.545Z",
+  "generatedAt": "2026-07-09T09:37:17.844Z",
   "toolchain": {
     "parser": "proleap engine (ProLeap ANTLR4 COBOL85 grammar + reference-format preprocessor, JVM)",
     "legacy": "GnuCOBOL 3.1.2 (debian:bookworm-slim, sandboxed: --network none, --rm)",
@@ -14,7 +14,7 @@
       "programId": "PAYROLL",
       "source": "examples/payroll.cbl",
       "loc": 59,
-      "wallSeconds": 63,
+      "wallSeconds": 61.1,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -75,7 +75,7 @@
       "programId": "INTEREST",
       "source": "benchmark/modules/interest.cbl",
       "loc": 53,
-      "wallSeconds": 63,
+      "wallSeconds": 60.9,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -134,7 +134,7 @@
       "programId": "DISCOUNT",
       "source": "benchmark/modules/discount.cbl",
       "loc": 54,
-      "wallSeconds": 60.3,
+      "wallSeconds": 63,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -195,7 +195,7 @@
       "programId": "LEDGER",
       "source": "benchmark/modules/ledger.cbl",
       "loc": 72,
-      "wallSeconds": 65,
+      "wallSeconds": 66.4,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -256,7 +256,7 @@
       "programId": "COMPOUND",
       "source": "benchmark/modules/compound.cbl",
       "loc": 52,
-      "wallSeconds": 73.7,
+      "wallSeconds": 63.3,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -315,7 +315,7 @@
       "programId": "TAXCALC",
       "source": "benchmark/modules/taxcalc.cbl",
       "loc": 58,
-      "wallSeconds": 67.9,
+      "wallSeconds": 64.8,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -374,7 +374,7 @@
       "programId": "GRADE",
       "source": "benchmark/modules/grade.cbl",
       "loc": 47,
-      "wallSeconds": 60.2,
+      "wallSeconds": 58.6,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -400,9 +400,9 @@
       "layerC": {
         "obligations": {
           "total": 3,
-          "verified": 1,
+          "verified": 2,
           "divergent": 0,
-          "unrealized": 2,
+          "unrealized": 1,
           "notApplicable": 0
         },
         "paths": {
@@ -422,8 +422,7 @@
         "capacityWarnings": 1
       },
       "gaps": [
-        "layer C: 2 obligation(s) could not be realized as inputs (see report)",
-        "layer C: 1 obligation-path combination(s) unrealized (see report)",
+        "layer C: 1 obligation(s) could not be realized as inputs (see report)",
         "layer D: 1 storage-capacity difference(s) flagged as warnings — statically inconclusive, covered dynamically by layers A/B/C"
       ],
       "signature": {

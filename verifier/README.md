@@ -121,7 +121,13 @@ deterministic: same IR, same obligations, same cases, every run.
      endpoint where HALF_UP and HALF_EVEN part ways;
    - *rounding half-boundaries*: for each affine ROUNDED expression, the
      inputs landing it exactly on a half-unit at the target scale, by
-     affine congruence solving (`k·x ≡ h (mod m)` with fixed terms);
+     affine congruence solving (`k·x ≡ h (mod m)` with fixed terms). The
+     search is seeded above any lower bound the path imposes on the free
+     variable (a single-variable constraint like `score >= 60`), so a
+     rounded compute gated behind a threshold is solved in its feasible
+     region rather than below it; every solution is still filtered
+     against the full constraint set, so the bound only moves the search
+     start, never soundness;
    - *nonlinear products* (`a * b * c / k`): linearized by fixing all
      factors but one at the path's witness values — which satisfy the
      path constraints by construction — then congruence-solved. The v1

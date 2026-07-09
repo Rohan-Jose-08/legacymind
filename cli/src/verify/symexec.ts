@@ -949,7 +949,14 @@ function egcd(a: bigint, b: bigint): [bigint, bigint, bigint] {
   return [g, y, x - (a / b) * y];
 }
 
-function solveCongruence(k: bigint, h: bigint, m: bigint, maxSolutions: number, maxX: bigint): bigint[] {
+function solveCongruence(
+  k: bigint,
+  h: bigint,
+  m: bigint,
+  maxSolutions: number,
+  maxX: bigint,
+  minX: bigint = 0n,
+): bigint[] {
   const kk = ((k % m) + m) % m;
   const hh = ((h % m) + m) % m;
   const [g] = egcd(kk === 0n ? m : kk, m);
@@ -959,13 +966,57 @@ function solveCongruence(k: bigint, h: bigint, m: bigint, maxSolutions: number, 
   const h2 = (hh / g) % m2;
   const [, inv] = egcd(k2 === 0n ? m2 : k2, m2);
   const x0 = m2 === 0n ? 0n : ((h2 * (((inv % m2) + m2) % m2)) % m2 + m2) % m2;
+  // Skip ahead to the first solution at or above the path's lower bound, so a
+  // rounded compute gated behind a threshold (score >= 60, balance >= 500)
+  // yields boundary inputs in the feasible region rather than below it. The
+  // caller still filters every solution against the full constraint set, so
+  // an approximate bound only affects *where* the search starts, not
+  // soundness.
+  const lo = minX > 1n ? minX : 1n;
+  let tStart = 0n;
+  if (m2 > 0n && x0 < lo) {
+    tStart = (lo - x0 + m2 - 1n) / m2; // ceil((lo - x0) / m2)
+  }
   const out: bigint[] = [];
-  for (let t = 0n; out.length < maxSolutions; t++) {
+  for (let t = tStart; out.length < maxSolutions; t++) {
     const sol = x0 + t * m2;
     if (sol > maxX) break;
     if (sol > 0n) out.push(sol);
   }
   return out;
+}
+
+const negateOp = (op: CmpOp): CmpOp =>
+  ({ ">": "<=", ">=": "<", "<": ">=", "<=": ">", "=": "<>", "<>": "=" } as const)[op];
+const flipOp = (op: CmpOp): CmpOp =>
+  ({ ">": "<", ">=": "<=", "<": ">", "<=": ">=", "=": "=", "<>": "<>" } as const)[op];
+
+/**
+ * A conservative lower bound (scaled to the free variable's PICTURE grid)
+ * on input `j`, derived from single-variable drift-free path constraints
+ * such as `WS-SCORE >= 60`. Returns null when no such lower bound exists.
+ * Under-estimates on purpose (floors to the grid): a loose bound only moves
+ * the search start; correctness comes from the caller's constraint filter.
+ */
+function freeVarLowerBoundScaled(constraints: Constraint[], j: number, scale: number): bigint | null {
+  let lo: Rat | null = null;
+  for (const c of constraints) {
+    if (!rIsZero(c.diff.fuzz)) continue;
+    if (c.exact && c.exact.rounds.length > 0) continue;
+    if (c.diff.terms.size !== 1) continue; // single-variable constraints only
+    const A = c.diff.terms.get(j);
+    if (A === undefined || rIsZero(A)) continue;
+    const xStar = rDiv(rNeg(c.diff.c), A); // boundary value of x_j
+    const effOp = c.taken ? c.op : negateOp(c.op);
+    const rel = rCmp(A, R0) > 0 ? effOp : flipOp(effOp); // x_j `rel` xStar
+    if ((rel === ">" || rel === ">=" || rel === "=") && (lo === null || rCmp(xStar, lo) > 0)) {
+      lo = xStar;
+    }
+  }
+  if (lo === null) return null;
+  const scaled = rMul(lo, { n: 10n ** BigInt(scale), d: 1n });
+  // floor toward -inf so the bound never overshoots the smallest valid grid point
+  return scaled.n >= 0n ? scaled.n / scaled.d : -((-scaled.n + scaled.d - 1n) / scaled.d);
 }
 
 // ---------------------------------------------------------------------------
@@ -1393,12 +1444,14 @@ export function runSymExec(configPath: string, outPath: string): number {
           const restScaled = rMul(rest, { n: scaleMul, d: 1n });
           if (kScaled.d !== 1n || restScaled.d !== 1n) continue;
           const maxXInt = rMul(spec.max, { n: 10n ** BigInt(spec.scale), d: 1n });
+          const minXInt = freeVarLowerBoundScaled(path.state.constraints, j, spec.scale);
           const sols = solveCongruence(
             kScaled.n,
             ((h - (restScaled.n % m)) % m + m) % m,
             m,
             maxSolutions,
             maxXInt.d === 1n ? maxXInt.n : 0n,
+            minXInt !== null && minXInt > 0n ? minXInt : 0n,
           );
           for (const sol of sols) {
             const x: Assignment = [...fixed];
