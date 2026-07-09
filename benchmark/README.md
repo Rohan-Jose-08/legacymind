@@ -110,6 +110,26 @@ drops the early return (the classic missing Java `return` when
 flattening COBOL paragraph flow) and bills the empty invoice; layer B
 catches it on every zero-amount case.
 
+The SHIPPING module proves stage-2 GO TO: forward jumps across
+top-level fall-through paragraphs — the guard-and-dispatch idiom. A
+zero weight jumps to REJECT-PARA (skipping all costing) and an
+over-cap cost jumps to CAPPED-PARA (skipping the standard print), two
+different forward targets. The chain builder eliminates them
+structurally: a tail-position GO TO continues the chain at its target
+inside its own branch while the sibling branch carries the
+fall-through continuation, with memoized shared subtrees and
+strictly-forward recursion. The frontend gate admits only this shape:
+the GO TO's paragraph must not be PERFORM-reachable, the target must
+be strictly later, every GO TO must sit in tail position, and no
+ACCEPT may textually follow a GO TO (stdin positions would become
+path-dependent). Layer C enumerates the reject/capped/standard paths
+and verifies the zero-weight boundary and the cost rounding; the cap
+boundary itself is honestly disclosed as unrealized — no on-grid
+weight lands 4.75·w within a half-cent of 200.00, so the boundary is
+proven unreachable rather than faked, and the dynamic layers cover the
+cap region. Candidate B drops the zero-weight guard and prices the
+empty package; layer B catches it on every zero case.
+
 ## Running
 
 ```

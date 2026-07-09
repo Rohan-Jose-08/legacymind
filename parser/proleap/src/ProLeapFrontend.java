@@ -1621,16 +1621,31 @@ public class ProLeapFrontend {
 		// GO TO soundness gate
 		// ------------------------------------------------------------------
 		//
-		// Stage 1 admits exactly one GO TO shape: the structured early-exit of
-		// a plain PERFORM <s> THRU <exit> range. A GO TO <exit> is sound iff
+		// Two admitted GO TO shapes; everything else is enumerated as
+		// unsupported so IR-completeness keeps implying verify-soundness and
+		// the layer-C rewrites stay total.
+		//
+		// Stage 1 — structured early-exit of a plain PERFORM <s> THRU <exit>
+		// range. A GO TO <exit> is sound iff
 		//   - <exit> is a real paragraph whose body is a pure EXIT terminator
 		//     (empty or a lone EXIT), so "jump to exit then return" == "return";
 		//   - <exit> is NOT the THRU endpoint of any looping PERFORM (there a
 		//     GO TO would mean continue-this-iteration, not return);
 		//   - some plain PERFORM <s> THRU <exit> range lexically encloses the
 		//     GO TO's paragraph as a forward jump (index(s) <= index(P) < index(exit)).
-		// Everything else is enumerated as unsupported so IR-completeness keeps
-		// implying verify-soundness, and the layer-C rewrite stays total.
+		//
+		// Stage 2 — forward jump across top-level fall-through paragraphs.
+		// Sound iff the GO TO's paragraph is NOT reachable via any PERFORM
+		// (otherwise the jump would fire inside a performed context the range
+		// inliner does not model) and the target is strictly later in source
+		// order (forward-only keeps the chain eliminator's recursion finite).
+		//
+		// Program-wide placement rules, both stages:
+		//   - a GO TO may appear only in tail position (last statement of its
+		//     block or of an IF branch) — the structural rewrites need it;
+		//   - no ACCEPT may textually follow any GO TO: a jump skipping an
+		//     ACCEPT would make stdin positions path-dependent (the same
+		//     reason ACCEPT inside a loop body is rejected).
 
 		/** Collect THRU ranges: plain PERFORM into `plainRanges` ({start,exit}); loop PERFORM exits into `loopExits`. */
 		void collectRanges(final List<?> stmts, final List<String[]> plainRanges, final Set<String> loopExits) {
@@ -1683,52 +1698,127 @@ public class ProLeapFrontend {
 			return false;
 		}
 
+		/** Every paragraph reachable via any PERFORM (all four kinds, THRU expanded). */
+		void collectPerformed(final List<?> stmts, final Set<String> out) {
+			for (final Object so : stmts) {
+				final Map<?, ?> s = (Map<?, ?>) so;
+				final String kind = (String) s.get("kind");
+				if (PERFORM_KINDS.contains(kind)) {
+					final int i = paragraphOrder.indexOf((String) s.get("target"));
+					final Object thru = s.get("thru");
+					final int j = thru != null ? paragraphOrder.indexOf((String) thru) : i;
+					if (i >= 0 && j >= i) {
+						for (int k = i; k <= j; k++) {
+							out.add(paragraphOrder.get(k));
+						}
+					}
+				} else if ("if".equals(kind)) {
+					collectPerformed((List<?>) s.get("then"), out);
+					if (s.get("else") != null) {
+						collectPerformed((List<?>) s.get("else"), out);
+					}
+				}
+			}
+		}
+
+		/** GO TO may appear only as the last statement of its block or IF branch. */
+		void checkGotoPlacement(final List<?> stmts) {
+			for (int i = 0; i < stmts.size(); i++) {
+				final Map<?, ?> s = (Map<?, ?>) stmts.get(i);
+				final String kind = (String) s.get("kind");
+				if ("go-to".equals(kind) && i != stmts.size() - 1) {
+					unsupported.add("GO TO " + s.get("target")
+							+ " is not in tail position (statements follow it in the same block) (line "
+							+ ((Map<?, ?>) s.get("span")).get("startLine") + ")");
+				} else if ("if".equals(kind)) {
+					checkGotoPlacement((List<?>) s.get("then"));
+					if (s.get("else") != null) {
+						checkGotoPlacement((List<?>) s.get("else"));
+					}
+				}
+			}
+		}
+
+		/** Reject any ACCEPT that textually follows a GO TO (path-dependent stdin positions). */
+		void checkAcceptAfterGoto(final List<?> stmts, final boolean[] seenGoto) {
+			for (final Object so : stmts) {
+				final Map<?, ?> s = (Map<?, ?>) so;
+				final String kind = (String) s.get("kind");
+				if ("go-to".equals(kind)) {
+					seenGoto[0] = true;
+				} else if ("accept".equals(kind) && seenGoto[0]) {
+					unsupported.add("ACCEPT " + s.get("target")
+							+ " textually follows a GO TO - stdin positions would become path-dependent (line "
+							+ ((Map<?, ?>) s.get("span")).get("startLine") + ")");
+				} else if ("if".equals(kind)) {
+					checkAcceptAfterGoto((List<?>) s.get("then"), seenGoto);
+					if (s.get("else") != null) {
+						checkAcceptAfterGoto((List<?>) s.get("else"), seenGoto);
+					}
+				}
+			}
+		}
+
 		void gateGotos(final List<Object> paragraphs) {
 			final List<String[]> plainRanges = new ArrayList<>();
 			final Set<String> loopExits = new LinkedHashSet<>();
+			final Set<String> performed = new LinkedHashSet<>();
 			for (final Object po : paragraphs) {
-				collectRanges((List<?>) ((Map<?, ?>) po).get("statements"), plainRanges, loopExits);
+				final List<?> stmts = (List<?>) ((Map<?, ?>) po).get("statements");
+				collectRanges(stmts, plainRanges, loopExits);
+				collectPerformed(stmts, performed);
 			}
+			// Program-wide placement rules (both stages).
+			final boolean[] seenGoto = new boolean[] { false };
+			for (final Object po : paragraphs) {
+				final List<?> stmts = (List<?>) ((Map<?, ?>) po).get("statements");
+				checkGotoPlacement(stmts);
+				checkAcceptAfterGoto(stmts, seenGoto);
+			}
+			// Per-goto acceptance: stage 1 (range early-exit) OR stage 2
+			// (forward top-level jump).
 			for (final Object po : paragraphs) {
 				final Map<?, ?> pm = (Map<?, ?>) po;
 				final String pname = (String) pm.get("name");
 				final List<String[]> gotos = new ArrayList<>();
 				collectGotos((List<?>) pm.get("statements"), gotos);
 				for (final String[] g : gotos) {
-					final String exit = g[0];
+					final String target = g[0];
 					final String line = g[1];
-					if (!paragraphNames.contains(exit)) {
-						unsupported.add("GO TO " + exit + " targets a name that is not a paragraph (line " + line + ")");
-						continue;
-					}
-					if (!isPureExit(exit, paragraphs)) {
-						unsupported.add("GO TO " + exit
-								+ " whose target paragraph is not a pure EXIT terminator; only structured early-exit is supported (line "
-								+ line + ")");
-						continue;
-					}
-					if (loopExits.contains(exit)) {
-						unsupported.add("GO TO " + exit
-								+ " is the exit of a looping PERFORM THRU range (continue-semantics, not early return) (line "
-								+ line + ")");
+					if (!paragraphNames.contains(target)) {
+						unsupported.add("GO TO " + target + " targets a name that is not a paragraph (line " + line + ")");
 						continue;
 					}
 					final int pIdx = paragraphOrder.indexOf(pname);
-					final int exitIdx = paragraphOrder.indexOf(exit);
-					boolean governed = false;
-					for (final String[] r : plainRanges) {
-						if (!exit.equals(r[1])) {
-							continue;
+					final int tIdx = paragraphOrder.indexOf(target);
+					// --- stage 1: early-exit of an enclosing plain PERFORM THRU range ---
+					boolean stage1 = isPureExit(target, paragraphs) && !loopExits.contains(target);
+					if (stage1) {
+						boolean governed = false;
+						for (final String[] r : plainRanges) {
+							if (!target.equals(r[1])) {
+								continue;
+							}
+							final int sIdx = paragraphOrder.indexOf(r[0]);
+							if (sIdx >= 0 && tIdx >= 0 && sIdx <= pIdx && pIdx < tIdx) {
+								governed = true;
+								break;
+							}
 						}
-						final int sIdx = paragraphOrder.indexOf(r[0]);
-						if (sIdx >= 0 && exitIdx >= 0 && sIdx <= pIdx && pIdx < exitIdx) {
-							governed = true;
-							break;
-						}
+						stage1 = governed;
 					}
-					if (!governed) {
-						unsupported.add("GO TO " + exit
-								+ " is not the forward exit of an enclosing plain PERFORM THRU range containing this paragraph (line "
+					if (stage1) {
+						continue;
+					}
+					// --- stage 2: forward jump across top-level fall-through paragraphs ---
+					if (performed.contains(pname)) {
+						unsupported.add("GO TO " + target + " inside PERFORM-reachable paragraph " + pname
+								+ " is neither a structured range early-exit nor a top-level jump (line " + line + ")");
+						continue;
+					}
+					if (tIdx <= pIdx) {
+						unsupported.add("GO TO " + target
+								+ " is a backward or self jump; only strictly forward top-level jumps are supported (line "
 								+ line + ")");
 					}
 				}

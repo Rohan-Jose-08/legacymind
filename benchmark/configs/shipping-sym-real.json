@@ -1,0 +1,19 @@
+{
+  "$comment": "Layer C for SHIPPING vs the real GnuCOBOL harness image. Two forward top-level GO TOs (zero-weight reject, cost cap) are structurally eliminated into branch-embedded continuations while the fall-through chain is built, so Layer C enumerates the reject, capped, and standard paths, verifies the WS-WEIGHT = 0 boundary and the WS-COST > 200 boundary (inverted through the ROUNDED store), and solves the cost's half-cent rounding boundary on the standard path.",
+  "legacy": {
+    "image": "legacymind/legacy-shipping",
+    "label": "COBOL 85 SHIPPING (GnuCOBOL via harness image legacymind/legacy-shipping)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/shipping/migrate/candidate-a", "Shipping"],
+    "label": "Java 21 shipping (migrated candidate A)"
+  },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "symbolic": {
+    "ir": "../../out/ir/SHIPPING.ir.json",
+    "stdinFields": ["WS-PKG-ID", "WS-WEIGHT"],
+    "baseCase": ["PKG00001", "10.00"],
+    "maxBoundarySolutions": 5
+  }
+}

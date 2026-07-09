@@ -130,5 +130,17 @@
     "staticConfig": "benchmark/configs/invoice-static.json",
     "migrateOut": "out/bench/invoice/migrate",
     "certCopy": "out/certification-invoice.json"
+  },
+  {
+    "id": "shipping",
+    "programId": "SHIPPING",
+    "source": "benchmark/modules/shipping.cbl",
+    "imageTag": "legacymind/legacy-shipping",
+    "diffConfig": "benchmark/configs/shipping-diff-real.json",
+    "propConfig": "benchmark/configs/shipping-prop-real.json",
+    "symConfig": "benchmark/configs/shipping-sym-real.json",
+    "staticConfig": "benchmark/configs/shipping-static.json",
+    "migrateOut": "out/bench/shipping/migrate",
+    "certCopy": "out/certification-shipping.json"
   }
 ]

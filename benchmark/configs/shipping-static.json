@@ -1,0 +1,7 @@
+{
+  "$comment": "Layer D for SHIPPING: static data-flow equivalence between the IR and migrated candidate A. The two eliminated GO TOs make COST union the computed flow (input 1, constant 4.75, half-up) with the 200 cap constant across the CAP/STD branches; the reject branch prints no COST on either side.",
+  "static": {
+    "ir": "../../out/ir/SHIPPING.ir.json",
+    "modernJava": "../../out/bench/shipping/migrate/candidate-a/Shipping.java"
+  }
+}

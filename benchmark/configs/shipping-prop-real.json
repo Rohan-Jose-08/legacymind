@@ -1,0 +1,19 @@
+{
+  "$comment": "Layer A for SHIPPING vs the real GnuCOBOL harness image. Generated weights include zero and span the PIC 9(5)V99 range, so the reject guard, the cap dispatch, and per-path rounding are exercised by seeded random inputs alone.",
+  "legacy": {
+    "image": "legacymind/legacy-shipping",
+    "label": "COBOL 85 SHIPPING (GnuCOBOL via harness image legacymind/legacy-shipping)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/shipping/migrate/candidate-a", "Shipping"],
+    "label": "Java 21 shipping (migrated candidate A)"
+  },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "generator": {
+    "ir": "../../out/ir/SHIPPING.ir.json",
+    "stdinFields": ["WS-PKG-ID", "WS-WEIGHT"],
+    "count": 200,
+    "seed": 20260709
+  }
+}

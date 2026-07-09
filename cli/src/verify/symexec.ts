@@ -440,28 +440,87 @@ export function rangeStatements(names: string[], paras: Map<string, Paragraph>):
   return out;
 }
 
+/** True if a go-to appears in `stmts` or nested IF branches. */
+function containsGoto(stmts: Statement[]): boolean {
+  for (const s of stmts) {
+    if (s.kind === "go-to") return true;
+    if (s.kind === "if" && (containsGoto(s.then) || containsGoto(s.else ?? []))) return true;
+  }
+  return false;
+}
+
 /**
  * Top-level fall-through chain: COBOL execution starts at the entry paragraph
  * and falls through paragraph to paragraph in source order until a STOP RUN /
- * GOBACK ends it. The chain concatenates paragraphs from the entry onward,
- * stopping after the first paragraph whose LAST top-level statement is an
- * unconditional stop-run/goback (paragraphs beyond it are unreachable by
- * fall-through — they remain reachable via PERFORM, which inlining handles).
- * Conditional early exits inside a paragraph are handled at execution time:
- * execute() terminates the path at any stop-run/goback it reaches.
+ * GOBACK ends it. Forward top-level GO TOs (stage 2 of the GO TO plan) are
+ * eliminated structurally while the chain is built: a tail-position GO TO T
+ * continues the chain at T inside its own branch, and the sibling branch
+ * carries the fall-through continuation — `IF c { GO TO T }; rest` becomes
+ * `IF c { chain-from-T } ELSE { chain-from-rest }`. Chains from a given
+ * paragraph are memoized and shared, and jumps are strictly forward (the
+ * frontend gate enforces it; re-checked here), so the recursion terminates.
+ * An unconditional stop-run/goback truncates its list — execute() also
+ * terminates paths at any stop-run/goback it reaches, so conditional early
+ * exits inside branches are handled at execution time.
  */
 export function topLevelChain(paras: Map<string, Paragraph>, entry: string): Statement[] {
   const order = [...paras.keys()];
   const start = order.indexOf(entry);
   if (start < 0) throw new DiffExecError(`entry paragraph ${entry} not found`);
-  const out: Statement[] = [];
-  for (let i = start; i < order.length; i++) {
-    const p = paras.get(order[i]!)!;
-    out.push(...p.statements);
-    const last = p.statements[p.statements.length - 1];
-    if (last && (last.kind === "stop-run" || last.kind === "goback")) break;
-  }
-  return out;
+  const memo = new Map<number, Statement[]>();
+
+  const paraChain = (i: number): Statement[] => {
+    if (i >= order.length) return [];
+    const hit = memo.get(i);
+    if (hit) return hit;
+    const built = elimList(paras.get(order[i]!)!.statements, i, () => paraChain(i + 1));
+    memo.set(i, built);
+    return built;
+  };
+
+  /**
+   * Eliminate top-level GO TOs from a statement list of paragraph `cur`;
+   * `cont` supplies the fall-through continuation when the list runs out.
+   */
+  const elimList = (stmts: Statement[], cur: number, cont: () => Statement[]): Statement[] => {
+    const out: Statement[] = [];
+    for (let si = 0; si < stmts.length; si++) {
+      const s = stmts[si]!;
+      const rest = stmts.slice(si + 1);
+      if (s.kind === "go-to") {
+        const t = order.indexOf(s.target);
+        if (t <= cur) {
+          throw new DiffExecError(`top-level GO TO ${s.target} is not a strictly forward jump`);
+        }
+        if (rest.length > 0) {
+          throw new DiffExecError(`top-level GO TO ${s.target} is not in tail position`);
+        }
+        out.push(...paraChain(t));
+        return out;
+      }
+      if (s.kind === "stop-run" || s.kind === "goback") {
+        out.push(s); // statements after an unconditional program end are dead
+        return out;
+      }
+      if (s.kind === "if" && (containsGoto(s.then) || containsGoto(s.else ?? []))) {
+        // The IF becomes terminal: each branch carries its own continuation —
+        // the jump target's chain in a goto branch, the fall-through
+        // continuation (rest of this list, then the next paragraph) in the
+        // other. Evaluated once and shared between branches when both need it.
+        let afterIf: Statement[] | null = null;
+        const contAfterIf = (): Statement[] => (afterIf ??= elimList(rest, cur, cont));
+        const branch = (b: Statement[]): Statement[] =>
+          containsGoto(b) ? elimList(b, cur, contAfterIf) : [...b, ...contAfterIf()];
+        out.push({ ...s, then: branch(s.then), else: branch(s.else ?? []) });
+        return out;
+      }
+      out.push(s);
+    }
+    out.push(...cont());
+    return out;
+  };
+
+  return paraChain(start);
 }
 
 /** True if any GO TO targeting `exit` appears anywhere in `stmts` (nested IFs included). */

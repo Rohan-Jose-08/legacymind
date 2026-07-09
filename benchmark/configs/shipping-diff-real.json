@@ -1,0 +1,22 @@
+{
+  "$comment": "Layer B selection cases for SHIPPING vs the real GnuCOBOL harness image. The zero-weight GO TO REJECT-PARA guard means an empty package prints STATUS=REJ with no COST line; a candidate that drops the guard prices it (STATUS=STD COST=0.00) and is caught on every zero case. Cases cover the reject path, both sides of the 200.00 cap (42.10 -> 199.98 STD, 42.11 -> 200.02 CAP), a half-cent ROUNDED cost, and a deep-cap weight.",
+  "legacy": {
+    "image": "legacymind/legacy-shipping",
+    "label": "COBOL 85 SHIPPING (GnuCOBOL via harness image legacymind/legacy-shipping)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/shipping/migrate/candidate-a", "Shipping"],
+    "label": "Java 21 shipping (migrated candidate A)"
+  },
+  "protocol": { "input": "stdin-lines", "output": "kv-lines" },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "cases": [
+    { "id": "standard", "stdin": ["PKG00001", "10.00"] },
+    { "id": "reject-zero", "stdin": ["PKG00002", "0.00"] },
+    { "id": "cap-under", "stdin": ["PKG00003", "42.10"] },
+    { "id": "cap-over", "stdin": ["PKG00004", "42.11"] },
+    { "id": "half-cent", "stdin": ["PKG00005", "0.10"] },
+    { "id": "deep-cap", "stdin": ["PKG00006", "100.00"] }
+  ]
+}
