@@ -302,6 +302,18 @@
         },
         {
           "type": "object",
+          "description": "GO TO <paragraph>. Representable only as the structured early-exit of an enclosing PERFORM <s> THRU <target> range: `target` is that range's THRU endpoint, itself a pure EXIT terminator, and the GO TO lies lexically within [s..target). The frontend rejects every other shape (backward jumps, GO TO DEPENDING ON, non-exit targets, exits of looping THRU ranges); layers C and D eliminate it into equivalent if/else inside inlineStatements before any execution, so no verifier engine sees a raw GO TO. General GO TO stays outside the subset.",
+          "required": ["kind", "target", "text", "span"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "const": "go-to" },
+            "target": { "type": "string", "pattern": "^[A-Z][A-Z0-9-]*$" },
+            "text": { "type": "string" },
+            "span": { "$ref": "#/$defs/span" }
+          }
+        },
+        {
+          "type": "object",
           "description": "PERFORM <paragraph> <n> TIMES. The body executes exactly n times (n evaluated once, before the first iteration).",
           "required": ["kind", "target", "times", "text", "span"],
           "additionalProperties": false,

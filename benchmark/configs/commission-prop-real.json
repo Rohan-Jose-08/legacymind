@@ -1,0 +1,19 @@
+{
+  "$comment": "Layer A for COMMISSION vs the real GnuCOBOL harness image. Generated sales values span both the below-cap (with bonus) and capped (no bonus) regions, so the early-exit semantics are exercised by seeded random inputs alone.",
+  "legacy": {
+    "image": "legacymind/legacy-commission",
+    "label": "COBOL 85 COMMISSION (GnuCOBOL via harness image legacymind/legacy-commission)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/commission/migrate/candidate-a", "Commission"],
+    "label": "Java 21 commission (migrated candidate A)"
+  },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "generator": {
+    "ir": "../../out/ir/COMMISSION.ir.json",
+    "stdinFields": ["WS-REP-ID", "WS-SALES"],
+    "count": 200,
+    "seed": 20260709
+  }
+}

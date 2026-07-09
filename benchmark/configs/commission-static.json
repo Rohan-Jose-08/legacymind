@@ -1,0 +1,7 @@
+{
+  "$comment": "Layer D for COMMISSION: static data-flow equivalence between the IR and migrated candidate A. The CALC-COMM THRU CALC-EXIT range with its GO TO early exit is eliminated to if/else, so the capped (MOVE WS-CAP) and bonus (ADD WS-BONUS) flows union flow-insensitively on the legacy side, mirrored by the Java-side extractor's if-branch union.",
+  "static": {
+    "ir": "../../out/ir/COMMISSION.ir.json",
+    "modernJava": "../../out/bench/commission/migrate/candidate-a/Commission.java"
+  }
+}

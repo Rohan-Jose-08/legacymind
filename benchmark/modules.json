@@ -82,5 +82,17 @@
     "staticConfig": "benchmark/configs/grade-static.json",
     "migrateOut": "out/bench/grade/migrate",
     "certCopy": "out/certification-grade.json"
+  },
+  {
+    "id": "commission",
+    "programId": "COMMISSION",
+    "source": "benchmark/modules/commission.cbl",
+    "imageTag": "legacymind/legacy-commission",
+    "diffConfig": "benchmark/configs/commission-diff-real.json",
+    "propConfig": "benchmark/configs/commission-prop-real.json",
+    "symConfig": "benchmark/configs/commission-sym-real.json",
+    "staticConfig": "benchmark/configs/commission-static.json",
+    "migrateOut": "out/bench/commission/migrate",
+    "certCopy": "out/certification-commission.json"
   }
 ]

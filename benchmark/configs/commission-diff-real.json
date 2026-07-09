@@ -1,0 +1,22 @@
+{
+  "$comment": "Layer B selection cases for COMMISSION vs the real GnuCOBOL harness image. The GO TO CALC-EXIT early return means a capped commission pays NO completion bonus; a candidate that clamps but still adds the bonus is caught on every capped sale (base 7.5% of sales over the 500.00 cap, i.e. sales > 6666.67). Cases cover below-cap, the exact cap boundary, capped, the PIC 9(7)V99 region, a half-cent ROUNDED case, and zero.",
+  "legacy": {
+    "image": "legacymind/legacy-commission",
+    "label": "COBOL 85 COMMISSION (GnuCOBOL via harness image legacymind/legacy-commission)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/commission/migrate/candidate-a", "Commission"],
+    "label": "Java 21 commission (migrated candidate A)"
+  },
+  "protocol": { "input": "stdin-lines", "output": "kv-lines" },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "cases": [
+    { "id": "below-cap", "stdin": ["REP00001", "5000.00"] },
+    { "id": "cap-boundary", "stdin": ["REP00002", "6666.67"] },
+    { "id": "capped", "stdin": ["REP00003", "9000.00"] },
+    { "id": "capped-large", "stdin": ["REP00004", "9999999.99"] },
+    { "id": "half-cent", "stdin": ["REP00005", "100.10"] },
+    { "id": "zero", "stdin": ["REP00006", "0.00"] }
+  ]
+}

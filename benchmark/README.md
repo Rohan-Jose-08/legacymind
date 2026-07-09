@@ -49,6 +49,22 @@ single `PERFORM CALC-STATE`, withholding only the state portion — the
 classic range-misread migration bug — and fails the curated cases on
 every non-zero gross.
 
+The COMMISSION module proves the stage-1 GO TO lowering: the structured
+early-exit idiom. A sales commission is 7.5% of sales ROUNDED to the
+cent; if that base is over a 500.00 cap it is clamped and the paragraph
+returns early via `GO TO CALC-EXIT`, paying no completion bonus —
+`GO TO` the THRU endpoint of the enclosing `PERFORM CALC-COMM THRU
+CALC-EXIT` range. Only this shape is admitted: the frontend rejects
+every other GO TO (backward jumps, computed `DEPENDING ON`, non-exit
+targets, loop-range exits), and the verifiers eliminate the sound one
+into equivalent `if/else` inside `inlineStatements` before any engine
+runs, so layer C enumerates the capped and bonus paths and solves both
+the cap branch boundary and the base-commission rounding boundary. The
+early exit is load-bearing, and candidate B is the demonstration: it
+"simplifies" the GO TO into a plain clamp and then adds the bonus
+unconditionally, overpaying every capped sale by 50.00 — caught by
+layer B against the real binary on each capped case.
+
 ## Running
 
 ```
@@ -113,11 +129,15 @@ the corpus named in the founding spec (759 files, commit pinned in
   the pipeline consumes: every construct lowered into IR. Files in
   between parse fine but use constructs outside the IR subset; each is
   enumerated per file (never skipped silently) and histogrammed in
-  `parse-coverage.json` as the prioritized lowering backlog. After
-  lowering wave 1 (arithmetic verbs, period-terminated IF, level-77,
-  EXIT, FILLER) the head of that histogram is control flow — GO TO and
-  the PERFORM loop family — which needs the path-sensitive verifier
-  engine, not just parsing. This corpus is ProLeap's own test suite and
+  `parse-coverage.json` as the prioritized lowering backlog. Lowering
+  waves have since worked down that histogram — arithmetic verbs and
+  period-terminated IF (wave 1), the PERFORM loop family (wave 2),
+  PERFORM THRU ranges (wave 3), 88-level condition names, and the
+  stage-1 GO TO early-exit idiom. General GO TO (arbitrary forward,
+  backward, and computed jumps) remains the histogram head and the next
+  epic: it is unsound to lower structurally and needs the PC-based
+  verifier engine, not just parsing (the committed `parse-coverage.json`
+  snapshot predates these waves). This corpus is ProLeap's own test suite and
   deliberately exercises every exotic construct, so the IR-complete rate
   is adversarially low by construction; the LEDGER module shows what the
   lowered subset covers on realistic batch code.
@@ -132,6 +152,6 @@ committed transpiler replay cache serves either engine unchanged.
   the persistent-container optimization is tracked in `harness/README.md`.
 - The Docker engine must be up; a dead engine surfaces as every legacy
   case ERROR-ing with exit code 1 within ~200ms (see finding 3).
-- Adding a module means: COBOL source in `modules/`, three configs in
-  `configs/`, recorded candidates (run migrate `--offline`, record the
-  stubs), and an entry in `modules.json`.
+- Adding a module means: COBOL source in `modules/`, four configs in
+  `configs/` (diff/prop/sym/static), recorded candidates (run migrate
+  `--offline`, record the stubs), and an entry in `modules.json`.

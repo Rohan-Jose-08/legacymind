@@ -440,6 +440,86 @@ export function rangeStatements(names: string[], paras: Map<string, Paragraph>):
   return out;
 }
 
+/** True if any GO TO targeting `exit` appears anywhere in `stmts` (nested IFs included). */
+function containsGotoTo(stmts: Statement[], exit: string): boolean {
+  for (const s of stmts) {
+    if (s.kind === "go-to" && s.target === exit) return true;
+    if (s.kind === "if" && (containsGotoTo(s.then, exit) || containsGotoTo(s.else ?? [], exit))) return true;
+  }
+  return false;
+}
+
+/** True when the last statement of `block` is a GO TO to `exit` (tail position). */
+function tailGotoTo(block: Statement[], exit: string): boolean {
+  const last = block[block.length - 1];
+  return !!last && last.kind === "go-to" && last.target === exit;
+}
+
+/**
+ * Structured elimination of the sound GO-TO-exit early-return idiom for one
+ * performed range (`exit` = the range's THRU endpoint). A GO TO `exit` in tail
+ * position — of the range body, or of exactly one branch of an IF — is rewritten
+ * into the if/else IR that already exists: the statements that follow it run
+ * only when the jump is NOT taken, so they move into the sibling branch. The
+ * rewrite is purely structural and semantics-preserving (the trailing EXIT
+ * paragraph is a no-op on every path). Every other placement throws — the
+ * frontend gate should already have rejected it, so a throw here is defensive,
+ * never a silent drop.
+ */
+function eliminateExitGotos(stmts: Statement[], exit: string): Statement[] {
+  const out: Statement[] = [];
+  for (let i = 0; i < stmts.length; i++) {
+    const s = stmts[i]!;
+    const rest = stmts.slice(i + 1);
+    if (s.kind === "go-to") {
+      if (s.target !== exit) {
+        throw new DiffExecError(`layer C: GO TO ${s.target} is not the exit ${exit} of its enclosing PERFORM THRU range`);
+      }
+      if (rest.length > 0) {
+        throw new DiffExecError(`layer C: GO TO ${exit} is not in tail position (statements follow it in the same block)`);
+      }
+      return out; // falling off the block == returning from the range
+    }
+    if (s.kind === "if") {
+      const thenGoto = containsGotoTo(s.then, exit);
+      const elseGoto = containsGotoTo(s.else ?? [], exit);
+      if (!thenGoto && !elseGoto) {
+        out.push({
+          ...s,
+          then: eliminateExitGotos(s.then, exit),
+          ...(s.else ? { else: eliminateExitGotos(s.else, exit) } : {}),
+        });
+        continue;
+      }
+      if (thenGoto && elseGoto) {
+        throw new DiffExecError(`layer C: GO TO ${exit} in both branches of an IF (unsupported early-exit shape)`);
+      }
+      if (thenGoto) {
+        if (!tailGotoTo(s.then, exit)) {
+          throw new DiffExecError(`layer C: GO TO ${exit} nested below the tail of an IF then-branch (needs stage-2 flag elimination)`);
+        }
+        out.push({
+          ...s,
+          then: eliminateExitGotos(s.then.slice(0, -1), exit),
+          else: eliminateExitGotos([...(s.else ?? []), ...rest], exit),
+        });
+      } else {
+        if (!tailGotoTo(s.else ?? [], exit)) {
+          throw new DiffExecError(`layer C: GO TO ${exit} nested below the tail of an IF else-branch (needs stage-2 flag elimination)`);
+        }
+        out.push({
+          ...s,
+          then: eliminateExitGotos([...s.then, ...rest], exit),
+          else: eliminateExitGotos((s.else ?? []).slice(0, -1), exit),
+        });
+      }
+      return out; // the statements after this IF were consumed into a branch
+    }
+    out.push(s); // any other kind carries no GO TO
+  }
+  return out;
+}
+
 /** Inline PERFORMed paragraphs so paths are enumerated over one statement tree. */
 export function inlineStatements(stmts: Statement[], paras: Map<string, Paragraph>, stack: string[]): Statement[] {
   const out: Statement[] = [];
@@ -451,7 +531,11 @@ export function inlineStatements(stmts: Statement[], paras: Map<string, Paragrap
           `layer C: PERFORM cycle through ${s.target}${s.thru ? ` THRU ${s.thru}` : ""}; loops need fixpoint machinery`,
         );
       }
-      out.push(...inlineStatements(rangeStatements(names, paras), paras, [...stack, ...names]));
+      let body = inlineStatements(rangeStatements(names, paras), paras, [...stack, ...names]);
+      // A PERFORM <s> THRU <exit> range is where the sound GO-TO-exit idiom is
+      // rewritten into if/else: the range's THRU endpoint is the return target.
+      if (s.thru) body = eliminateExitGotos(body, s.thru);
+      out.push(...body);
     } else if (s.kind === "if") {
       out.push({
         ...s,
@@ -705,6 +789,10 @@ function execute(stmts: Statement[], state: PathState, ctx: ExecCtx, out: PathSt
         break; // flow-neutral for the symbolic store
       case "perform":
         break; // already inlined; unresolved targets have no body to run
+      case "go-to":
+        // Sound GO-TO-exit is rewritten to if/else in inlineStatements before
+        // execution; reaching one here means an unhandled shape slipped through.
+        throw new DiffExecError(`layer C: GO TO ${s.target} survived structured elimination`);
       default: {
         const never: never = s;
         throw new DiffExecError(`layer C: unsupported statement kind ${(never as Statement).kind}`);

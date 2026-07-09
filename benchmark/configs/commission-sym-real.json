@@ -1,0 +1,19 @@
+{
+  "$comment": "Layer C for COMMISSION vs the real GnuCOBOL harness image. The PERFORM CALC-COMM THRU CALC-EXIT range is inlined and its GO TO CALC-EXIT early return is structurally eliminated into an if/else, so Layer C enumerates the capped path and the completion-bonus path. The ROUNDED base commission (WS-SALES * 7.5 / 100) yields a source*constant rounding half-boundary obligation solved by congruence; the WS-COMMISSION > WS-CAP test yields a branch boundary at sales ~ 6666.67.",
+  "legacy": {
+    "image": "legacymind/legacy-commission",
+    "label": "COBOL 85 COMMISSION (GnuCOBOL via harness image legacymind/legacy-commission)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/commission/migrate/candidate-a", "Commission"],
+    "label": "Java 21 commission (migrated candidate A)"
+  },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "symbolic": {
+    "ir": "../../out/ir/COMMISSION.ir.json",
+    "stdinFields": ["WS-REP-ID", "WS-SALES"],
+    "baseCase": ["REP00001", "5000.00"],
+    "maxBoundarySolutions": 5
+  }
+}

@@ -73,6 +73,7 @@ import io.proleap.cobol.asg.metamodel.procedure.move.MoveToStatement;
 import io.proleap.cobol.asg.metamodel.procedure.perform.PerformProcedureStatement;
 import io.proleap.cobol.asg.metamodel.procedure.perform.PerformStatement;
 import io.proleap.cobol.asg.metamodel.procedure.stop.StopStatement;
+import io.proleap.cobol.asg.metamodel.procedure.gotostmt.GoToStatement;
 import io.proleap.cobol.asg.metamodel.call.Call;
 import io.proleap.cobol.asg.params.CobolParserParams;
 import io.proleap.cobol.asg.params.impl.CobolParserParamsImpl;
@@ -453,6 +454,11 @@ public class ProLeapFrontend {
 				}
 			}
 
+			// Soundness gate for GO TO: only the structured early-exit of a plain
+			// PERFORM THRU range survives; every other shape is enumerated as
+			// unsupported here so IR-completeness keeps implying verify-soundness.
+			gateGotos(paragraphs);
+
 			if (!unsupported.isEmpty()) {
 				return null;
 			}
@@ -767,6 +773,35 @@ public class ProLeapFrontend {
 				final Map<String, Object> m = new LinkedHashMap<>();
 				m.put("kind", "goback");
 				m.put("text", "GOBACK");
+				m.put("span", span(ctx));
+				out.add(m);
+				return;
+			}
+			case GO_TO: {
+				// A plain GO TO <paragraph> is lowered faithfully to a go-to node;
+				// whether it is a SOUND early-exit (the only shape the verifier
+				// admits) is decided by gateGotos() once every paragraph and
+				// PERFORM range is known. GO TO ... DEPENDING ON is a computed
+				// jump outside the subset and is rejected here.
+				final GoToStatement gt = (GoToStatement) s;
+				if (gt.getGoToType() != GoToStatement.GoToType.SIMPLE || gt.getSimple() == null) {
+					reject(ctx, "GO TO ... DEPENDING ON (computed jump)");
+					return;
+				}
+				final Call proc = gt.getSimple().getProcedureCall();
+				if (proc == null || proc.getName() == null) {
+					reject(ctx, "GO TO with no resolvable procedure target");
+					return;
+				}
+				final String target = proc.getName().toUpperCase();
+				if (!ID_ONLY.matcher(target).matches()) {
+					reject(ctx, "GO TO target \"" + target + "\" is not representable in the IR");
+					return;
+				}
+				final Map<String, Object> m = new LinkedHashMap<>();
+				m.put("kind", "go-to");
+				m.put("target", target);
+				m.put("text", textOf(ctx));
 				m.put("span", span(ctx));
 				out.add(m);
 				return;
@@ -1419,6 +1454,124 @@ public class ProLeapFrontend {
 					collectPerformEdges((List<?>) stmt.get("then"), from, edges);
 					if (stmt.get("else") != null) {
 						collectPerformEdges((List<?>) stmt.get("else"), from, edges);
+					}
+				}
+			}
+		}
+
+		// ------------------------------------------------------------------
+		// GO TO soundness gate
+		// ------------------------------------------------------------------
+		//
+		// Stage 1 admits exactly one GO TO shape: the structured early-exit of
+		// a plain PERFORM <s> THRU <exit> range. A GO TO <exit> is sound iff
+		//   - <exit> is a real paragraph whose body is a pure EXIT terminator
+		//     (empty or a lone EXIT), so "jump to exit then return" == "return";
+		//   - <exit> is NOT the THRU endpoint of any looping PERFORM (there a
+		//     GO TO would mean continue-this-iteration, not return);
+		//   - some plain PERFORM <s> THRU <exit> range lexically encloses the
+		//     GO TO's paragraph as a forward jump (index(s) <= index(P) < index(exit)).
+		// Everything else is enumerated as unsupported so IR-completeness keeps
+		// implying verify-soundness, and the layer-C rewrite stays total.
+
+		/** Collect THRU ranges: plain PERFORM into `plainRanges` ({start,exit}); loop PERFORM exits into `loopExits`. */
+		void collectRanges(final List<?> stmts, final List<String[]> plainRanges, final Set<String> loopExits) {
+			for (final Object so : stmts) {
+				final Map<?, ?> s = (Map<?, ?>) so;
+				final String kind = (String) s.get("kind");
+				final Object thru = s.get("thru");
+				if (thru != null) {
+					if ("perform".equals(kind)) {
+						plainRanges.add(new String[] { (String) s.get("target"), (String) thru });
+					} else {
+						loopExits.add((String) thru); // perform-times / perform-until / perform-varying
+					}
+				}
+				if ("if".equals(kind)) {
+					collectRanges((List<?>) s.get("then"), plainRanges, loopExits);
+					if (s.get("else") != null) {
+						collectRanges((List<?>) s.get("else"), plainRanges, loopExits);
+					}
+				}
+			}
+		}
+
+		/** Collect GO TO sites (target + source line) in a statement list, recursing into IFs. */
+		void collectGotos(final List<?> stmts, final List<String[]> out) {
+			for (final Object so : stmts) {
+				final Map<?, ?> s = (Map<?, ?>) so;
+				final String kind = (String) s.get("kind");
+				if ("go-to".equals(kind)) {
+					out.add(new String[] { (String) s.get("target"),
+							String.valueOf(((Map<?, ?>) s.get("span")).get("startLine")) });
+				} else if ("if".equals(kind)) {
+					collectGotos((List<?>) s.get("then"), out);
+					if (s.get("else") != null) {
+						collectGotos((List<?>) s.get("else"), out);
+					}
+				}
+			}
+		}
+
+		/** A paragraph is a pure EXIT terminator when its body is empty or a single EXIT statement. */
+		boolean isPureExit(final String name, final List<Object> paragraphs) {
+			for (final Object po : paragraphs) {
+				final Map<?, ?> pm = (Map<?, ?>) po;
+				if (name.equals(pm.get("name"))) {
+					final List<?> st = (List<?>) pm.get("statements");
+					return st.isEmpty() || (st.size() == 1 && "exit".equals(((Map<?, ?>) st.get(0)).get("kind")));
+				}
+			}
+			return false;
+		}
+
+		void gateGotos(final List<Object> paragraphs) {
+			final List<String[]> plainRanges = new ArrayList<>();
+			final Set<String> loopExits = new LinkedHashSet<>();
+			for (final Object po : paragraphs) {
+				collectRanges((List<?>) ((Map<?, ?>) po).get("statements"), plainRanges, loopExits);
+			}
+			for (final Object po : paragraphs) {
+				final Map<?, ?> pm = (Map<?, ?>) po;
+				final String pname = (String) pm.get("name");
+				final List<String[]> gotos = new ArrayList<>();
+				collectGotos((List<?>) pm.get("statements"), gotos);
+				for (final String[] g : gotos) {
+					final String exit = g[0];
+					final String line = g[1];
+					if (!paragraphNames.contains(exit)) {
+						unsupported.add("GO TO " + exit + " targets a name that is not a paragraph (line " + line + ")");
+						continue;
+					}
+					if (!isPureExit(exit, paragraphs)) {
+						unsupported.add("GO TO " + exit
+								+ " whose target paragraph is not a pure EXIT terminator; only structured early-exit is supported (line "
+								+ line + ")");
+						continue;
+					}
+					if (loopExits.contains(exit)) {
+						unsupported.add("GO TO " + exit
+								+ " is the exit of a looping PERFORM THRU range (continue-semantics, not early return) (line "
+								+ line + ")");
+						continue;
+					}
+					final int pIdx = paragraphOrder.indexOf(pname);
+					final int exitIdx = paragraphOrder.indexOf(exit);
+					boolean governed = false;
+					for (final String[] r : plainRanges) {
+						if (!exit.equals(r[1])) {
+							continue;
+						}
+						final int sIdx = paragraphOrder.indexOf(r[0]);
+						if (sIdx >= 0 && exitIdx >= 0 && sIdx <= pIdx && pIdx < exitIdx) {
+							governed = true;
+							break;
+						}
+					}
+					if (!governed) {
+						unsupported.add("GO TO " + exit
+								+ " is not the forward exit of an enclosing plain PERFORM THRU range containing this paragraph (line "
+								+ line + ")");
 					}
 				}
 			}

@@ -70,6 +70,13 @@ export type Statement =
   | { kind: "goback"; text: string; span: Span }
   /** EXIT: no-op paragraph terminator (proleap engine only; flow-neutral in every layer). */
   | { kind: "exit"; text: string; span: Span }
+  /**
+   * GO TO <paragraph> (proleap engine only). Accepted only as the structured
+   * early-exit of an enclosing PERFORM <s> THRU <target> range; the frontend
+   * rejects every other shape. Layer C/D eliminate it into if/else inside
+   * inlineStatements before execution, so no verifier engine sees it directly.
+   */
+  | { kind: "go-to"; target: string; text: string; span: Span }
   /** PERFORM loops (proleap engine only; TEST BEFORE semantics). `thru` marks a THRU paragraph range. */
   | { kind: "perform-times"; target: string; thru?: string; times: OperandExpr; text: string; span: Span }
   | { kind: "perform-until"; target: string; thru?: string; condition: OperandExpr; text: string; span: Span }
