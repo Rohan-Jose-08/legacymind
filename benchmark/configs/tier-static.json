@@ -1,0 +1,7 @@
+{
+  "$comment": "Layer D for TIER: static data-flow equivalence between the IR and migrated candidate A. The EVALUATE lowers to nested IF/ELSE on the legacy side, so DISCOUNT unions all four branch flows (rates 15/10/5, shift 2, half-up rounding, plus the MOVE 0 constant), mirrored by the Java-side extractor's if-branch union.",
+  "static": {
+    "ir": "../../out/ir/TIER.ir.json",
+    "modernJava": "../../out/bench/tier/migrate/candidate-a/Tier.java"
+  }
+}

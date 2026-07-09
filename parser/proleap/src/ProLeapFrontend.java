@@ -74,6 +74,10 @@ import io.proleap.cobol.asg.metamodel.procedure.perform.PerformProcedureStatemen
 import io.proleap.cobol.asg.metamodel.procedure.perform.PerformStatement;
 import io.proleap.cobol.asg.metamodel.procedure.stop.StopStatement;
 import io.proleap.cobol.asg.metamodel.procedure.gotostmt.GoToStatement;
+import io.proleap.cobol.asg.metamodel.procedure.evaluate.EvaluateStatement;
+import io.proleap.cobol.asg.metamodel.procedure.evaluate.WhenPhrase;
+import io.proleap.cobol.asg.metamodel.procedure.evaluate.When;
+import io.proleap.cobol.asg.metamodel.procedure.evaluate.Condition;
 import io.proleap.cobol.asg.metamodel.call.Call;
 import io.proleap.cobol.asg.params.CobolParserParams;
 import io.proleap.cobol.asg.params.impl.CobolParserParamsImpl;
@@ -855,6 +859,9 @@ public class ProLeapFrontend {
 				}
 				return;
 			}
+			case EVALUATE:
+				lowerEvaluate((EvaluateStatement) s, out);
+				return;
 			default:
 				reject(ctx, type + " statement");
 			}
@@ -1288,6 +1295,108 @@ public class ProLeapFrontend {
 				out.put("else", lowerStatements(s.getElse().getStatements()));
 			}
 			return out;
+		}
+
+		/**
+		 * EVALUATE is pure structured sugar: it lowers to a nested if/else chain
+		 * over the existing `if` IR, so the verifiers need no EVALUATE awareness.
+		 * Sound stage-1 subset: a single subject (no ALSO), one WHEN test per
+		 * phrase (no OR), and either
+		 *   - EVALUATE <subject> WHEN <value>  ->  IF <subject> = <value>, or
+		 *   - EVALUATE TRUE     WHEN <cond>     ->  IF <cond>,
+		 * with an optional WHEN OTHER as the innermost else. THRU ranges, WHEN
+		 * ANY, WHEN NOT, boolean-literal WHENs, EVALUATE FALSE, and mixed
+		 * subject/condition forms are rejected — never mis-lowered.
+		 */
+		void lowerEvaluate(final EvaluateStatement e, final List<Object> out) {
+			final ParserRuleContext ctx = e.getCtx();
+			if (!e.getAlsoSelects().isEmpty()) {
+				reject(ctx, "EVALUATE ... ALSO (multiple subjects)");
+				return;
+			}
+			if (e.getSelect() == null || e.getSelect().getSelectValueStmt() == null) {
+				reject(ctx, "EVALUATE without a resolvable subject");
+				return;
+			}
+			final String subject = textOf(e.getSelect().getSelectValueStmt().getCtx());
+			if ("FALSE".equals(subject)) {
+				reject(ctx, "EVALUATE FALSE");
+				return;
+			}
+			final boolean conditionMode = "TRUE".equals(subject);
+			if (!conditionMode && subject.contains(" ")) {
+				reject(ctx, "EVALUATE subject \"" + subject + "\" (qualified/subscripted or expression)");
+				return;
+			}
+			final List<String> condTexts = new ArrayList<>();
+			final List<List<Object>> thenBodies = new ArrayList<>();
+			for (final WhenPhrase wp : e.getWhenPhrases()) {
+				if (wp.getWhens().size() != 1) {
+					reject(ctx, "EVALUATE WHEN with multiple values in one phrase (OR)");
+					return;
+				}
+				final When w = wp.getWhens().get(0);
+				if (!w.getAlsoConditions().isEmpty()) {
+					reject(ctx, "EVALUATE WHEN ... ALSO");
+					return;
+				}
+				final Condition c = w.getCondition();
+				if (c.isNot()) {
+					reject(ctx, "EVALUATE WHEN NOT");
+					return;
+				}
+				final Condition.ConditionType ct = c.getConditionType();
+				final String cond;
+				if (conditionMode) {
+					if (ct != Condition.ConditionType.CONDITION || c.getConditionValueStmt() == null) {
+						reject(ctx, "EVALUATE TRUE WHEN " + ct + " (only a relational/condition WHEN is supported)");
+						return;
+					}
+					cond = textOf(c.getConditionValueStmt().getCtx());
+				} else {
+					if (ct != Condition.ConditionType.VALUE || c.getValue() == null
+							|| c.getValue().getValueStmt() == null) {
+						reject(ctx, "EVALUATE <subject> WHEN " + ct + " (THRU range / ANY / condition outside the subset)");
+						return;
+					}
+					cond = subject + " = " + textOf(c.getValue().getValueStmt().getCtx());
+				}
+				condTexts.add(expandConditionNames(cond));
+				thenBodies.add(lowerStatements(wp.getStatements()));
+			}
+			final List<Object> otherBody = e.getWhenOther() != null
+					? lowerStatements(e.getWhenOther().getStatements())
+					: new ArrayList<>();
+			if (condTexts.isEmpty()) {
+				// EVALUATE with only WHEN OTHER (or empty): just the other body.
+				for (final Object m : otherBody) {
+					out.add(m);
+				}
+				return;
+			}
+			// Fold phrases from last to first into a nested if/else chain; WHEN
+			// OTHER (possibly empty) is the innermost else.
+			List<Object> elseChain = otherBody;
+			for (int i = condTexts.size() - 1; i >= 0; i--) {
+				final Map<String, Object> ifNode = new LinkedHashMap<>();
+				ifNode.put("kind", "if");
+				final Map<String, Object> cond = new LinkedHashMap<>();
+				cond.put("text", condTexts.get(i));
+				cond.put("refs", refsIn(condTexts.get(i)));
+				ifNode.put("condition", cond);
+				ifNode.put("then", thenBodies.get(i));
+				ifNode.put("text", "IF " + condTexts.get(i));
+				ifNode.put("span", span(ctx));
+				if (!elseChain.isEmpty()) {
+					ifNode.put("else", elseChain); // key order: else serializes last
+				}
+				final List<Object> wrapped = new ArrayList<>();
+				wrapped.add(ifNode);
+				elseChain = wrapped;
+			}
+			for (final Object m : elseChain) {
+				out.add(m);
+			}
 		}
 
 		Map<String, Object> lowerPerform(final PerformStatement s) {

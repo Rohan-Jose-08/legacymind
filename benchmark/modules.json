@@ -106,5 +106,17 @@
     "staticConfig": "benchmark/configs/senior-static.json",
     "migrateOut": "out/bench/senior/migrate",
     "certCopy": "out/certification-senior.json"
+  },
+  {
+    "id": "tier",
+    "programId": "TIER",
+    "source": "benchmark/modules/tier.cbl",
+    "imageTag": "legacymind/legacy-tier",
+    "diffConfig": "benchmark/configs/tier-diff-real.json",
+    "propConfig": "benchmark/configs/tier-prop-real.json",
+    "symConfig": "benchmark/configs/tier-sym-real.json",
+    "staticConfig": "benchmark/configs/tier-static.json",
+    "migrateOut": "out/bench/tier/migrate",
+    "certCopy": "out/certification-tier.json"
   }
 ]

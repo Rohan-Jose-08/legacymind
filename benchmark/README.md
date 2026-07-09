@@ -79,6 +79,22 @@ boundary to drive, covered dynamically by layers A and B). Candidate B
 reads the age threshold as a strict `> 65` instead of `>= 65`, so the
 exactly-65 senior is missed; layer B catches it on the age-65 boundary.
 
+The TIER module proves the EVALUATE lowering: a tiered order discount
+selected by `EVALUATE TRUE` over three `>=` amount bands (15%/10%/5%,
+WHEN OTHER none), each applied ROUNDED to the cent. EVALUATE is pure
+structured sugar — the frontend expands the sound subset (single
+subject, one WHEN test per phrase, `EVALUATE <subject> WHEN <value>` as
+equality and `EVALUATE TRUE WHEN <condition>` as the condition, WHEN
+OTHER as the innermost else) into the nested IF/ELSE chain the IR
+already has, so no verifier needs EVALUATE awareness; ALSO, THRU
+ranges, WHEN-value OR lists, ANY, NOT, and EVALUATE FALSE are rejected.
+Layer C enumerates all four band paths and verifies every obligation —
+the three band boundaries and all three per-band rounding half-cent
+boundaries (the congruence search seeded above each band's threshold) —
+producing a gap-free certificate. Candidate B reads the top band as a
+strict `> 1000`, dropping the exactly-1000 order to the 10% band;
+layer B catches it on the boundary case.
+
 ## Running
 
 ```

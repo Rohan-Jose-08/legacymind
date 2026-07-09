@@ -1,0 +1,19 @@
+{
+  "$comment": "Layer A for TIER vs the real GnuCOBOL harness image. Generated amounts span all four EVALUATE bands (>=1000, >=500, >=100, other) plus the PIC 9(7)V99 range, so band selection and per-band rounding are exercised by seeded random inputs alone.",
+  "legacy": {
+    "image": "legacymind/legacy-tier",
+    "label": "COBOL 85 TIER (GnuCOBOL via harness image legacymind/legacy-tier)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/tier/migrate/candidate-a", "Tier"],
+    "label": "Java 21 tier (migrated candidate A)"
+  },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "generator": {
+    "ir": "../../out/ir/TIER.ir.json",
+    "stdinFields": ["WS-ID-TEXT", "WS-AMOUNT"],
+    "count": 200,
+    "seed": 20260709
+  }
+}

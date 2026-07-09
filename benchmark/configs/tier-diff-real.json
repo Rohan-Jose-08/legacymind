@@ -1,0 +1,22 @@
+{
+  "$comment": "Layer B selection cases for TIER vs the real GnuCOBOL harness image. The EVALUATE TRUE band selector uses >= boundaries; a candidate that reads the top band as a strict > 1000 gives an order of exactly 1000 the 10% rate (100.00) instead of 15% (150.00), so the 1000 case catches it. Cases cover each band, both band boundaries, a half-cent ROUNDED discount, and a below-threshold order.",
+  "legacy": {
+    "image": "legacymind/legacy-tier",
+    "label": "COBOL 85 TIER (GnuCOBOL via harness image legacymind/legacy-tier)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/tier/migrate/candidate-a", "Tier"],
+    "label": "Java 21 tier (migrated candidate A)"
+  },
+  "protocol": { "input": "stdin-lines", "output": "kv-lines" },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "cases": [
+    { "id": "band3", "stdin": ["ORD001", "1500.00"] },
+    { "id": "band3-boundary", "stdin": ["ORD002", "1000.00"] },
+    { "id": "band2-top", "stdin": ["ORD003", "999.99"] },
+    { "id": "band2-boundary", "stdin": ["ORD004", "500.00"] },
+    { "id": "band1-halfcent", "stdin": ["ORD005", "200.10"] },
+    { "id": "below", "stdin": ["ORD006", "99.99"] }
+  ]
+}
