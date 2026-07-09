@@ -118,5 +118,17 @@
     "staticConfig": "benchmark/configs/tier-static.json",
     "migrateOut": "out/bench/tier/migrate",
     "certCopy": "out/certification-tier.json"
+  },
+  {
+    "id": "invoice",
+    "programId": "INVOICE",
+    "source": "benchmark/modules/invoice.cbl",
+    "imageTag": "legacymind/legacy-invoice",
+    "diffConfig": "benchmark/configs/invoice-diff-real.json",
+    "propConfig": "benchmark/configs/invoice-prop-real.json",
+    "symConfig": "benchmark/configs/invoice-sym-real.json",
+    "staticConfig": "benchmark/configs/invoice-static.json",
+    "migrateOut": "out/bench/invoice/migrate",
+    "certCopy": "out/certification-invoice.json"
   }
 ]

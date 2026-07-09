@@ -1,0 +1,7 @@
+{
+  "$comment": "Layer D for INVOICE: static data-flow equivalence between the IR and migrated candidate A. The legacy walk covers the full fall-through chain (MAIN -> CALC -> PRINT), so FEE's flow (input 1, constant 2.5, shift 2, half-up) and the STATUS/INV_ID flows union across both program-exit paths, mirrored by the Java side.",
+  "static": {
+    "ir": "../../out/ir/INVOICE.ir.json",
+    "modernJava": "../../out/bench/invoice/migrate/candidate-a/Invoice.java"
+  }
+}

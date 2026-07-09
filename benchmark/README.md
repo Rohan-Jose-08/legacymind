@@ -95,6 +95,21 @@ producing a gap-free certificate. Candidate B reads the top band as a
 strict `> 1000`, dropping the exactly-1000 order to the 10% band;
 layer B catches it on the boundary case.
 
+The INVOICE module proves top-level fall-through and conditional early
+exit — the control-flow shape the verifier layers previously modeled
+only by accident of every prior module ending its entry paragraph with
+STOP RUN. INVOICE has no PERFORM at all: MAIN-PARA validates (a zero
+amount prints STATUS=EMPTY and executes STOP RUN *inside the IF*),
+otherwise control falls through into CALC-PARA (2.5% fee, ROUNDED) and
+on into PRINT-PARA. Layers C and D now execute the whole top-level
+paragraph chain and honor STOP RUN/GOBACK as a path terminator, so
+layer C enumerates exactly the early-exit and billed paths — the fee's
+rounding obligation exists at all only because the chain reaches
+CALC-PARA — and layer D unions flows across the chain. Candidate B
+drops the early return (the classic missing Java `return` when
+flattening COBOL paragraph flow) and bills the empty invoice; layer B
+catches it on every zero-amount case.
+
 ## Running
 
 ```
@@ -139,6 +154,16 @@ in the order found. They are the sales pitch:
    (an "IR-complete" file that shouldn't be is a red flag by
    construction); the frontend now rejects stray division-level
    statements explicitly, and IR-complete dropped from 10 to an honest 5.
+5. **Layer D caught a flow hidden behind a string literal (2026-07-09).**
+   The first INVOICE candidate A appended the STATUS value as a bare
+   string literal (`.append("READY")`), so the modern side derived the
+   STATUS output from nothing while the COBOL moved the value through
+   WS-STATUS. Layer D reported the key as present only on the legacy
+   side and refused the module — statically, with zero execution. The
+   faithful translation routes the status through a variable, mirroring
+   the MOVE; re-verified 3/3 keys and certified. Layers A and B alone
+   would have passed it (identical bytes on stdout): only the data-flow
+   layer sees the difference between a value and its derivation.
 
 ## Parser-coverage sweep
 

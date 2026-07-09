@@ -440,6 +440,30 @@ export function rangeStatements(names: string[], paras: Map<string, Paragraph>):
   return out;
 }
 
+/**
+ * Top-level fall-through chain: COBOL execution starts at the entry paragraph
+ * and falls through paragraph to paragraph in source order until a STOP RUN /
+ * GOBACK ends it. The chain concatenates paragraphs from the entry onward,
+ * stopping after the first paragraph whose LAST top-level statement is an
+ * unconditional stop-run/goback (paragraphs beyond it are unreachable by
+ * fall-through — they remain reachable via PERFORM, which inlining handles).
+ * Conditional early exits inside a paragraph are handled at execution time:
+ * execute() terminates the path at any stop-run/goback it reaches.
+ */
+export function topLevelChain(paras: Map<string, Paragraph>, entry: string): Statement[] {
+  const order = [...paras.keys()];
+  const start = order.indexOf(entry);
+  if (start < 0) throw new DiffExecError(`entry paragraph ${entry} not found`);
+  const out: Statement[] = [];
+  for (let i = start; i < order.length; i++) {
+    const p = paras.get(order[i]!)!;
+    out.push(...p.statements);
+    const last = p.statements[p.statements.length - 1];
+    if (last && (last.kind === "stop-run" || last.kind === "goback")) break;
+  }
+  return out;
+}
+
 /** True if any GO TO targeting `exit` appears anywhere in `stmts` (nested IFs included). */
 function containsGotoTo(stmts: Statement[], exit: string): boolean {
   for (const s of stmts) {
@@ -580,9 +604,23 @@ function loopBody(ctx: ExecCtx, s: LoopStmt): Statement[] {
         `layer C: ACCEPT inside PERFORM loop body ${key} — stdin positions become iteration-dependent (needs the record protocol)`,
       );
     }
+    if (containsStop(body)) {
+      throw new DiffExecError(
+        `layer C: STOP RUN/GOBACK inside PERFORM loop body ${key} — mid-loop program exit is not modeled by the unroller yet`,
+      );
+    }
     ctx.loopBodies.set(key, body);
   }
   return body;
+}
+
+/** True if a stop-run/goback appears in `stmts` or nested IF branches. */
+function containsStop(stmts: Statement[]): boolean {
+  for (const s of stmts) {
+    if (s.kind === "stop-run" || s.kind === "goback") return true;
+    if (s.kind === "if" && (containsStop(s.then) || containsStop(s.else ?? []))) return true;
+  }
+  return false;
 }
 
 function containsAccept(stmts: Statement[], ctx: ExecCtx, seen: Set<string>): boolean {
@@ -784,9 +822,13 @@ function execute(stmts: Statement[], state: PathState, ctx: ExecCtx, out: PathSt
       }
       case "display":
       case "exit":
+        break; // flow-neutral for the symbolic store
       case "stop-run":
       case "goback":
-        break; // flow-neutral for the symbolic store
+        // Program end: this path is complete here — statements after it (the
+        // rest of an IF fork, or fall-through paragraphs) never run on it.
+        out.push(state);
+        return;
       case "perform":
         break; // already inlined; unresolved targets have no body to run
       case "go-to":
@@ -1179,9 +1221,13 @@ export function runSymExec(configPath: string, outPath: string): number {
 
   // --- 1. symbolic execution over every path ---------------------------------
   const paras = new Map(ir.procedureDivision.paragraphs.map((p) => [p.name, p]));
-  const entry = paras.get(ir.controlFlow.entry);
-  if (!entry) throw new DiffExecError(`layer C: entry paragraph ${ir.controlFlow.entry} not found`);
-  const tree = inlineStatements(entry.statements, paras, [ir.controlFlow.entry]);
+  if (!paras.has(ir.controlFlow.entry)) {
+    throw new DiffExecError(`layer C: entry paragraph ${ir.controlFlow.entry} not found`);
+  }
+  // Execute the full top-level fall-through chain, not just the entry
+  // paragraph: COBOL control falls through paragraph to paragraph until a
+  // STOP RUN/GOBACK, which execute() honors as a path terminator.
+  const tree = inlineStatements(topLevelChain(paras, ir.controlFlow.entry), paras, [ir.controlFlow.entry]);
 
   const acceptOrder: string[] = [];
   const collectAccepts = (stmts: Statement[]): void => {

@@ -36,7 +36,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { DataItem, ModuleIR, Statement } from "../parse/parser.js";
 import { DiffExecError } from "./diffexec.js";
-import { inlineStatements, rangeNames, rangeStatements } from "./symexec.js";
+import { inlineStatements, rangeNames, rangeStatements, topLevelChain } from "./symexec.js";
 import { findItem } from "./propgen.js";
 
 export interface StaticConfig {
@@ -211,9 +211,12 @@ export function extractLegacyFlows(ir: ModuleIR): { outputs: Map<string, FlowRec
     }
   };
 
-  const entry = paras.get(ir.controlFlow.entry);
-  if (!entry) throw new DiffExecError(`layer D: entry paragraph ${ir.controlFlow.entry} not found`);
-  walk(inlineStatements(entry.statements, paras, [ir.controlFlow.entry]));
+  if (!paras.has(ir.controlFlow.entry)) {
+    throw new DiffExecError(`layer D: entry paragraph ${ir.controlFlow.entry} not found`);
+  }
+  // Walk the full top-level fall-through chain (mirrors layer C): outputs
+  // printed in fall-through paragraphs belong to the legacy flow union too.
+  walk(inlineStatements(topLevelChain(paras, ir.controlFlow.entry), paras, [ir.controlFlow.entry]));
   return { outputs, varFlows };
 }
 

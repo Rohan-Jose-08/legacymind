@@ -1,0 +1,19 @@
+{
+  "$comment": "Layer C for INVOICE vs the real GnuCOBOL harness image. This module has NO PERFORM: control falls through MAIN-PARA -> CALC-PARA -> PRINT-PARA, and the zero-amount validation STOP RUN inside MAIN's IF ends the program early. Layer C executes the full top-level paragraph chain and honors STOP RUN as a path terminator, so it enumerates exactly two paths (early-exit and billed), verifies the WS-AMOUNT = 0 branch boundary, and solves the fee's rounding half-cent boundary on the billed path.",
+  "legacy": {
+    "image": "legacymind/legacy-invoice",
+    "label": "COBOL 85 INVOICE (GnuCOBOL via harness image legacymind/legacy-invoice)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/invoice/migrate/candidate-a", "Invoice"],
+    "label": "Java 21 invoice (migrated candidate A)"
+  },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "symbolic": {
+    "ir": "../../out/ir/INVOICE.ir.json",
+    "stdinFields": ["WS-ID-TEXT", "WS-AMOUNT"],
+    "baseCase": ["INV00001", "1000.00"],
+    "maxBoundarySolutions": 5
+  }
+}

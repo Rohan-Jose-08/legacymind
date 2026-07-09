@@ -1,0 +1,22 @@
+{
+  "$comment": "Layer B selection cases for INVOICE vs the real GnuCOBOL harness image. The conditional STOP RUN in MAIN-PARA means a zero amount prints only INV_ID/STATUS=EMPTY and exits; a candidate that drops the early return bills the empty invoice (extra READY/FEE output, STATUS overwritten) and is caught on every zero case. Cases cover the early-exit path, the billed fall-through path, a half-cent ROUNDED fee, a tiny fee, and the capacity region.",
+  "legacy": {
+    "image": "legacymind/legacy-invoice",
+    "label": "COBOL 85 INVOICE (GnuCOBOL via harness image legacymind/legacy-invoice)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/invoice/migrate/candidate-a", "Invoice"],
+    "label": "Java 21 invoice (migrated candidate A)"
+  },
+  "protocol": { "input": "stdin-lines", "output": "kv-lines" },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "cases": [
+    { "id": "billed", "stdin": ["INV00001", "1000.00"] },
+    { "id": "empty", "stdin": ["INV00002", "0.00"] },
+    { "id": "half-cent", "stdin": ["INV00003", "100.20"] },
+    { "id": "tiny", "stdin": ["INV00004", "1.00"] },
+    { "id": "capacity-region", "stdin": ["INV00005", "9999999.99"] },
+    { "id": "empty-bare-zero", "stdin": ["INV00006", "0"] }
+  ]
+}
