@@ -1,0 +1,7 @@
+{
+  "$comment": "Layer D for GRADE: static data-flow equivalence between the IR and migrated candidate A. The PASS output derives from the constant flag assignments (0/1) and BONUS from the ROUNDED score*rate/100 form; both sides must agree per output key.",
+  "static": {
+    "ir": "../../out/ir/GRADE.ir.json",
+    "modernJava": "../../out/bench/grade/migrate/candidate-a/Grade.java"
+  }
+}

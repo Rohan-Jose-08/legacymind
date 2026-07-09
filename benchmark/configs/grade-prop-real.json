@@ -1,0 +1,19 @@
+{
+  "$comment": "Layer A for GRADE vs the real GnuCOBOL harness image. Generated scores sweep both sides of the pass mark and the odd scores that land the bonus on a half-cent.",
+  "legacy": {
+    "image": "legacymind/legacy-grade",
+    "label": "COBOL 85 GRADE (GnuCOBOL via harness image legacymind/legacy-grade)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/grade/migrate/candidate-a", "Grade"],
+    "label": "Java 21 grade (migrated candidate A)"
+  },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "generator": {
+    "ir": "../../out/ir/GRADE.ir.json",
+    "stdinFields": ["WS-STUDENT-ID", "WS-SCORE"],
+    "count": 200,
+    "seed": 20260709
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "$comment": "Layer B selection cases for GRADE vs the real GnuCOBOL harness image. The pass mark is >= 60, so score exactly 60 catches a strict-> off-by-one; a half-cent bonus (score 61 -> 1.525 -> 1.53) exercises ROUNDED; the 88-level PASSING gate is read on every case.",
+  "legacy": {
+    "image": "legacymind/legacy-grade",
+    "label": "COBOL 85 GRADE (GnuCOBOL via harness image legacymind/legacy-grade)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/grade/migrate/candidate-a", "Grade"],
+    "label": "Java 21 grade (migrated candidate A)"
+  },
+  "protocol": { "input": "stdin-lines", "output": "kv-lines" },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "cases": [
+    { "id": "boundary-pass", "stdin": ["STU00001", "60"] },
+    { "id": "boundary-fail", "stdin": ["STU00002", "59"] },
+    { "id": "half-cent", "stdin": ["STU00003", "61"] },
+    { "id": "top", "stdin": ["STU00004", "100"] },
+    { "id": "zero", "stdin": ["STU00005", "0"] }
+  ]
+}

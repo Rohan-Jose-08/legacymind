@@ -70,5 +70,17 @@
     "staticConfig": "benchmark/configs/taxcalc-static.json",
     "migrateOut": "out/bench/taxcalc/migrate",
     "certCopy": "out/certification-taxcalc.json"
+  },
+  {
+    "id": "grade",
+    "programId": "GRADE",
+    "source": "benchmark/modules/grade.cbl",
+    "imageTag": "legacymind/legacy-grade",
+    "diffConfig": "benchmark/configs/grade-diff-real.json",
+    "propConfig": "benchmark/configs/grade-prop-real.json",
+    "symConfig": "benchmark/configs/grade-sym-real.json",
+    "staticConfig": "benchmark/configs/grade-static.json",
+    "migrateOut": "out/bench/grade/migrate",
+    "certCopy": "out/certification-grade.json"
   }
 ]

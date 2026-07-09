@@ -100,12 +100,25 @@ module, certified against real GnuCOBOL):
   by the TAXCALC benchmark module, whose candidate B mistranslates the
   THRU range as a single `PERFORM` and is caught.
 
+## 88-level condition names (2026-07-09)
+
+- **`88 <name> VALUE <literal>`** under an elementary item is pure sugar:
+  the frontend captures `name -> (parent item, value)`, never emits the
+  88 as storage, and expands references — a bare `name` in a condition
+  becomes `parent = value`, `NOT name` becomes `parent <> value`. So the
+  verifiers never see condition names; they see ordinary comparisons.
+  Multiple values (`VALUES a b`) and a `THRU` range are rejected (they
+  need OR / range predicates the verifier subset does not model). Proven
+  by the GRADE benchmark module, whose `PASSING` flag gates a bonus.
+
 ## Backlog
 
 - GO TO — unstructured jumps need CFG-level reasoning that range
   flattening does not cover.
 - REDEFINES (storage aliasing), qualified/subscripted references,
   OCCURS.
+- SET `<condition-name>` TO TRUE — the write side of 88-levels (lowers
+  to a MOVE of the value into the parent); the read side is done.
 - File I/O statement family (OPEN/READ/WRITE/CLOSE) — arrives with the
   record/file trace-capture protocol.
 - Rust IR core per the founding spec, behind the same JSON contract.

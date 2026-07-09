@@ -1,0 +1,19 @@
+{
+  "$comment": "Layer C for GRADE vs the real GnuCOBOL harness image. Two branches: WS-SCORE >= 60 (input boundary, solved 59/60/61) and the 88-level PASSING expanded to WS-PASS-FLAG = 1 (a derived flag, constant 0 or 1 on each score branch, so the impossible flag/score combinations are proven infeasible). The bonus is a source*constant ROUNDED form solved by congruence on the passing path.",
+  "legacy": {
+    "image": "legacymind/legacy-grade",
+    "label": "COBOL 85 GRADE (GnuCOBOL via harness image legacymind/legacy-grade)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/grade/migrate/candidate-a", "Grade"],
+    "label": "Java 21 grade (migrated candidate A)"
+  },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "symbolic": {
+    "ir": "../../out/ir/GRADE.ir.json",
+    "stdinFields": ["WS-STUDENT-ID", "WS-SCORE"],
+    "baseCase": ["STU00001", "72"],
+    "maxBoundarySolutions": 5
+  }
+}

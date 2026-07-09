@@ -26,6 +26,18 @@ TEST BEFORE loop as an "idiomatic" do-while — the classic off-by-one
 loop-count migration bug — and the curated zero-term case (which must
 accrue nothing) rejects it deterministically.
 
+The GRADE module proves the 88-level condition-name lowering: a
+pass/fail-with-bonus routine where `88 PASSING VALUE 1` names the
+pass flag and `IF PASSING` reads it (expanded to `WS-PASS-FLAG = 1`
+before any verifier sees it). Layer C verifies the `score >= 60`
+boundary and proves the impossible flag/score combinations infeasible;
+it honestly discloses two obligations it cannot symbolically realize
+(the derived boolean flag has no input boundary, and the bonus
+half-cent falls below the passing-score constraint where the congruence
+solver's first solutions cannot reach) — both covered dynamically by
+layers A and B. Candidate B carries a `>` off-by-one at the pass mark,
+caught by the curated score-60 case.
+
 The TAXCALC module proves the wave-3 PERFORM THRU range lowering:
 combined payroll withholding (state + federal + local) computed by
 `PERFORM CALC-STATE THRU CALC-LOCAL`, a range of three ROUNDED

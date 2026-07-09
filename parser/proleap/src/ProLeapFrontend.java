@@ -53,6 +53,7 @@ import io.proleap.cobol.asg.metamodel.Program;
 import io.proleap.cobol.asg.metamodel.ProgramUnit;
 import io.proleap.cobol.asg.metamodel.data.DataDivision;
 import io.proleap.cobol.asg.metamodel.data.datadescription.DataDescriptionEntry;
+import io.proleap.cobol.asg.metamodel.data.datadescription.DataDescriptionEntryCondition;
 import io.proleap.cobol.asg.metamodel.data.datadescription.DataDescriptionEntryGroup;
 import io.proleap.cobol.asg.metamodel.data.datadescription.UsageClause;
 import io.proleap.cobol.asg.metamodel.data.datadescription.ValueClause;
@@ -226,6 +227,8 @@ public class ProLeapFrontend {
 		final Set<String> paragraphNames = new LinkedHashSet<>();
 		/** Paragraph names in source order — the domain for PERFORM THRU ranges. */
 		final List<String> paragraphOrder = new ArrayList<>();
+		/** 88-level condition name -> {parent item name, value literal}. Pure sugar: expanded into comparisons. */
+		final Map<String, String[]> conditionNames = new LinkedHashMap<>();
 
 		/** preprocessed line number (1-based) -> original line number; null when inexact. */
 		int[] lineMap;
@@ -606,6 +609,13 @@ public class ProLeapFrontend {
 			item.put("span", span(ctx));
 			final List<Object> children = new ArrayList<>();
 			for (final DataDescriptionEntry child : g.getDataDescriptionEntries()) {
+				// 88-level condition names are pure sugar: capture the
+				// name -> (this item = value) mapping and expand references
+				// to comparisons later; never emit them as storage.
+				if (child.getDataDescriptionEntryType() == DataDescriptionEntry.DataDescriptionEntryType.CONDITION) {
+					captureConditionName(child, name);
+					continue;
+				}
 				final Object c = lowerDataItem(child, path);
 				if (c != null) {
 					children.add(c);
@@ -616,6 +626,62 @@ public class ProLeapFrontend {
 				declared.add(name);
 			}
 			return item;
+		}
+
+		/** Record an 88-level condition name against its parent item's single VALUE. */
+		void captureConditionName(final DataDescriptionEntry child, final String parent) {
+			final ParserRuleContext ctx = ((io.proleap.cobol.asg.metamodel.ASGElement) child).getCtx();
+			if (child.getName() == null) {
+				reject(ctx, "88-level condition name without a name");
+				return;
+			}
+			final String cn = child.getName().toUpperCase();
+			if (!ID_ONLY.matcher(cn).matches()) {
+				reject(ctx, "88-level condition name \"" + cn + "\" is not representable in the IR");
+				return;
+			}
+			final ValueClause vc = ((DataDescriptionEntryCondition) child).getValueClause();
+			final List<ValueInterval> intervals = vc == null ? List.of() : vc.getValueIntervals();
+			// Only a single VALUE lowers soundly to `parent = value`; multiple
+			// values or a THRU range would need OR / range predicates the
+			// verifier subset does not model, so they are rejected.
+			if (intervals.size() != 1 || intervals.get(0).getToValueStmt() != null) {
+				reject(ctx, "88-level " + cn + " with multiple values or a THRU range");
+				return;
+			}
+			final String value = textOf(intervals.get(0).getFromValueStmt().getCtx());
+			conditionNames.put(cn, new String[] { parent, value });
+		}
+
+		/**
+		 * Expand 88-level condition names in a condition into the equivalent
+		 * comparison on the parent item: a bare name becomes `parent = value`,
+		 * and `NOT name` becomes `parent <> value`. Non-condition tokens pass
+		 * through unchanged, so an ordinary condition is returned verbatim.
+		 */
+		String expandConditionNames(final String text) {
+			if (conditionNames.isEmpty()) {
+				return text;
+			}
+			final List<String> out = new ArrayList<>();
+			final Matcher m = TOKEN.matcher(text);
+			while (m.find()) {
+				final String tok = m.group();
+				final String[] cn = conditionNames.get(tok.toUpperCase());
+				if (cn == null) {
+					out.add(tok);
+				} else if (!out.isEmpty() && out.get(out.size() - 1).equals("NOT")) {
+					out.remove(out.size() - 1);
+					out.add(cn[0]);
+					out.add("<>");
+					out.add(cn[1]);
+				} else {
+					out.add(cn[0]);
+					out.add("=");
+					out.add(cn[1]);
+				}
+			}
+			return String.join(" ", out);
 		}
 
 		// --- paragraphs and statements ---
@@ -1114,7 +1180,7 @@ public class ProLeapFrontend {
 				reject(ctx, "IF ... NEXT SENTENCE");
 				return null;
 			}
-			final String condText = textOf(s.getCondition().getCtx());
+			final String condText = expandConditionNames(textOf(s.getCondition().getCtx()));
 			final Map<String, Object> out = new LinkedHashMap<>();
 			out.put("kind", "if");
 			final Map<String, Object> cond = new LinkedHashMap<>();
@@ -1220,7 +1286,7 @@ public class ProLeapFrontend {
 				if (thru != null) {
 					out.put("thru", thru);
 				}
-				out.put("condition", operandExpr(textOf(u.getCondition().getCtx())));
+				out.put("condition", operandExpr(expandConditionNames(textOf(u.getCondition().getCtx()))));
 				break;
 			}
 			default: { // VARYING
@@ -1261,7 +1327,7 @@ public class ProLeapFrontend {
 				varying.put("from", operandExpr(from));
 				varying.put("by", operandExpr(by));
 				out.put("varying", varying);
-				out.put("condition", operandExpr(textOf(ph.getUntil().getCondition().getCtx())));
+				out.put("condition", operandExpr(expandConditionNames(textOf(ph.getUntil().getCondition().getCtx()))));
 				break;
 			}
 			}

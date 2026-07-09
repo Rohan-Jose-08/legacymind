@@ -1,6 +1,6 @@
 {
   "tool": "legacymind parse-sweep",
-  "generatedAt": "2026-07-08T18:57:58.931Z",
+  "generatedAt": "2026-07-09T08:58:08.383Z",
   "corpus": "C:/Users/Ender/AppData/Local/Temp/claude/C--Users-Ender-startup/7a40dc33-ad23-428b-805e-9e71bcc7aa45/scratchpad/proleap-cobol-parser",
   "commit": "d1bfe75bdd6d480f70c74c6345bcc02610ac30d3",
   "total": 759,
@@ -190,10 +190,6 @@
       {
         "reason": "ADD receiving field \"…\" (qualified/subscripted)",
         "count": 230
-      },
-      {
-        "reason": "88-level condition name",
-        "count": 195
       },
       {
         "reason": "START statement",
@@ -436,6 +432,50 @@
         "count": 4
       },
       {
+        "reason": "88-level B with multiple values or a THRU range",
+        "count": 4
+      },
+      {
+        "reason": "88-level E with multiple values or a THRU range",
+        "count": 4
+      },
+      {
+        "reason": "88-level F with multiple values or a THRU range",
+        "count": 4
+      },
+      {
+        "reason": "88-level G with multiple values or a THRU range",
+        "count": 4
+      },
+      {
+        "reason": "88-level IF-D40A with multiple values or a THRU range",
+        "count": 4
+      },
+      {
+        "reason": "88-level IF-D40B with multiple values or a THRU range",
+        "count": 4
+      },
+      {
+        "reason": "88-level COND-1 with multiple values or a THRU range",
+        "count": 4
+      },
+      {
+        "reason": "88-level COND-2 with multiple values or a THRU range",
+        "count": 4
+      },
+      {
+        "reason": "88-level COND-3 with multiple values or a THRU range",
+        "count": 4
+      },
+      {
+        "reason": "88-level A80 with multiple values or a THRU range",
+        "count": 4
+      },
+      {
+        "reason": "88-level C80 with multiple values or a THRU range",
+        "count": 4
+      },
+      {
         "reason": "PERFORM ... WITH TEST AFTER",
         "count": 4
       },
@@ -452,6 +492,42 @@
         "count": 3
       },
       {
+        "reason": "88-level CON-YEAR with multiple values or a THRU range",
+        "count": 2
+      },
+      {
+        "reason": "88-level CON-MONTH with multiple values or a THRU range",
+        "count": 2
+      },
+      {
+        "reason": "88-level CON-DAY with multiple values or a THRU range",
+        "count": 2
+      },
+      {
+        "reason": "88-level CON-HOUR with multiple values or a THRU range",
+        "count": 2
+      },
+      {
+        "reason": "88-level CON-MIN with multiple values or a THRU range",
+        "count": 2
+      },
+      {
+        "reason": "88-level CON-SEC with multiple values or a THRU range",
+        "count": 2
+      },
+      {
+        "reason": "88-level CON-HUNDSEC with multiple values or a THRU range",
+        "count": 2
+      },
+      {
+        "reason": "88-level CON-GREENW with multiple values or a THRU range",
+        "count": 2
+      },
+      {
+        "reason": "88-level CON-OFFSET with multiple values or a THRU range",
+        "count": 2
+      },
+      {
         "reason": "PERFORM TIMES operand \"…\" (qualified/subscripted)",
         "count": 2
       },
@@ -465,6 +541,18 @@
       },
       {
         "reason": "LOCAL-STORAGE SECTION",
+        "count": 2
+      },
+      {
+        "reason": "88-level MANN with multiple values or a THRU range",
+        "count": 2
+      },
+      {
+        "reason": "88-level FRAU with multiple values or a THRU range",
+        "count": 2
+      },
+      {
+        "reason": "88-level EGAL with multiple values or a THRU range",
         "count": 2
       },
       {
@@ -505,6 +593,10 @@
       },
       {
         "reason": "stacked/nested program units (3)",
+        "count": 1
+      },
+      {
+        "reason": "88-level CON-OFFSET2 with multiple values or a THRU range",
         "count": 1
       },
       {
