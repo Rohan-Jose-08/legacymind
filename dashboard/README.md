@@ -39,13 +39,29 @@ directory; the dashboard lists every `certification*.json` it finds there.
 
 ## Pages
 
-- `/` — certificate list: verdict badges, per-layer status chips, disclosed
-  gap count, per-module and aggregate LLM cost.
-- `/certs/[slug]` — one certificate: provenance (source/target hashes,
-  model, candidate), layer table with coverage, the gaps panel, remaining
-  unverified branches (layer C unrealized obligations and uncovered paths),
-  and evidence downloads (certificate, layer reports, selection report,
-  certified Java source).
+- `/` — certificate list: verdict badges, a **signature badge per
+  certificate**, per-layer status chips, disclosed gap count, an
+  aggregate "signatures verified" tile, and per-module/aggregate LLM cost.
+- `/certs/[slug]` — one certificate: an **Authenticity** section
+  (signature verdict, algorithm, signer key vs the trusted key, content
+  digest), provenance (source/target hashes, model, candidate), layer
+  table with coverage, the gaps panel, remaining unverified branches
+  (layer C unrealized obligations and uncovered paths), and evidence
+  downloads (certificate, layer reports, selection report, certified Java
+  source).
+
+## Signature verification
+
+`lib/verify.ts` verifies each certificate's Ed25519 signature server-side
+— the same two checks as `legacymind verify-cert`: the signature covers
+the canonical certificate body (integrity — any edit breaks it), and the
+embedded public key is pinned against the trusted key (provenance). The
+canonical form mirrors `cli/src/sign.ts` exactly, so a CLI-signed
+certificate verifies here byte-for-byte. The trusted public key defaults
+to `../keys/legacymind-dev-ed25519.pub.pem`; override with
+`LEGACYMIND_TRUSTED_KEY` to pin a production key. A tampered or
+wrongly-signed certificate renders a red **SIGNATURE INVALID** /
+**UNTRUSTED SIGNER** badge instead of quietly displaying as valid.
 
 ## Failure modes
 
@@ -58,6 +74,6 @@ directory; the dashboard lists every `certification*.json` it finds there.
 - Artifacts that fail to parse are skipped silently on the list page —
   acceptable for v1, but a corrupt certificate should eventually surface
   as its own error state.
-- The dashboard trusts `LEGACYMIND_DATA_DIR` content. It is a viewer for
-  artifacts you produced; it does not validate integrity hashes yet
-  (planned: verify `integrity.hash` and show a tamper warning).
+- Signature verification runs server-side on every render; a certificate
+  whose signature does not verify is still listed, but flagged red rather
+  than hidden — a tampered artifact must be visible, not silently dropped.

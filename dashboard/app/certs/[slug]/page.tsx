@@ -6,9 +6,10 @@ import {
   loadLayerCReport,
   resolveArtifact,
   toDataRelative,
+  verifyCertSignature,
   type LayerName,
 } from "@/lib/data";
-import { Badge, Header, Mono, shortHash } from "../../ui";
+import { Badge, Header, Mono, shortHash, SignatureBadge } from "../../ui";
 
 const LAYER_TECH: Record<LayerName, string> = {
   A: "Property-based testing (seeded generation + shrinking)",
@@ -22,6 +23,7 @@ export default async function CertPage({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const cert = loadCertification(slug);
   if (!cert) notFound();
+  const signature = verifyCertSignature(cert);
   const layerC = loadLayerCReport(cert);
 
   const downloads: { label: string; rel: string | null }[] = [
@@ -51,6 +53,7 @@ export default async function CertPage({ params }: { params: Promise<{ slug: str
         <div className="mt-3 flex items-center gap-4">
           <h1 className="text-2xl font-bold">{cert.module.programId}</h1>
           <Badge value={cert.verdict} />
+          <SignatureBadge sig={signature} withKey />
         </div>
 
         <section className="mt-6 rounded-lg border border-stone-300 bg-white p-5">
@@ -66,9 +69,36 @@ export default async function CertPage({ params }: { params: Promise<{ slug: str
             <dd>{cert.target.model} — candidate {cert.target.candidate} of {cert.selection.candidatesEvaluated}</dd>
             <dt className="text-stone-500">LLM cost</dt>
             <dd>${(cert.selection.totalCostUsd ?? 0).toFixed(4)} (cached replays are free)</dd>
-            <dt className="text-stone-500">Integrity</dt>
-            <dd><Mono>{shortHash(cert.integrity.hash)}</Mono> ({cert.integrity.algorithm})</dd>
           </dl>
+        </section>
+
+        <section className="mt-6 rounded-lg border border-stone-300 bg-white p-5">
+          <div className="flex items-center gap-3">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">Authenticity</h2>
+            <SignatureBadge sig={signature} />
+          </div>
+          <dl className="mt-3 grid grid-cols-[12rem_1fr] gap-y-2 text-sm">
+            <dt className="text-stone-500">Signature</dt>
+            <dd>{signature.reason}</dd>
+            <dt className="text-stone-500">Algorithm</dt>
+            <dd>{cert.integrity.algorithm ?? "unsigned"}{cert.integrity.canonicalization ? ` over ${cert.integrity.canonicalization}` : ""}</dd>
+            <dt className="text-stone-500">Signer key</dt>
+            <dd>
+              <Mono>{signature.keyId}</Mono>
+              {signature.trustedKeyId
+                ? signature.keyTrusted
+                  ? " — matches the trusted key"
+                  : ` — does NOT match the trusted key ${signature.trustedKeyId}`
+                : " — no trusted key configured"}
+            </dd>
+            <dt className="text-stone-500">Content digest</dt>
+            <dd><Mono>{shortHash(cert.integrity.contentSha256 ?? cert.integrity.hash)}</Mono></dd>
+          </dl>
+          <p className="mt-3 text-xs text-stone-400">
+            Verified server-side, the same check as <Mono>legacymind verify-cert</Mono>: the
+            Ed25519 signature covers the certificate body, and the signer&apos;s public key is
+            pinned against the trusted key. Any edit to the certificate breaks the signature.
+          </p>
         </section>
 
         <section className="mt-6 rounded-lg border border-stone-300 bg-white p-5">

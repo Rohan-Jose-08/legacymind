@@ -1,22 +1,24 @@
 import { withAuth } from "@workos-inc/authkit-nextjs";
 import Link from "next/link";
 import { listCertifications, DATA_DIR } from "@/lib/data";
-import { Badge, Header, Mono } from "./ui";
+import { Badge, Header, Mono, SignatureBadge } from "./ui";
 
 export default async function Home() {
   const { user } = await withAuth({ ensureSignedIn: true });
   const certs = listCertifications();
 
   const certified = certs.filter((c) => c.cert.verdict === "CERTIFIED").length;
+  const signed = certs.filter((c) => c.signature.ok).length;
   const totalCost = certs.reduce((s, c) => s + (c.cert.selection.totalCostUsd ?? 0), 0);
 
   return (
     <>
       <Header email={user.email} />
       <main className="mx-auto max-w-5xl px-6 py-8">
-        <div className="mb-8 grid grid-cols-3 gap-4">
+        <div className="mb-8 grid grid-cols-4 gap-4">
           <Stat label="Certificates" value={String(certs.length)} />
           <Stat label="Certified" value={`${certified} / ${certs.length}`} />
+          <Stat label="Signatures verified" value={`${signed} / ${certs.length}`} />
           <Stat label="LLM cost (metered)" value={`$${totalCost.toFixed(4)}`} />
         </div>
 
@@ -28,7 +30,7 @@ export default async function Home() {
           </div>
         ) : (
           <ul className="space-y-4">
-            {certs.map(({ slug, cert }) => (
+            {certs.map(({ slug, cert, signature }) => (
               <li key={slug}>
                 <Link
                   href={`/certs/${slug}`}
@@ -38,6 +40,7 @@ export default async function Home() {
                     <div className="flex items-center gap-3">
                       <span className="text-lg font-bold">{cert.module.programId}</span>
                       <Badge value={cert.verdict} />
+                      <SignatureBadge sig={signature} />
                     </div>
                     <span className="text-sm text-stone-500">
                       {new Date(cert.generatedAt).toLocaleString()}

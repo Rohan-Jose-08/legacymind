@@ -51,6 +51,58 @@ export function Badge({ value }: { value: string }) {
   );
 }
 
+export interface SignatureStatus {
+  present: boolean;
+  signatureValid: boolean;
+  keyTrusted: boolean | null;
+  keyId: string;
+  trustedKeyId: string | null;
+  ok: boolean;
+  reason: string;
+}
+
+/**
+ * Signature verdict badge. Green only when the signature is valid AND the
+ * signer is the trusted key; red on tampering or an untrusted signer;
+ * amber when valid but provenance is unchecked; grey when unsigned.
+ */
+export function SignatureBadge({ sig, withKey = false }: { sig: SignatureStatus; withKey?: boolean }) {
+  let label: string;
+  let style: string;
+  if (!sig.present) {
+    label = "UNSIGNED";
+    style = "bg-stone-100 text-stone-500 border-stone-300";
+  } else if (!sig.signatureValid) {
+    label = "SIGNATURE INVALID";
+    style = "bg-red-100 text-red-800 border-red-300";
+  } else if (sig.keyTrusted === false) {
+    label = "UNTRUSTED SIGNER";
+    style = "bg-red-100 text-red-800 border-red-300";
+  } else if (sig.keyTrusted === null) {
+    label = "SIGNED (unpinned)";
+    style = "bg-amber-100 text-amber-800 border-amber-300";
+  } else {
+    label = "SIGNATURE VERIFIED";
+    style = "bg-emerald-100 text-emerald-800 border-emerald-300";
+  }
+  return (
+    <span className={`inline-flex items-center gap-1 rounded border px-2 py-0.5 text-xs font-semibold ${style}`}>
+      <LockGlyph />
+      {label}
+      {withKey && sig.present ? <span className="font-mono font-normal opacity-70">{sig.keyId}</span> : null}
+    </span>
+  );
+}
+
+function LockGlyph() {
+  return (
+    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+      <rect x="4" y="11" width="16" height="10" rx="2" />
+      <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+    </svg>
+  );
+}
+
 export function Mono({ children }: { children: React.ReactNode }) {
   return <code className="rounded bg-stone-100 px-1 py-0.5 font-mono text-xs">{children}</code>;
 }

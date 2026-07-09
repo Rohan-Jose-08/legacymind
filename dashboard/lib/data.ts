@@ -9,6 +9,7 @@
 
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
+import { verifyCertSignature, type Integrity, type SignatureStatus } from "./verify";
 
 export const DATA_DIR = path.resolve(
   process.cwd(),
@@ -45,13 +46,16 @@ export interface Certification {
     candidatesEvaluated: number | null;
     totalCostUsd: number | null;
   };
-  integrity: { algorithm: string; hash: string; note: string };
+  integrity: Integrity;
 }
 
 export interface CertEntry {
   slug: string;
   cert: Certification;
+  signature: SignatureStatus;
 }
+
+export { verifyCertSignature, type SignatureStatus, type Integrity };
 
 const SLUG_RE = /^certification[a-z0-9-]*$/;
 
@@ -62,7 +66,9 @@ export function listCertifications(): CertEntry[] {
     if (!/^certification[a-z0-9-]*\.json$/.test(f)) continue;
     try {
       const cert = JSON.parse(readFileSync(path.join(DATA_DIR, f), "utf8")) as Certification;
-      if (cert.tool === "legacymind certify") entries.push({ slug: f.replace(/\.json$/, ""), cert });
+      if (cert.tool === "legacymind certify") {
+        entries.push({ slug: f.replace(/\.json$/, ""), cert, signature: verifyCertSignature(cert) });
+      }
     } catch {
       // unreadable artifact: skip rather than break the dashboard
     }

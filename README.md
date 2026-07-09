@@ -22,7 +22,7 @@ the product; the LLM behind the transpiler is a swappable commodity.
 | `benchmark/` | Reproducible multi-module benchmark vs real GnuCOBOL (6/6 certified + signed, incl. THRU-range TAXCALC, loop-shaped COMPOUND, stub-unparseable LEDGER) + external parser-coverage sweep; see `benchmark/RESULTS.md` and the findings log in `benchmark/README.md` | **built** |
 | `parser/` | Production ingestion: `parser/proleap` runs the ProLeap ANTLR4 COBOL85 grammar + reference-format preprocessor (JVM, jars committed) and lowers the ASG to IR — 97.1% front-end acceptance on the 759-file external corpus (vs stub's 0%); wave 1 added arithmetic verbs, period-terminated IF, level-77, EXIT, FILLER; wave 2 PERFORM TIMES/UNTIL/VARYING loops (TEST BEFORE); wave 3 PERFORM THRU ranges; Rust IR core still planned | **built (frontend + lowering waves 1-3)** |
 | `harness/` | Sandboxed legacy execution: GnuCOBOL Docker image (program compiled in at build time; `--network none`, `--rm`, libfaketime for clock injection) + mock-validation configs | **built (GnuCOBOL side)** |
-| `dashboard/` | Next.js 15 + Tailwind 4 verification dashboard behind WorkOS SSO: per-module status, coverage envelope, cost meter, unverified branches, evidence downloads | **built (v1)** |
+| `dashboard/` | Next.js 15 + Tailwind 4 verification dashboard behind WorkOS SSO: per-module status, coverage envelope, cost meter, unverified branches, evidence downloads, and **server-side Ed25519 signature verification** (a tampered certificate shows a red badge, not a silent pass) | **built (v1)** |
 
 ## Quickstart (the demo)
 
@@ -125,8 +125,8 @@ node cli/dist/main.js verify --config examples/payroll-diff-fixed.json --out out
     nothing) so the demo is reproducible offline; production passes a
     KMS-held key via `--signing-key`. The signature covers a sorted-key
     canonical form, so a certificate can be re-serialized and still
-    verify. (Dashboard-side signature verification is the remaining
-    follow-on.)
+    verify. The dashboard verifies signatures server-side too, so a
+    tampered certificate is flagged in the UI rather than shown as valid.
 11. **Dashboard v1 uses WorkOS AuthKit** (founder decision, 2026-07-05) in
     secure-by-default middleware mode — every route except the OAuth
     callback requires a session. It is a read-only viewer over the
