@@ -1,0 +1,19 @@
+{
+  "$comment": "Layer A for RETAIL vs the real GnuCOBOL harness image. Generated amounts span the PIC 9(7)V99 range; the small-value bias exercises the whole-dollar settle region where double vs single rounding differ most.",
+  "legacy": {
+    "image": "legacymind/legacy-retail",
+    "label": "COBOL 85 RETAIL (GnuCOBOL via harness image legacymind/legacy-retail)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/retail/migrate/candidate-a", "Retail"],
+    "label": "Java 21 retail (migrated candidate A)"
+  },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "generator": {
+    "ir": "../../out/ir/RETAIL.ir.json",
+    "stdinFields": ["WS-ORD-ID", "WS-AMOUNT"],
+    "count": 200,
+    "seed": 20260710
+  }
+}

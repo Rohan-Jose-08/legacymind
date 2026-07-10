@@ -154,5 +154,17 @@
     "staticConfig": "benchmark/configs/transfer-static.json",
     "migrateOut": "out/bench/transfer/migrate",
     "certCopy": "out/certification-transfer.json"
+  },
+  {
+    "id": "retail",
+    "programId": "RETAIL",
+    "source": "benchmark/modules/retail.cbl",
+    "imageTag": "legacymind/legacy-retail",
+    "diffConfig": "benchmark/configs/retail-diff-real.json",
+    "propConfig": "benchmark/configs/retail-prop-real.json",
+    "symConfig": "benchmark/configs/retail-sym-real.json",
+    "staticConfig": "benchmark/configs/retail-static.json",
+    "migrateOut": "out/bench/retail/migrate",
+    "certCopy": "out/certification-retail.json"
   }
 ]

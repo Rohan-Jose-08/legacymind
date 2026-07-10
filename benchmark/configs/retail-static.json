@@ -1,0 +1,7 @@
+{
+  "$comment": "Layer D for RETAIL: static data-flow equivalence between the IR and migrated candidate A. DISC/TAX/TOTAL all derive from input 1 with constants 90/825 (and shifts 2/4), both roundings half-up; TIER is control flow over TOTAL.",
+  "static": {
+    "ir": "../../out/ir/RETAIL.ir.json",
+    "modernJava": "../../out/bench/retail/migrate/candidate-a/Retail.java"
+  }
+}

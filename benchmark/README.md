@@ -127,11 +127,11 @@ reject/capped/standard paths — the capped-path witness and the capped
 half-cent obligations are realized by solving through the rounded
 store (an on-grid probe of the rounding's preimage for witnesses, and
 a congruence lower bound derived by inverting the rounding) — and
-verifies the zero-weight boundary and the cost rounding on every path.
-The cap boundary itself is honestly disclosed as unrealized: no
-on-grid weight lands 4.75·w within a half-cent of 200.00, so the
-boundary is proven unreachable rather than faked, and the dynamic
-layers cover the cap region. Candidate B drops the zero-weight guard
+verifies every obligation including the cap boundary itself: no
+on-grid weight lands 4.75·w exactly on 200.00, and the staircase
+search finds the nearest achievable points on each side (42.10 →
+199.98 and 42.11 → 200.02), yielding a gap-free certificate.
+Candidate B drops the zero-weight guard
 and prices the empty package; layer B catches it on every zero case.
 
 The TRANSFER module proves qualified data references: two account
@@ -154,6 +154,23 @@ the classic
 wrong-record bug: it credits approved transfers onto the source's
 1000.00 instead of the destination's 250.00 — DST_BAL off by exactly
 750.00, caught by layer B on every approved case.
+
+The RETAIL module proves nested exact rounding — the double-rounding
+chain `round₂(0.0825 · round₀(0.9 · amount))`: a 10% discount settled
+ROUNDED to the nearest whole dollar, then 8.25% tax ROUNDED to the
+cent on the settled amount. The symbolic engine keeps the exact form
+through both stores (previously a value through two rounded stores
+degraded to a fuzz band), so the TIER boundary sitting directly over
+the nested form (TOTAL > 500) is verified by the exact staircase
+search, and the dollar settle's half-unit boundary is congruence-
+solved. The outer tax half-boundary needs congruence over a rounded
+value (solve the settled-dollar congruence, then invert the inner
+rounding) — disclosed as unrealized and tracked as the next solver
+depth, covered dynamically. Candidate B "streamlines" the double
+rounding into one, taxing the unrounded discounted amount: whenever
+the dollar settle moves the base (10.56 → 9.504 settles to 10), the
+tax differs by whole cents (0.78 vs the correct 0.83) — caught by
+layer B on the curated settle cases.
 
 ## Running
 

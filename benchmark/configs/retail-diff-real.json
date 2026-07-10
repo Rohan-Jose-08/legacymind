@@ -1,0 +1,22 @@
+{
+  "$comment": "Layer B selection cases for RETAIL vs the real GnuCOBOL harness image. The double rounding (discount settled to whole dollars, tax on the settled amount) means a candidate that taxes the unrounded discounted value diverges by whole cents whenever the dollar settle moves the base: 10.56 -> 9.504 settles to 10, tax 0.83 vs 0.78. Cases cover both nested roundings, the 500.00 tier boundary from both sides, a tiny settle-up, and zero.",
+  "legacy": {
+    "image": "legacymind/legacy-retail",
+    "label": "COBOL 85 RETAIL (GnuCOBOL via harness image legacymind/legacy-retail)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/retail/migrate/candidate-a", "Retail"],
+    "label": "Java 21 retail (migrated candidate A)"
+  },
+  "protocol": { "input": "stdin-lines", "output": "kv-lines" },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "cases": [
+    { "id": "typical", "stdin": ["ORD00001", "100.00"] },
+    { "id": "settle-moves-tax", "stdin": ["ORD00002", "10.56"] },
+    { "id": "tier-high", "stdin": ["ORD00003", "513.34"] },
+    { "id": "tier-norm", "stdin": ["ORD00004", "512.22"] },
+    { "id": "tiny-settle-up", "stdin": ["ORD00005", "0.56"] },
+    { "id": "zero", "stdin": ["ORD00006", "0.00"] }
+  ]
+}

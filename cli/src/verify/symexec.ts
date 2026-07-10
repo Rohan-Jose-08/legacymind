@@ -157,7 +157,10 @@ interface RoundTerm {
   coeff: Rat;
   mode: "half-up" | "trunc";
   scale: number;
-  inner: Affine; // fuzz always 0 by construction
+  /** Drift-free by construction; may itself contain rounded terms — a value
+   *  flowing through NESTED rounded stores keeps its exact form (the fuzz
+   *  belt still widens per store, but exactness decides where fuzz cannot). */
+  inner: ExactForm;
 }
 
 interface ExactForm {
@@ -211,13 +214,34 @@ function ratRound(v: Rat, scale: number, mode: "half-up" | "trunc"): Rat {
   return rat(adj, m);
 }
 
-/** Evaluate an exact form at a full assignment. */
+/** Evaluate an exact form at a full assignment (recursing into nested rounds). */
 function evalExact(e: ExactForm, x: Assignment): Rat {
   let acc = evalAffine(e.affine, x);
   for (const r of e.rounds) {
-    acc = rAdd(acc, rMul(r.coeff, ratRound(evalAffine(r.inner, x), r.scale, r.mode)));
+    acc = rAdd(acc, rMul(r.coeff, ratRound(evalExact(r.inner, x), r.scale, r.mode)));
   }
   return acc;
+}
+
+/** All input variables appearing anywhere in an exact form. */
+function exactVarSet(e: ExactForm, out: Set<number> = new Set()): Set<number> {
+  for (const i of e.affine.terms.keys()) out.add(i);
+  for (const r of e.rounds) exactVarSet(r.inner, out);
+  return out;
+}
+
+/** True when every coefficient in the form is positive: the exact value is a
+ *  monotone nondecreasing staircase in each of its variables. */
+function exactMonotonePositive(e: ExactForm): boolean {
+  if (!rIsZero(e.affine.fuzz)) return false;
+  for (const c of e.affine.terms.values()) {
+    if (rCmp(c, R0) <= 0) return false;
+  }
+  for (const r of e.rounds) {
+    if (rCmp(r.coeff, R0) <= 0) return false;
+    if (!exactMonotonePositive(r.inner)) return false;
+  }
+  return true;
 }
 
 const affineConst = (c: Rat): Affine => ({ terms: new Map(), c, fuzz: R0 });
@@ -771,12 +795,14 @@ function store(state: PathState, ctx: ExecCtx, target: string, val: SymVal, roun
   } else {
     const u = ulpOf(scale);
     fuzz = rAdd(fuzz, rounded ? rDiv(u, { n: 2n, d: 1n }) : u);
-    // The stored value is exactly round(inner) when the incoming value is
-    // itself drift-free and affine; one more rounding level drops the form.
-    if (incoming && incoming.rounds.length === 0) {
+    // The stored value is exactly round(incoming) whenever the incoming value
+    // has an exact form — including one that already contains rounded terms:
+    // nested stores keep exactness (the fuzz belt still widens per store,
+    // but the exact form decides what fuzz margins cannot).
+    if (incoming) {
       exactForm = {
         affine: affineConst(R0),
-        rounds: [{ coeff: { n: 1n, d: 1n }, mode: rounded ? "half-up" : "trunc", scale, inner: incoming.affine }],
+        rounds: [{ coeff: { n: 1n, d: 1n }, mode: rounded ? "half-up" : "trunc", scale, inner: incoming }],
       };
     }
   }
@@ -1207,12 +1233,16 @@ function singleVarLowerBound(c: Constraint, j: number): Rat | null {
     return rel === ">" || rel === ">=" || rel === "=" ? xStar : null;
   }
   // --- k·round(a·x_j + b) with a constant or single-variable affine part ---
+  // (flat inner only: bound derivation through nested rounds is not needed —
+  // the caller's constraint filter still decides every candidate exactly)
   if (!c.exact || c.exact.rounds.length !== 1) return null;
   const ex = c.exact;
   if (!rIsZero(ex.affine.fuzz)) return null;
   const rt = ex.rounds[0]!;
-  if (!rIsZero(rt.inner.fuzz) || rt.inner.terms.size !== 1 || rIsZero(rt.coeff)) return null;
-  const a = rt.inner.terms.get(j);
+  if (rt.inner.rounds.length > 0) return null; // nested: skip bound derivation
+  const innerA = rt.inner.affine;
+  if (!rIsZero(innerA.fuzz) || innerA.terms.size !== 1 || rIsZero(rt.coeff)) return null;
+  const a = innerA.terms.get(j);
   if (a === undefined || rCmp(a, R0) <= 0) return null; // a<0 gives an upper bound; skip
   if (ex.affine.terms.size === 0) {
     // constant + k·round(a·x_j + b): invert the rounding exactly.
@@ -1223,7 +1253,7 @@ function singleVarLowerBound(c: Constraint, j: number): Rat | null {
     const g = ulpOf(rt.scale);
     const t = gridCeil(v, g, rel === ">"); // smallest admissible round(inner)
     const innerLo = rt.mode === "half-up" ? rSub(t, rDiv(g, { n: 2n, d: 1n })) : t;
-    return rDiv(rSub(innerLo, rt.inner.c), a);
+    return rDiv(rSub(innerLo, innerA.c), a);
   }
   // Mixed form over the SAME variable: A·x_j + C + k·round(a·x_j + b).
   // Linearized under-estimate: half-up rounding satisfies round(y) <= y + ½ulp
@@ -1237,7 +1267,7 @@ function singleVarLowerBound(c: Constraint, j: number): Rat | null {
   if (effOp !== ">" && effOp !== ">=" && effOp !== "=") return null;
   const slack = rt.mode === "half-up" ? rDiv(ulpOf(rt.scale), { n: 2n, d: 1n }) : R0;
   // A·x + C + k·(a·x + b + slack) >= 0  =>  x >= -(C + k·(b + slack)) / (A + k·a)
-  const num = rNeg(rAdd(ex.affine.c, rMul(rt.coeff, rAdd(rt.inner.c, slack))));
+  const num = rNeg(rAdd(ex.affine.c, rMul(rt.coeff, rAdd(innerA.c, slack))));
   return rDiv(num, rAdd(A, rMul(rt.coeff, a)));
 }
 
@@ -1590,17 +1620,18 @@ export function runSymExec(configPath: string, outPath: string): number {
         e[1].exact !== null &&
         e[1].exact.rounds.length === 1 &&
         e[1].exact.affine.terms.size === 0 &&
-        e[1].exact.rounds[0]!.inner.terms.size > 0,
+        e[1].exact.rounds[0]!.inner.rounds.length === 0 &&
+        e[1].exact.rounds[0]!.inner.affine.terms.size > 0,
     );
-    // Mixed form: an affine part AND one rounded term over the same single
-    // variable (amount + round(amount·rate) − limit) — a monotone staircase,
-    // searched exactly on the input grid.
+    // Single-variable monotone staircases: affine and rounded terms (nested
+    // included) over one input with positive coefficients — searched exactly
+    // on the input grid.
     const mixedSites = [...perPath.entries()].filter(
       (e): e is [number, { diff: Affine | null; exact: ExactForm }] =>
         e[1].exact !== null &&
-        e[1].exact.rounds.length === 1 &&
-        e[1].exact.affine.terms.size === 1 &&
-        e[1].exact.rounds[0]!.inner.terms.size === 1,
+        e[1].exact.rounds.length >= 1 &&
+        exactVarSet(e[1].exact).size === 1 &&
+        exactMonotonePositive(e[1].exact),
     );
     if (affineSites.length === 0 && roundSites.length === 0 && mixedSites.length === 0) {
       const any = [...perPath.values()].find((x) => x.diff !== null);
@@ -2045,6 +2076,7 @@ function solveThroughRounding(
 ): Assignment | null {
   const rt = exact.rounds[0]!;
   if (rIsZero(rt.coeff)) return null;
+  if (rt.inner.rounds.length > 0) return null; // nested inner: the staircase solver handles it
   const u = ulpOf(rt.scale);
   const step = rMul(rAbs(rt.coeff), u); // one representable move of the decision value
   const t = rMul(step, { n: offset, d: 1n });
@@ -2058,21 +2090,22 @@ function solveThroughRounding(
       : [v, rAdd(v, half)];
   for (const tA of innerTargets) {
     if (rCmp(tA, R0) < 0) continue;
-    const solved = solveEquality(rt.inner, tA, inputs, fixedCandidates, constraints);
+    const solved = solveEquality(rt.inner.affine, tA, inputs, fixedCandidates, constraints);
     if (solved) return solved;
   }
   return null;
 }
 
 /**
- * Boundary cases for a MIXED decision value A·x + C + k·round(a·x + b) over
- * one shared variable: the staircase is monotone nondecreasing when A, k, a
- * are all positive, so the zero crossing is found by exact binary search on
- * the input's PICTURE grid, evaluating the exact form at each probe — no
- * approximation anywhere. `offset` −1/0/+1 selects the largest input with a
- * negative decision value / an input landing exactly on zero / the smallest
- * input with a positive one. Every returned assignment satisfies the full
- * path constraint set.
+ * Boundary cases for a decision value that mixes affine and rounded terms
+ * over ONE variable — including NESTED rounded terms (round of a value that
+ * was itself rounded): with every coefficient positive the exact value is a
+ * monotone nondecreasing staircase in the input, so the zero crossing is
+ * found by exact binary search on the input's PICTURE grid, evaluating the
+ * exact form at each probe — no approximation anywhere. `offset` −1/0/+1
+ * selects the largest input with a negative decision value / an input
+ * landing exactly on zero / the smallest input with a positive one. Every
+ * returned assignment satisfies the full path constraint set.
  */
 function solveMixedRounding(
   exact: ExactForm,
@@ -2081,13 +2114,10 @@ function solveMixedRounding(
   fixedCandidates: Assignment[],
   constraints: Constraint[],
 ): Assignment | null {
-  if (exact.rounds.length !== 1 || exact.affine.terms.size !== 1 || !rIsZero(exact.affine.fuzz)) return null;
-  const rt = exact.rounds[0]!;
-  if (!rIsZero(rt.inner.fuzz) || rt.inner.terms.size !== 1) return null;
-  const [j, A] = [...exact.affine.terms.entries()][0]!;
-  const a = rt.inner.terms.get(j);
-  if (a === undefined) return null; // different variables: not a single-var staircase
-  if (rCmp(A, R0) <= 0 || rCmp(rt.coeff, R0) <= 0 || rCmp(a, R0) <= 0) return null; // monotone case only
+  if (exact.rounds.length === 0) return null;
+  const vars = exactVarSet(exact);
+  if (vars.size !== 1 || !exactMonotonePositive(exact)) return null;
+  const j = [...vars][0]!;
   const spec = inputs[j];
   if (!spec?.numeric) return null;
   const g = 10n ** BigInt(spec.scale);

@@ -1,0 +1,19 @@
+{
+  "$comment": "Layer C for RETAIL vs the real GnuCOBOL harness image. The value chain is NESTED rounding - round2(0.0825 * round0(0.9 * amount)) - which the engine now keeps as an exact recursive form instead of degrading to fuzz. The TIER split (TOTAL > 500) puts a branch boundary directly over the nested form, solved by the exact staircase search on the input grid; the discount's whole-dollar half-boundary is congruence-solved.",
+  "legacy": {
+    "image": "legacymind/legacy-retail",
+    "label": "COBOL 85 RETAIL (GnuCOBOL via harness image legacymind/legacy-retail)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/retail/migrate/candidate-a", "Retail"],
+    "label": "Java 21 retail (migrated candidate A)"
+  },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "symbolic": {
+    "ir": "../../out/ir/RETAIL.ir.json",
+    "stdinFields": ["WS-ORD-ID", "WS-AMOUNT"],
+    "baseCase": ["ORD00001", "100.00"],
+    "maxBoundarySolutions": 5
+  }
+}
