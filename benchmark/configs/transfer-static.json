@@ -1,0 +1,7 @@
+{
+  "$comment": "Layer D for TRANSFER: static data-flow equivalence between the IR and migrated candidate A. SRC_BAL unions the 1000.00 constant (power of ten, excluded) with the amount/fee flow (input 1, constant 1.25, shift 2, half-up); DST_BAL unions the 250.00 constant with the amount - a wrong-record candidate would surface as a constants mismatch here too.",
+  "static": {
+    "ir": "../../out/ir/TRANSFER.ir.json",
+    "modernJava": "../../out/bench/transfer/migrate/candidate-a/Transfer.java"
+  }
+}

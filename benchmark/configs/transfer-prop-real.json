@@ -1,0 +1,19 @@
+{
+  "$comment": "Layer A for TRANSFER vs the real GnuCOBOL harness image. Generated amounts span the PIC 9(7)V99 range, exercising both the approved region (amount + fee <= 1000.00) and the declined region by seeded random inputs alone.",
+  "legacy": {
+    "image": "legacymind/legacy-transfer",
+    "label": "COBOL 85 TRANSFER (GnuCOBOL via harness image legacymind/legacy-transfer)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/transfer/migrate/candidate-a", "Transfer"],
+    "label": "Java 21 transfer (migrated candidate A)"
+  },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "generator": {
+    "ir": "../../out/ir/TRANSFER.ir.json",
+    "stdinFields": ["WS-XFER-ID", "WS-AMOUNT"],
+    "count": 200,
+    "seed": 20260710
+  }
+}

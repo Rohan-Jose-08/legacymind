@@ -1,0 +1,19 @@
+{
+  "$comment": "Layer C for TRANSFER vs the real GnuCOBOL harness image. The qualified BAL references resolve to unique names (SRC-ACCT-BAL / DST-ACCT-BAL); the source balance is a never-assigned VALUE constant, so the decline condition WS-AMOUNT + WS-FEE > 1000.00 is affine-plus-one-rounded-term - the boundary is inverted through the ROUNDED fee store, and the fee's half-cent congruence is solved on both the approved and declined paths.",
+  "legacy": {
+    "image": "legacymind/legacy-transfer",
+    "label": "COBOL 85 TRANSFER (GnuCOBOL via harness image legacymind/legacy-transfer)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/transfer/migrate/candidate-a", "Transfer"],
+    "label": "Java 21 transfer (migrated candidate A)"
+  },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "symbolic": {
+    "ir": "../../out/ir/TRANSFER.ir.json",
+    "stdinFields": ["WS-XFER-ID", "WS-AMOUNT"],
+    "baseCase": ["XFR00001", "100.00"],
+    "maxBoundarySolutions": 5
+  }
+}

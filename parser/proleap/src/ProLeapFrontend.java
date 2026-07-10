@@ -234,6 +234,14 @@ public class ProLeapFrontend {
 		final List<String> paragraphOrder = new ArrayList<>();
 		/** 88-level condition name -> {parent item name, value literal}. Pure sugar: expanded into comparisons. */
 		final Map<String, String[]> conditionNames = new LinkedHashMap<>();
+		/** Non-filler items pending final naming: {itemMap, originalLeafName, ancestors nearest-first}. */
+		final List<Object[]> pendingItems = new ArrayList<>();
+		/** 88-level captures pending parent finalization: {conditionName, parentItemMap, valueText}. */
+		final List<Object[]> pendingConds = new ArrayList<>();
+		/** Original leaf name -> entries {finalName, ancestors nearest-first}. Basis for OF/IN resolution. */
+		final Map<String, List<Object[]>> leafIndex = new LinkedHashMap<>();
+		/** Leaf names declared more than once: bare references to them are ambiguous. */
+		final Set<String> duplicatedLeaves = new LinkedHashSet<>();
 
 		/** preprocessed line number (1-based) -> original line number; null when inexact. */
 		int[] lineMap;
@@ -399,6 +407,9 @@ public class ProLeapFrontend {
 					}
 				}
 			}
+			// Unique final names (duplicated leaves renamed), declared set,
+			// leaf index for OF/IN resolution, and 88-level captures.
+			finalizeNames();
 
 			// --- PROCEDURE DIVISION ---
 			final List<Object> paragraphs = new ArrayList<>();
@@ -623,7 +634,7 @@ public class ProLeapFrontend {
 				// name -> (this item = value) mapping and expand references
 				// to comparisons later; never emit them as storage.
 				if (child.getDataDescriptionEntryType() == DataDescriptionEntry.DataDescriptionEntryType.CONDITION) {
-					captureConditionName(child, name);
+					captureConditionName(child, item);
 					continue;
 				}
 				final Object c = lowerDataItem(child, path);
@@ -633,13 +644,22 @@ public class ProLeapFrontend {
 			}
 			item.put("children", children);
 			if (!filler) {
-				declared.add(name);
+				// Final (unique) naming happens in finalizeNames() once every
+				// item is known: duplicated leaf names are renamed there.
+				final List<String> ancestors = new ArrayList<>();
+				if (parentPath != null) {
+					final String[] parts = parentPath.split("\\.");
+					for (int i = parts.length - 1; i >= 0; i--) {
+						ancestors.add(parts[i]); // nearest-first, original names
+					}
+				}
+				pendingItems.add(new Object[] { item, name, ancestors });
 			}
 			return item;
 		}
 
 		/** Record an 88-level condition name against its parent item's single VALUE. */
-		void captureConditionName(final DataDescriptionEntry child, final String parent) {
+		void captureConditionName(final DataDescriptionEntry child, final Map<String, Object> parentItem) {
 			final ParserRuleContext ctx = ((io.proleap.cobol.asg.metamodel.ASGElement) child).getCtx();
 			if (child.getName() == null) {
 				reject(ctx, "88-level condition name without a name");
@@ -660,7 +680,156 @@ public class ProLeapFrontend {
 				return;
 			}
 			final String value = textOf(intervals.get(0).getFromValueStmt().getCtx());
-			conditionNames.put(cn, new String[] { parent, value });
+			pendingConds.add(new Object[] { cn, parentItem, value });
+		}
+
+		/**
+		 * Assign final (unique) names once the whole data division is known.
+		 * COBOL allows the same leaf name under different groups, referenced
+		 * with OF/IN qualification; the IR namespace is flat, so duplicated
+		 * leaves are renamed to their hyphen-joined path (SRC-REC.BALANCE ->
+		 * SRC-REC-BALANCE) and every qualified reference is resolved to the
+		 * final name by resolveQualified(). Bare references to duplicated
+		 * leaves are ambiguous and rejected there. Paths keep original names
+		 * (source-level provenance).
+		 */
+		void finalizeNames() {
+			final Map<String, List<Object[]>> byLeaf = new LinkedHashMap<>();
+			for (final Object[] pi : pendingItems) {
+				byLeaf.computeIfAbsent((String) pi[1], k -> new ArrayList<>()).add(pi);
+			}
+			final Set<String> taken = new LinkedHashSet<>();
+			for (final Map.Entry<String, List<Object[]>> e : byLeaf.entrySet()) {
+				if (e.getValue().size() == 1) {
+					taken.add(e.getKey());
+				} else {
+					duplicatedLeaves.add(e.getKey());
+				}
+			}
+			for (final String leaf : duplicatedLeaves) {
+				for (final Object[] pi : byLeaf.get(leaf)) {
+					@SuppressWarnings("unchecked")
+					final Map<String, Object> item = (Map<String, Object>) pi[0];
+					@SuppressWarnings("unchecked")
+					final List<String> ancestors = (List<String>) pi[2];
+					final StringBuilder sb = new StringBuilder();
+					for (int i = ancestors.size() - 1; i >= 0; i--) {
+						sb.append(ancestors.get(i)).append('-'); // root-first
+					}
+					sb.append(leaf);
+					final String finalName = sb.toString();
+					if (!ID_ONLY.matcher(finalName).matches() || !taken.add(finalName)) {
+						unsupported.add("cannot synthesize a unique name for duplicated data item "
+								+ item.get("path") + " (candidate \"" + finalName + "\")");
+						continue;
+					}
+					item.put("name", finalName);
+				}
+			}
+			for (final Object[] pi : pendingItems) {
+				@SuppressWarnings("unchecked")
+				final Map<String, Object> item = (Map<String, Object>) pi[0];
+				declared.add((String) item.get("name"));
+				leafIndex.computeIfAbsent((String) pi[1], k -> new ArrayList<>())
+						.add(new Object[] { item.get("name"), pi[2] });
+			}
+			for (final Object[] pc : pendingConds) {
+				final String cn = (String) pc[0];
+				@SuppressWarnings("unchecked")
+				final Map<String, Object> parent = (Map<String, Object>) pc[1];
+				if (conditionNames.containsKey(cn)) {
+					unsupported.add("88-level condition name " + cn + " is declared more than once");
+					continue;
+				}
+				conditionNames.put(cn, new String[] { (String) parent.get("name"), (String) pc[2] });
+			}
+		}
+
+		/**
+		 * Resolve qualified data references in a normalized operand text:
+		 * `LEAF OF G1 [OF G2 ...]` (IN == OF) must match exactly one declared
+		 * item whose ancestor chain contains the qualifiers in inner-to-outer
+		 * order (COBOL allows skipping levels); the chain is replaced with the
+		 * item's final (unique) name. A bare reference to a duplicated leaf is
+		 * ambiguous and rejected — never guessed. Returns the rewritten text,
+		 * or null after enumerating the problem into `unsupported`.
+		 */
+		String resolveQualified(final String text, final ParserRuleContext ctx) {
+			if (leafIndex.isEmpty() || (!text.contains(" OF ") && !text.contains(" IN ")
+					&& duplicatedLeavesAbsent(text))) {
+				return text; // fast path: nothing to resolve or validate
+			}
+			final List<String> toks = new ArrayList<>();
+			final Matcher m = TOKEN.matcher(text);
+			while (m.find()) {
+				toks.add(m.group());
+			}
+			final List<String> out = new ArrayList<>();
+			int i = 0;
+			while (i < toks.size()) {
+				final String tok = toks.get(i);
+				final boolean quoted = tok.startsWith("\"") || tok.startsWith("'");
+				if (quoted || !leafIndex.containsKey(tok)) {
+					out.add(tok);
+					i++;
+					continue;
+				}
+				// gather the OF/IN qualifier chain
+				final List<String> quals = new ArrayList<>();
+				int j = i + 1;
+				while (j + 1 < toks.size() && ("OF".equals(toks.get(j)) || "IN".equals(toks.get(j)))
+						&& ID_ONLY.matcher(toks.get(j + 1)).matches()) {
+					quals.add(toks.get(j + 1));
+					j += 2;
+				}
+				if (quals.isEmpty()) {
+					if (duplicatedLeaves.contains(tok)) {
+						reject(ctx, "ambiguous unqualified reference \"" + tok + "\" (declared more than once)");
+						return null;
+					}
+					out.add(tok); // unique leaf keeps its original name
+					i++;
+					continue;
+				}
+				final List<Object[]> candidates = new ArrayList<>();
+				for (final Object[] entry : leafIndex.get(tok)) {
+					@SuppressWarnings("unchecked")
+					final List<String> ancestors = (List<String>) entry[1];
+					int a = 0;
+					boolean matches = true;
+					for (final String q : quals) {
+						while (a < ancestors.size() && !ancestors.get(a).equals(q)) {
+							a++;
+						}
+						if (a >= ancestors.size()) {
+							matches = false;
+							break;
+						}
+						a++;
+					}
+					if (matches) {
+						candidates.add(entry);
+					}
+				}
+				if (candidates.size() != 1) {
+					reject(ctx, "qualified reference \"" + tok + " OF " + String.join(" OF ", quals)
+							+ "\" resolves to " + candidates.size() + " data item(s)");
+					return null;
+				}
+				out.add((String) candidates.get(0)[0]);
+				i = j;
+			}
+			return String.join(" ", out);
+		}
+
+		/** Cheap pre-check: does the text avoid every duplicated leaf name? */
+		boolean duplicatedLeavesAbsent(final String text) {
+			for (final String d : duplicatedLeaves) {
+				if (text.contains(d)) {
+					return false;
+				}
+			}
+			return true;
 		}
 
 		/**
@@ -896,7 +1065,10 @@ public class ProLeapFrontend {
 		}
 
 		String arithOperand(final ParserRuleContext operandCtx, final ParserRuleContext stmtCtx, final String verb) {
-			final String t = textOf(operandCtx);
+			final String t = resolveQualified(textOf(operandCtx), stmtCtx);
+			if (t == null) {
+				return null;
+			}
 			if (t.contains(" ")) {
 				reject(stmtCtx, verb + " operand \"" + t + "\" (qualified/subscripted)");
 				return null;
@@ -906,7 +1078,10 @@ public class ProLeapFrontend {
 
 		ArithTarget arithTarget(final Call call, final boolean rounded, final ParserRuleContext stmtCtx,
 				final String verb) {
-			final String t = textOf(call.getCtx());
+			final String t = resolveQualified(textOf(call.getCtx()), stmtCtx);
+			if (t == null) {
+				return null;
+			}
 			if (!ID_ONLY.matcher(t).matches()) {
 				reject(stmtCtx, verb + " receiving field \"" + t + "\" (qualified/subscripted)");
 				return null;
@@ -1209,10 +1384,16 @@ public class ProLeapFrontend {
 				return null;
 			}
 			final MoveToStatement mt = s.getMoveToStatement();
-			final String fromText = textOf(mt.getSendingArea().getCtx());
+			final String fromText = resolveQualified(textOf(mt.getSendingArea().getCtx()), ctx);
+			if (fromText == null) {
+				return null;
+			}
 			final List<String> to = new ArrayList<>();
 			for (final Call receiving : mt.getReceivingAreaCalls()) {
-				final String target = textOf(receiving.getCtx());
+				final String target = resolveQualified(textOf(receiving.getCtx()), ctx);
+				if (target == null) {
+					return null;
+				}
 				if (!ID_ONLY.matcher(target).matches()) {
 					reject(ctx, "MOVE target \"" + target + "\" (qualified/subscripted)");
 					return null;
@@ -1242,12 +1423,18 @@ public class ProLeapFrontend {
 				return null;
 			}
 			final Store store = s.getStores().get(0);
-			final String target = textOf(store.getStoreCall().getCtx());
+			final String target = resolveQualified(textOf(store.getStoreCall().getCtx()), ctx);
+			if (target == null) {
+				return null;
+			}
 			if (!ID_ONLY.matcher(target).matches()) {
 				reject(ctx, "COMPUTE target \"" + target + "\" (qualified/subscripted)");
 				return null;
 			}
-			final String exprText = textOf(s.getArithmeticExpression().getCtx());
+			final String exprText = resolveQualified(textOf(s.getArithmeticExpression().getCtx()), ctx);
+			if (exprText == null) {
+				return null;
+			}
 			final Map<String, Object> out = new LinkedHashMap<>();
 			out.put("kind", "compute");
 			out.put("target", target);
@@ -1271,7 +1458,11 @@ public class ProLeapFrontend {
 				reject(ctx, "IF ... NEXT SENTENCE");
 				return null;
 			}
-			final String condText = expandConditionNames(textOf(s.getCondition().getCtx()));
+			final String condResolved = resolveQualified(textOf(s.getCondition().getCtx()), ctx);
+			if (condResolved == null) {
+				return null;
+			}
+			final String condText = expandConditionNames(condResolved);
 			final Map<String, Object> out = new LinkedHashMap<>();
 			out.put("kind", "if");
 			final Map<String, Object> cond = new LinkedHashMap<>();
@@ -1318,7 +1509,10 @@ public class ProLeapFrontend {
 				reject(ctx, "EVALUATE without a resolvable subject");
 				return;
 			}
-			final String subject = textOf(e.getSelect().getSelectValueStmt().getCtx());
+			final String subject = resolveQualified(textOf(e.getSelect().getSelectValueStmt().getCtx()), ctx);
+			if (subject == null) {
+				return;
+			}
 			if ("FALSE".equals(subject)) {
 				reject(ctx, "EVALUATE FALSE");
 				return;
@@ -1352,14 +1546,22 @@ public class ProLeapFrontend {
 						reject(ctx, "EVALUATE TRUE WHEN " + ct + " (only a relational/condition WHEN is supported)");
 						return;
 					}
-					cond = textOf(c.getConditionValueStmt().getCtx());
+					final String resolved = resolveQualified(textOf(c.getConditionValueStmt().getCtx()), ctx);
+					if (resolved == null) {
+						return;
+					}
+					cond = resolved;
 				} else {
 					if (ct != Condition.ConditionType.VALUE || c.getValue() == null
 							|| c.getValue().getValueStmt() == null) {
 						reject(ctx, "EVALUATE <subject> WHEN " + ct + " (THRU range / ANY / condition outside the subset)");
 						return;
 					}
-					cond = subject + " = " + textOf(c.getValue().getValueStmt().getCtx());
+					final String resolved = resolveQualified(textOf(c.getValue().getValueStmt().getCtx()), ctx);
+					if (resolved == null) {
+						return;
+					}
+					cond = subject + " = " + resolved;
 				}
 				condTexts.add(expandConditionNames(cond));
 				thenBodies.add(lowerStatements(wp.getStatements()));
@@ -1474,12 +1676,16 @@ public class ProLeapFrontend {
 					reject(ctx, "PERFORM ... WITH TEST AFTER");
 					return null;
 				}
+				final String untilCond = resolveQualified(textOf(u.getCondition().getCtx()), ctx);
+				if (untilCond == null) {
+					return null;
+				}
 				out.put("kind", "perform-until");
 				out.put("target", target);
 				if (thru != null) {
 					out.put("thru", thru);
 				}
-				out.put("condition", operandExpr(expandConditionNames(textOf(u.getCondition().getCtx()))));
+				out.put("condition", operandExpr(expandConditionNames(untilCond)));
 				break;
 			}
 			default: { // VARYING
@@ -1495,7 +1701,10 @@ public class ProLeapFrontend {
 					return null;
 				}
 				final io.proleap.cobol.asg.metamodel.procedure.perform.VaryingPhrase ph = vc.getVaryingPhrase();
-				final String var = textOf(ph.getVaryingValueStmt().getCtx());
+				final String var = resolveQualified(textOf(ph.getVaryingValueStmt().getCtx()), ctx);
+				if (var == null) {
+					return null;
+				}
 				if (!ID_ONLY.matcher(var).matches()) {
 					reject(ctx, "PERFORM VARYING control variable \"" + var + "\" (qualified/subscripted)");
 					return null;
@@ -1519,8 +1728,12 @@ public class ProLeapFrontend {
 				varying.put("var", var);
 				varying.put("from", operandExpr(from));
 				varying.put("by", operandExpr(by));
+				final String varyCond = resolveQualified(textOf(ph.getUntil().getCondition().getCtx()), ctx);
+				if (varyCond == null) {
+					return null;
+				}
 				out.put("varying", varying);
-				out.put("condition", operandExpr(expandConditionNames(textOf(ph.getUntil().getCondition().getCtx()))));
+				out.put("condition", operandExpr(expandConditionNames(varyCond)));
 				break;
 			}
 			}
@@ -1545,7 +1758,10 @@ public class ProLeapFrontend {
 			}
 			final List<Object> operands = new ArrayList<>();
 			for (final io.proleap.cobol.asg.metamodel.procedure.display.Operand op : s.getOperands()) {
-				final String text = textOf(op.getCtx());
+				final String text = resolveQualified(textOf(op.getCtx()), ctx);
+				if (text == null) {
+					return null;
+				}
 				final Map<String, Object> o = new LinkedHashMap<>();
 				if (text.startsWith("\"") || text.startsWith("'")) {
 					o.put("kind", "literal");
@@ -1576,7 +1792,10 @@ public class ProLeapFrontend {
 				reject(ctx, "ACCEPT ... FROM");
 				return null;
 			}
-			final String target = textOf(s.getAcceptCall().getCtx());
+			final String target = resolveQualified(textOf(s.getAcceptCall().getCtx()), ctx);
+			if (target == null) {
+				return null;
+			}
 			if (!ID_ONLY.matcher(target).matches()) {
 				reject(ctx, "ACCEPT target \"" + target + "\" (qualified/subscripted)");
 				return null;

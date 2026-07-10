@@ -1,0 +1,22 @@
+{
+  "$comment": "Layer B selection cases for TRANSFER vs the real GnuCOBOL harness image. The duplicated BAL leaves force OF/IN qualification; a candidate that reads the wrong record's balance credits approved transfers onto 1000.00 instead of 250.00 (DST_BAL off by 750.00), caught on every approved case. Cases cover a typical approval, the exact decline boundary (987.65 -> net 1000.00 approved vs 987.66 declined), a half-cent ROUNDED fee, a deep decline, and a zero transfer.",
+  "legacy": {
+    "image": "legacymind/legacy-transfer",
+    "label": "COBOL 85 TRANSFER (GnuCOBOL via harness image legacymind/legacy-transfer)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/transfer/migrate/candidate-a", "Transfer"],
+    "label": "Java 21 transfer (migrated candidate A)"
+  },
+  "protocol": { "input": "stdin-lines", "output": "kv-lines" },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "cases": [
+    { "id": "approved", "stdin": ["XFR00001", "100.00"] },
+    { "id": "boundary-approved", "stdin": ["XFR00002", "987.65"] },
+    { "id": "boundary-declined", "stdin": ["XFR00003", "987.66"] },
+    { "id": "half-cent-fee", "stdin": ["XFR00004", "0.40"] },
+    { "id": "deep-decline", "stdin": ["XFR00005", "5000.00"] },
+    { "id": "zero", "stdin": ["XFR00006", "0.00"] }
+  ]
+}

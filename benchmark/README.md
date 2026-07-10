@@ -134,6 +134,25 @@ boundary is proven unreachable rather than faked, and the dynamic
 layers cover the cap region. Candidate B drops the zero-weight guard
 and prices the empty package; layer B catches it on every zero case.
 
+The TRANSFER module proves qualified data references: two account
+records whose fields share the leaf name `BAL`, referenced with
+`BAL OF SRC-ACCT` / `BAL IN DST-ACCT`. The frontend renames duplicated
+leaves to their hyphen-joined paths (SRC-ACCT-BAL) so the IR namespace
+stays flat and unique — zero verifier changes — and resolves every
+OF/IN chain against the ancestor chains at every operand site,
+rejecting ambiguous bare references and unresolvable qualifications.
+(The same pass closed a latent hole: qualified MOVE sources and IF
+conditions previously slipped through unguarded, conflating same-named
+fields in downstream refs.) A 1.25% ROUNDED fee gates a decline check
+against the source balance; layer C covers both paths and verifies the
+fee rounding, disclosing the decline boundary as unrealized — its
+decision value mixes an affine term with a rounded term over the same
+variable, a solver depth (joint inversion) tracked on the backlog and
+covered dynamically by layers A and B. Candidate B is the classic
+wrong-record bug: it credits approved transfers onto the source's
+1000.00 instead of the destination's 250.00 — DST_BAL off by exactly
+750.00, caught by layer B on every approved case.
+
 ## Running
 
 ```
