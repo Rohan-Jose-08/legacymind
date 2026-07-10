@@ -1,7 +1,7 @@
 {
   "tool": "legacymind benchmark",
   "version": "0.1.0",
-  "generatedAt": "2026-07-10T08:55:13.028Z",
+  "generatedAt": "2026-07-10T13:18:16.064Z",
   "toolchain": {
     "parser": "proleap engine (ProLeap ANTLR4 COBOL85 grammar + reference-format preprocessor, JVM)",
     "legacy": "GnuCOBOL 3.1.2 (debian:bookworm-slim, sandboxed: --network none, --rm)",
@@ -14,7 +14,7 @@
       "programId": "PAYROLL",
       "source": "examples/payroll.cbl",
       "loc": 59,
-      "wallSeconds": 67.7,
+      "wallSeconds": 64.2,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -75,7 +75,7 @@
       "programId": "INTEREST",
       "source": "benchmark/modules/interest.cbl",
       "loc": 53,
-      "wallSeconds": 85.3,
+      "wallSeconds": 66.8,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -134,7 +134,7 @@
       "programId": "DISCOUNT",
       "source": "benchmark/modules/discount.cbl",
       "loc": 54,
-      "wallSeconds": 77.7,
+      "wallSeconds": 71.9,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -195,7 +195,7 @@
       "programId": "LEDGER",
       "source": "benchmark/modules/ledger.cbl",
       "loc": 72,
-      "wallSeconds": 83.8,
+      "wallSeconds": 80.7,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -256,7 +256,7 @@
       "programId": "COMPOUND",
       "source": "benchmark/modules/compound.cbl",
       "loc": 52,
-      "wallSeconds": 83.9,
+      "wallSeconds": 78.3,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -315,7 +315,7 @@
       "programId": "TAXCALC",
       "source": "benchmark/modules/taxcalc.cbl",
       "loc": 58,
-      "wallSeconds": 81.4,
+      "wallSeconds": 75.3,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -374,7 +374,7 @@
       "programId": "GRADE",
       "source": "benchmark/modules/grade.cbl",
       "loc": 47,
-      "wallSeconds": 72.4,
+      "wallSeconds": 79.2,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -436,7 +436,7 @@
       "programId": "COMMISSION",
       "source": "benchmark/modules/commission.cbl",
       "loc": 49,
-      "wallSeconds": 74.2,
+      "wallSeconds": 91.1,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -495,7 +495,7 @@
       "programId": "SENIOR",
       "source": "benchmark/modules/senior.cbl",
       "loc": 38,
-      "wallSeconds": 75.1,
+      "wallSeconds": 94,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -557,7 +557,7 @@
       "programId": "TIER",
       "source": "benchmark/modules/tier.cbl",
       "loc": 37,
-      "wallSeconds": 78.9,
+      "wallSeconds": 94.1,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -616,7 +616,7 @@
       "programId": "INVOICE",
       "source": "benchmark/modules/invoice.cbl",
       "loc": 41,
-      "wallSeconds": 72.5,
+      "wallSeconds": 84.2,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -675,7 +675,7 @@
       "programId": "SHIPPING",
       "source": "benchmark/modules/shipping.cbl",
       "loc": 55,
-      "wallSeconds": 74,
+      "wallSeconds": 86,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -736,7 +736,7 @@
       "programId": "TRANSFER",
       "source": "benchmark/modules/transfer.cbl",
       "loc": 52,
-      "wallSeconds": 70.9,
+      "wallSeconds": 85.5,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -762,9 +762,9 @@
       "layerC": {
         "obligations": {
           "total": 2,
-          "verified": 1,
+          "verified": 2,
           "divergent": 0,
-          "unrealized": 1,
+          "unrealized": 0,
           "notApplicable": 0
         },
         "paths": {
@@ -783,10 +783,7 @@
         },
         "capacityWarnings": 0
       },
-      "gaps": [
-        "layer C: 1 obligation(s) could not be realized as inputs (see report)",
-        "layer C: 1 obligation-path combination(s) unrealized (see report)"
-      ],
+      "gaps": [],
       "signature": {
         "algorithm": "ed25519",
         "keyId": "9b70a354efb9feab",

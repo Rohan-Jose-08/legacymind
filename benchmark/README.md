@@ -144,11 +144,13 @@ rejecting ambiguous bare references and unresolvable qualifications.
 (The same pass closed a latent hole: qualified MOVE sources and IF
 conditions previously slipped through unguarded, conflating same-named
 fields in downstream refs.) A 1.25% ROUNDED fee gates a decline check
-against the source balance; layer C covers both paths and verifies the
-fee rounding, disclosing the decline boundary as unrealized — its
+against the source balance; layer C covers both paths, verifies the
+fee rounding on both, and verifies the decline boundary itself — its
 decision value mixes an affine term with a rounded term over the same
-variable, a solver depth (joint inversion) tracked on the backlog and
-covered dynamically by layers A and B. Candidate B is the classic
+variable (amount + round(amount·1.25%) − 1000), a monotone staircase
+the solver searches exactly on the input grid, landing cases at
+987.64 / 987.65 / 987.66. The certificate is gap-free. Candidate B is
+the classic
 wrong-record bug: it credits approved transfers onto the source's
 1000.00 instead of the destination's 250.00 — DST_BAL off by exactly
 750.00, caught by layer B on every approved case.

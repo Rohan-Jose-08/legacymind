@@ -1206,22 +1206,39 @@ function singleVarLowerBound(c: Constraint, j: number): Rat | null {
     const rel = rCmp(A, R0) > 0 ? effOp : flipOp(effOp); // x_j `rel` xStar
     return rel === ">" || rel === ">=" || rel === "=" ? xStar : null;
   }
-  // --- constant + k·round(a·x_j + b): invert the rounding ---
+  // --- k·round(a·x_j + b) with a constant or single-variable affine part ---
   if (!c.exact || c.exact.rounds.length !== 1) return null;
   const ex = c.exact;
-  if (ex.affine.terms.size > 0 || !rIsZero(ex.affine.fuzz)) return null;
+  if (!rIsZero(ex.affine.fuzz)) return null;
   const rt = ex.rounds[0]!;
   if (!rIsZero(rt.inner.fuzz) || rt.inner.terms.size !== 1 || rIsZero(rt.coeff)) return null;
   const a = rt.inner.terms.get(j);
   if (a === undefined || rCmp(a, R0) <= 0) return null; // a<0 gives an upper bound; skip
+  if (ex.affine.terms.size === 0) {
+    // constant + k·round(a·x_j + b): invert the rounding exactly.
+    const effOp = c.taken ? c.op : negateOp(c.op);
+    const rel = rCmp(rt.coeff, R0) > 0 ? effOp : flipOp(effOp); // round(inner) `rel` v
+    if (rel !== ">" && rel !== ">=" && rel !== "=") return null;
+    const v = rDiv(rNeg(ex.affine.c), rt.coeff);
+    const g = ulpOf(rt.scale);
+    const t = gridCeil(v, g, rel === ">"); // smallest admissible round(inner)
+    const innerLo = rt.mode === "half-up" ? rSub(t, rDiv(g, { n: 2n, d: 1n })) : t;
+    return rDiv(rSub(innerLo, rt.inner.c), a);
+  }
+  // Mixed form over the SAME variable: A·x_j + C + k·round(a·x_j + b).
+  // Linearized under-estimate: half-up rounding satisfies round(y) <= y + ½ulp
+  // (truncation: round(y) <= y), so any x_j meeting a >/>=/= requirement lies
+  // at or above the bound where the OVER-approximated decision value crosses
+  // zero. Under-estimating is fine — the bound only moves search starts.
+  if (ex.affine.terms.size !== 1) return null;
+  const A = ex.affine.terms.get(j);
+  if (A === undefined || rCmp(A, R0) <= 0 || rCmp(rt.coeff, R0) <= 0) return null; // monotone case only
   const effOp = c.taken ? c.op : negateOp(c.op);
-  const rel = rCmp(rt.coeff, R0) > 0 ? effOp : flipOp(effOp); // round(inner) `rel` v
-  if (rel !== ">" && rel !== ">=" && rel !== "=") return null;
-  const v = rDiv(rNeg(ex.affine.c), rt.coeff);
-  const g = ulpOf(rt.scale);
-  const t = gridCeil(v, g, rel === ">"); // smallest admissible round(inner)
-  const innerLo = rt.mode === "half-up" ? rSub(t, rDiv(g, { n: 2n, d: 1n })) : t;
-  return rDiv(rSub(innerLo, rt.inner.c), a);
+  if (effOp !== ">" && effOp !== ">=" && effOp !== "=") return null;
+  const slack = rt.mode === "half-up" ? rDiv(ulpOf(rt.scale), { n: 2n, d: 1n }) : R0;
+  // A·x + C + k·(a·x + b + slack) >= 0  =>  x >= -(C + k·(b + slack)) / (A + k·a)
+  const num = rNeg(rAdd(ex.affine.c, rMul(rt.coeff, rAdd(rt.inner.c, slack))));
+  return rDiv(num, rAdd(A, rMul(rt.coeff, a)));
 }
 
 /**
@@ -1575,7 +1592,17 @@ export function runSymExec(configPath: string, outPath: string): number {
         e[1].exact.affine.terms.size === 0 &&
         e[1].exact.rounds[0]!.inner.terms.size > 0,
     );
-    if (affineSites.length === 0 && roundSites.length === 0) {
+    // Mixed form: an affine part AND one rounded term over the same single
+    // variable (amount + round(amount·rate) − limit) — a monotone staircase,
+    // searched exactly on the input grid.
+    const mixedSites = [...perPath.entries()].filter(
+      (e): e is [number, { diff: Affine | null; exact: ExactForm }] =>
+        e[1].exact !== null &&
+        e[1].exact.rounds.length === 1 &&
+        e[1].exact.affine.terms.size === 1 &&
+        e[1].exact.rounds[0]!.inner.terms.size === 1,
+    );
+    if (affineSites.length === 0 && roundSites.length === 0 && mixedSites.length === 0) {
       const any = [...perPath.values()].find((x) => x.diff !== null);
       ob.notes.push(
         any === undefined
@@ -1618,6 +1645,22 @@ export function runSymExec(configPath: string, outPath: string): number {
           if (solved) {
             solvedPath = pathId;
             how = "inverted through the rounded store";
+            break;
+          }
+        }
+      }
+      if (!solved) {
+        for (const [pathId, site] of mixedSites) {
+          solved = solveMixedRounding(
+            site.exact,
+            offset,
+            inputs,
+            fixedCandidatesFor(pathId),
+            paths[pathId]!.state.constraints,
+          );
+          if (solved) {
+            solvedPath = pathId;
+            how = "exact staircase search over the mixed affine+rounded form";
             break;
           }
         }
@@ -2017,6 +2060,83 @@ function solveThroughRounding(
     if (rCmp(tA, R0) < 0) continue;
     const solved = solveEquality(rt.inner, tA, inputs, fixedCandidates, constraints);
     if (solved) return solved;
+  }
+  return null;
+}
+
+/**
+ * Boundary cases for a MIXED decision value A·x + C + k·round(a·x + b) over
+ * one shared variable: the staircase is monotone nondecreasing when A, k, a
+ * are all positive, so the zero crossing is found by exact binary search on
+ * the input's PICTURE grid, evaluating the exact form at each probe — no
+ * approximation anywhere. `offset` −1/0/+1 selects the largest input with a
+ * negative decision value / an input landing exactly on zero / the smallest
+ * input with a positive one. Every returned assignment satisfies the full
+ * path constraint set.
+ */
+function solveMixedRounding(
+  exact: ExactForm,
+  offset: bigint,
+  inputs: InputVar[],
+  fixedCandidates: Assignment[],
+  constraints: Constraint[],
+): Assignment | null {
+  if (exact.rounds.length !== 1 || exact.affine.terms.size !== 1 || !rIsZero(exact.affine.fuzz)) return null;
+  const rt = exact.rounds[0]!;
+  if (!rIsZero(rt.inner.fuzz) || rt.inner.terms.size !== 1) return null;
+  const [j, A] = [...exact.affine.terms.entries()][0]!;
+  const a = rt.inner.terms.get(j);
+  if (a === undefined) return null; // different variables: not a single-var staircase
+  if (rCmp(A, R0) <= 0 || rCmp(rt.coeff, R0) <= 0 || rCmp(a, R0) <= 0) return null; // monotone case only
+  const spec = inputs[j];
+  if (!spec?.numeric) return null;
+  const g = 10n ** BigInt(spec.scale);
+  const maxScaled = rMul(spec.max, { n: g, d: 1n }).n; // spec.max is on-grid
+  const dAt = (xScaled: bigint, base: Assignment): Rat => {
+    const x: Assignment = [...base];
+    x[j] = rat(xScaled, g);
+    return evalExact(exact, x);
+  };
+  for (const base of fixedCandidates) {
+    // x0 = smallest on-grid x with D(x) >= 0 (monotone staircase).
+    let lo = 0n;
+    let hi = maxScaled;
+    if (rCmp(dAt(0n, base), R0) >= 0) {
+      hi = 0n;
+    } else if (rCmp(dAt(maxScaled, base), R0) < 0) {
+      lo = maxScaled + 1n; // no crossing inside the domain
+    } else {
+      while (lo < hi) {
+        const mid = (lo + hi) / 2n;
+        if (rCmp(dAt(mid, base), R0) >= 0) hi = mid;
+        else lo = mid + 1n;
+      }
+    }
+    const x0 = lo <= maxScaled ? hi : maxScaled + 1n;
+    // Candidate inputs per offset, all re-decided exactly before use.
+    const cands: bigint[] = [];
+    if (offset === 0n) {
+      for (let s = 0n; s <= 4n; s++) {
+        if (x0 + s <= maxScaled) cands.push(x0 + s);
+      }
+    } else if (offset > 0n) {
+      for (let s = 0n; s <= 8n; s++) {
+        if (x0 + s <= maxScaled) cands.push(x0 + s);
+      }
+    } else {
+      for (let s = 1n; s <= 8n; s++) {
+        if (x0 - s >= 0n) cands.push(x0 - s);
+      }
+      if (x0 > maxScaled && maxScaled >= 0n) cands.push(maxScaled); // no crossing: deepest negative
+    }
+    for (const cand of cands) {
+      const d = dAt(cand, base);
+      const want = offset === 0n ? rIsZero(d) : offset > 0n ? rCmp(d, R0) > 0 : rCmp(d, R0) < 0;
+      if (!want) continue;
+      const x: Assignment = [...base];
+      x[j] = rat(cand, g);
+      if (allConstraintsHold(constraints, x) === true) return x;
+    }
   }
   return null;
 }
