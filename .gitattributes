@@ -1,0 +1,11 @@
+# Deterministic line endings on every platform. This is LOAD-BEARING beyond
+# style: the transpiler replay cache is keyed on prompts that embed each
+# COBOL source file's SHA-256, so source bytes must be identical on every
+# checkout or the committed cache stops replaying offline. Everything text
+# normalizes to LF; binaries are marked so no filter ever touches them.
+* text=auto eol=lf
+
+# Binary artifacts (auto-detection would get these right, but be explicit).
+*.jar binary
+*.png binary
+*.ico binary

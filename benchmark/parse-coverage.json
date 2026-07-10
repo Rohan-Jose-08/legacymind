@@ -1,6 +1,6 @@
 {
   "tool": "legacymind parse-sweep",
-  "generatedAt": "2026-07-09T08:58:08.383Z",
+  "generatedAt": "2026-07-10T13:59:34.349Z",
   "corpus": "C:/Users/Ender/AppData/Local/Temp/claude/C--Users-Ender-startup/7a40dc33-ad23-428b-805e-9e71bcc7aa45/scratchpad/proleap-cobol-parser",
   "commit": "d1bfe75bdd6d480f70c74c6345bcc02610ac30d3",
   "total": 759,
@@ -57,8 +57,8 @@
   "proleap": {
     "frontendAccepted": 737,
     "frontendRate": 0.9710144927536232,
-    "irComplete": 8,
-    "irRate": 0.010540184453227932,
+    "irComplete": 9,
+    "irRate": 0.011857707509881422,
     "formats": {
       "FIXED": 547,
       "TANDEM": 187,
@@ -136,16 +136,12 @@
     ],
     "topUnsupportedConstructs": [
       {
-        "reason": "GO_TO statement",
-        "count": 18947
-      },
-      {
         "reason": "REDEFINES",
         "count": 4326
       },
       {
         "reason": "MOVE target \"…\" (qualified/subscripted)",
-        "count": 3432
+        "count": 3161
       },
       {
         "reason": "WRITE statement",
@@ -160,12 +156,16 @@
         "count": 966
       },
       {
-        "reason": "SET statement",
-        "count": 927
+        "reason": "SET target(s) TO a value other than TRUE (only SET condition-name TO TRUE is supported)",
+        "count": 825
       },
       {
         "reason": "READ statement",
         "count": 767
+      },
+      {
+        "reason": "GO TO FAIL-ROUTINE-WRITE inside PERFORM-reachable paragraph FAIL-ROUTINE is neither a structured ran",
+        "count": 750
       },
       {
         "reason": "OCCURS",
@@ -182,6 +182,14 @@
       {
         "reason": "sections in the PROCEDURE DIVISION",
         "count": 413
+      },
+      {
+        "reason": "GO TO BAIL-OUT-WRITE inside PERFORM-reachable paragraph BAIL-OUT is neither a structured range early",
+        "count": 375
+      },
+      {
+        "reason": "GO TO CLOSE-FILES is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 367
       },
       {
         "reason": "PROCEDURE DIVISION has no paragraphs",
@@ -220,12 +228,16 @@
         "count": 111
       },
       {
-        "reason": "ALTER statement",
-        "count": 97
+        "reason": "GO TO CCVS-EXIT targets a name that is not a paragraph",
+        "count": 99
       },
       {
-        "reason": "EVALUATE statement",
-        "count": 95
+        "reason": "SET ... UP/DOWN BY (index adjustment, outside the subset)",
+        "count": 98
+      },
+      {
+        "reason": "ALTER statement",
+        "count": 97
       },
       {
         "reason": "DECLARATIVES",
@@ -256,24 +268,16 @@
         "count": 58
       },
       {
-        "reason": "ADD operand \"…\" (qualified/subscripted)",
-        "count": 57
-      },
-      {
         "reason": "ACCEPT ... FROM",
         "count": 54
       },
       {
-        "reason": "DIVIDE operand \"…\" (qualified/subscripted)",
+        "reason": "EVALUATE subject \"…\" (qualified/subscripted or expression)",
+        "count": 49
+      },
+      {
+        "reason": "GO TO DECL-FAIL-WRITE inside PERFORM-reachable paragraph DECL-FAIL-ROUTINE is neither a structured r",
         "count": 48
-      },
-      {
-        "reason": "SUBTRACT operand \"…\" (qualified/subscripted)",
-        "count": 47
-      },
-      {
-        "reason": "MULTIPLY operand \"…\" (qualified/subscripted)",
-        "count": 44
       },
       {
         "reason": "PICTURE …: unsupported symbol",
@@ -297,6 +301,10 @@
       },
       {
         "reason": "CONTINUE statement",
+        "count": 38
+      },
+      {
+        "reason": "ADD operand \"…\" (qualified/subscripted)",
         "count": 38
       },
       {
@@ -324,7 +332,19 @@
         "count": 31
       },
       {
+        "reason": "DIVIDE operand \"…\" (qualified/subscripted)",
+        "count": 31
+      },
+      {
+        "reason": "SUBTRACT operand \"…\" (qualified/subscripted)",
+        "count": 30
+      },
+      {
         "reason": "ENABLE statement",
+        "count": 29
+      },
+      {
+        "reason": "GO TO ... DEPENDING ON (computed jump)",
         "count": 29
       },
       {
@@ -336,11 +356,23 @@
         "count": 27
       },
       {
+        "reason": "GO TO D-FAIL-ROUTINE-WRITE inside PERFORM-reachable paragraph D-FAIL-ROUTINE is neither a structured",
+        "count": 26
+      },
+      {
         "reason": "DISPLAY ... AT/UPON/WITH/ON EXCEPTION",
         "count": 25
       },
       {
+        "reason": "MULTIPLY operand \"…\" (qualified/subscripted)",
+        "count": 25
+      },
+      {
         "reason": "MOVE CORRESPONDING",
+        "count": 24
+      },
+      {
+        "reason": "GO TO DECL-BAIL-WRITE inside PERFORM-reachable paragraph DECL-BAIL is neither a structured range ear",
         "count": 24
       },
       {
@@ -352,8 +384,24 @@
         "count": 22
       },
       {
+        "reason": "GO TO READ-TEST-GF-01 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 22
+      },
+      {
         "reason": "preprocessor changed the line structure (COPY/REPLACE expansion?): span provenance cannot be mapped ",
         "count": 21
+      },
+      {
+        "reason": "GO TO READ-SHORT-REC-ERROR inside PERFORM-reachable paragraph READ-SHORT-REC is neither a structured",
+        "count": 21
+      },
+      {
+        "reason": "GO TO READ-LONG-REC-ERROR inside PERFORM-reachable paragraph READ-LONG-REC is neither a structured r",
+        "count": 21
+      },
+      {
+        "reason": "GO TO FAIL-RTN-WRITE-1 inside PERFORM-reachable paragraph FAIL-ROUTINE-1 is neither a structured ran",
+        "count": 20
       },
       {
         "reason": "DISABLE statement",
@@ -364,12 +412,60 @@
         "count": 18
       },
       {
+        "reason": "GO TO SEQ-TEST-002 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 18
+      },
+      {
+        "reason": "GO TO REWRITE-TEST-GF-02 is a backward or self jump; only strictly forward top-level jumps are suppo",
+        "count": 17
+      },
+      {
+        "reason": "EVALUATE WHEN NOT",
+        "count": 16
+      },
+      {
+        "reason": "GO TO target \"…\" is not representable in the IR",
+        "count": 15
+      },
+      {
+        "reason": "ambiguous unqualified reference \"…\" (declared more than once)",
+        "count": 14
+      },
+      {
+        "reason": "GO TO REL-TEST-010-R is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 14
+      },
+      {
         "reason": "GENERATE statement",
+        "count": 14
+      },
+      {
+        "reason": "GO TO READ-SHORT-REC-EXIT inside PERFORM-reachable paragraph READ-SHORT-REC is neither a structured ",
+        "count": 14
+      },
+      {
+        "reason": "GO TO READ-LONG-REC-EXIT inside PERFORM-reachable paragraph READ-LONG-REC is neither a structured ra",
         "count": 14
       },
       {
         "reason": "RECEIVE statement",
         "count": 13
+      },
+      {
+        "reason": "GO TO READ-TEST-F1-01 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 13
+      },
+      {
+        "reason": "GO TO D-BAIL-OUT-WRITE inside PERFORM-reachable paragraph D-BAIL-OUT is neither a structured range e",
+        "count": 13
+      },
+      {
+        "reason": "GO TO READ-TEST-GF-02 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 13
+      },
+      {
+        "reason": "GO TO SEQ-TEST-001 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 12
       },
       {
         "reason": "statement before the first paragraph header",
@@ -380,12 +476,28 @@
         "count": 11
       },
       {
+        "reason": "GO TO WRITE-TEST-GF-01 is a backward or self jump; only strictly forward top-level jumps are support",
+        "count": 11
+      },
+      {
         "reason": "INITIALIZE statement",
         "count": 11
       },
       {
         "reason": "ADD CORRESPONDING",
         "count": 11
+      },
+      {
+        "reason": "GO TO REL-TEST-004-R is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 11
+      },
+      {
+        "reason": "GO TO READ-TEST-GF-04 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 11
+      },
+      {
+        "reason": "GO TO BAIL-OUT-WRITE-1 inside PERFORM-reachable paragraph BAIL-OUT-1 is neither a structured range e",
+        "count": 10
       },
       {
         "reason": "inline PERFORM",
@@ -404,15 +516,119 @@
         "count": 10
       },
       {
+        "reason": "GO TO READ-TEST-GF-03 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 10
+      },
+      {
+        "reason": "GO TO SEQ-TEST-014 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 10
+      },
+      {
+        "reason": "GO TO R1-EXIT inside PERFORM-reachable paragraph RD-1 is neither a structured range early-exit nor a",
+        "count": 10
+      },
+      {
+        "reason": "GO TO BREAKDOWN-EXIT inside PERFORM-reachable paragraph BREAKDOWN-PARA is neither a structured range",
+        "count": 9
+      },
+      {
         "reason": "SUBTRACT CORRESPONDING",
         "count": 9
+      },
+      {
+        "reason": "GO TO SEQ-TEST-003 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 9
+      },
+      {
+        "reason": "GO TO SEQ-TEST-004 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 9
+      },
+      {
+        "reason": "GO TO REL-TEST-001 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 9
+      },
+      {
+        "reason": "GO TO FAIL-RTN-WRITE-2 inside PERFORM-reachable paragraph FAIL-ROUTINE-2 is neither a structured ran",
+        "count": 8
+      },
+      {
+        "reason": "GO TO PROC-005-GO--TEST-2 is a backward or self jump; only strictly forward top-level jumps are supp",
+        "count": 8
       },
       {
         "reason": "ELSE NEXT SENTENCE",
         "count": 8
       },
       {
+        "reason": "GO TO FAIL-ROUTINE-WRITE-DECL inside PERFORM-reachable paragraph FAIL-ROUTINE-DECL is neither a stru",
+        "count": 8
+      },
+      {
+        "reason": "GO TO GO--TEST-F2-1 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 8
+      },
+      {
+        "reason": "GO TO REL-TEST-002 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 8
+      },
+      {
+        "reason": "GO TO REL-TEST-003-R is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 8
+      },
+      {
+        "reason": "GO TO REL-TEST-005-R is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 8
+      },
+      {
+        "reason": "GO TO REL-TEST-009-R is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 8
+      },
+      {
+        "reason": "GO TO D1-FAIL-ROUTINE-WRITE inside PERFORM-reachable paragraph D1-FAIL-ROUTINE is neither a structur",
+        "count": 8
+      },
+      {
+        "reason": "GO TO CONTINUE-TESTING targets a name that is not a paragraph",
+        "count": 8
+      },
+      {
+        "reason": "GO TO SEQ-TEST-008 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 7
+      },
+      {
+        "reason": "GO TO BUILD-LEVEL-1 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 7
+      },
+      {
+        "reason": "GO TO READ-TEST-GF-05 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 7
+      },
+      {
         "reason": "MERGE statement",
+        "count": 6
+      },
+      {
+        "reason": "EVALUATE ... ALSO (multiple subjects)",
+        "count": 6
+      },
+      {
+        "reason": "GO TO BUILD-LEVEL-2 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 6
+      },
+      {
+        "reason": "GO TO BUILD-LEVEL-3 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 6
+      },
+      {
+        "reason": "EVALUATE <subject> WHEN VALUE_THROUGH (THRU range / ANY / condition outside the subset)",
+        "count": 6
+      },
+      {
+        "reason": "qualified reference \"…\" resolves to 2 data item(s)",
+        "count": 6
+      },
+      {
+        "reason": "GO TO REL-TEST-007-R is a backward or self jump; only strictly forward top-level jumps are supported",
         "count": 6
       },
       {
@@ -424,8 +640,88 @@
         "count": 6
       },
       {
+        "reason": "GO TO SPACE-IS-LESS-THAN-B targets a name that is not a paragraph",
+        "count": 6
+      },
+      {
+        "reason": "GO TO OUTPROC-EXIT targets a name that is not a paragraph",
+        "count": 6
+      },
+      {
+        "reason": "GO TO READ-TEST-GF-06 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 6
+      },
+      {
+        "reason": "GO TO READ-TEST-F2-05 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 5
+      },
+      {
+        "reason": "GO TO READ-TEST-F1-02 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 5
+      },
+      {
+        "reason": "GO TO RWRT-TEST-GF-01-R is a backward or self jump; only strictly forward top-level jumps are suppor",
+        "count": 5
+      },
+      {
+        "reason": "GO TO MOVE-VALUE is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 5
+      },
+      {
         "reason": "MULTIPLY receiving field \"…\" (qualified/subscripted)",
         "count": 5
+      },
+      {
+        "reason": "GO TO SEQ-TEST-005 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 5
+      },
+      {
+        "reason": "GO TO WRITE-TEST-GF-02 is a backward or self jump; only strictly forward top-level jumps are support",
+        "count": 5
+      },
+      {
+        "reason": "GO TO END-ROUTINE-2 inside PERFORM-reachable paragraph END-ROUTINE-1 is neither a structured range e",
+        "count": 4
+      },
+      {
+        "reason": "GO TO END-ROUTINE-3 inside PERFORM-reachable paragraph END-ROUTINE-1 is neither a structured range e",
+        "count": 4
+      },
+      {
+        "reason": "qualified reference \"…\" resolves to 0 data item(s)",
+        "count": 4
+      },
+      {
+        "reason": "GO TO BAIL-OUT-WRITE-2 inside PERFORM-reachable paragraph BAIL-OUT-2 is neither a structured range e",
+        "count": 4
+      },
+      {
+        "reason": "GO TO SEQ-TEST-007 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 4
+      },
+      {
+        "reason": "GO TO READ-TEST-F2-01 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 4
+      },
+      {
+        "reason": "GO TO WRITE-TEST-GF-01-R is a backward or self jump; only strictly forward top-level jumps are suppo",
+        "count": 4
+      },
+      {
+        "reason": "GO TO READ-TEST-F1-03 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 4
+      },
+      {
+        "reason": "GO TO READ-TEST-F1-04 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 4
+      },
+      {
+        "reason": "GO TO WRI-TEST-GF-01-0 is a backward or self jump; only strictly forward top-level jumps are support",
+        "count": 4
+      },
+      {
+        "reason": "GO TO BAIL-OUT-WRITE-DECL inside PERFORM-reachable paragraph BAIL-OUT-DECL is neither a structured r",
+        "count": 4
       },
       {
         "reason": "DISPLAY operand \"…\" (qualified/subscripted)",
@@ -476,6 +772,18 @@
         "count": 4
       },
       {
+        "reason": "88-level condition name C is declared more than once",
+        "count": 4
+      },
+      {
+        "reason": "88-level condition name D is declared more than once",
+        "count": 4
+      },
+      {
+        "reason": "88-level condition name B is declared more than once",
+        "count": 4
+      },
+      {
         "reason": "PERFORM ... WITH TEST AFTER",
         "count": 4
       },
@@ -484,12 +792,204 @@
         "count": 4
       },
       {
+        "reason": "GO TO D1-BAIL-OUT-WRITE inside PERFORM-reachable paragraph D1-BAIL-OUT is neither a structured range",
+        "count": 4
+      },
+      {
+        "reason": "GO TO D2-FAIL-ROUTINE-WRITE inside PERFORM-reachable paragraph D2-FAIL-ROUTINE is neither a structur",
+        "count": 4
+      },
+      {
+        "reason": "GO TO SEQ-TEST-WR-01-LOOP is a backward or self jump; only strictly forward top-level jumps are supp",
+        "count": 4
+      },
+      {
+        "reason": "GO TO REWRITE-TEST-GF-01 is a backward or self jump; only strictly forward top-level jumps are suppo",
+        "count": 4
+      },
+      {
+        "reason": "GO TO REWRITE-TEST-GF-04 is a backward or self jump; only strictly forward top-level jumps are suppo",
+        "count": 4
+      },
+      {
+        "reason": "GO TO READ-REC-1-EXIT inside PERFORM-reachable paragraph READ-REC-1 is neither a structured range ea",
+        "count": 4
+      },
+      {
+        "reason": "GO TO INFO-INIT-03-1 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 4
+      },
+      {
+        "reason": "GO TO ALTERABLE-PARAGRAPH is a backward or self jump; only strictly forward top-level jumps are supp",
+        "count": 3
+      },
+      {
         "reason": "SUBTRACT receiving field \"…\" (qualified/subscripted)",
+        "count": 3
+      },
+      {
+        "reason": "GO TO END-OF-DB204A targets a name that is not a paragraph",
+        "count": 3
+      },
+      {
+        "reason": "GO TO REWRITE-TEST-F2-01 is a backward or self jump; only strictly forward top-level jumps are suppo",
+        "count": 3
+      },
+      {
+        "reason": "GO TO READ-TEST-F1-05 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 3
+      },
+      {
+        "reason": "GO TO WRITE-TEST-GF-02-R is a backward or self jump; only strictly forward top-level jumps are suppo",
+        "count": 3
+      },
+      {
+        "reason": "GO TO READ-TEST-F2-07 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 3
+      },
+      {
+        "reason": "GO TO READ-TEST-F1-01-R1 is a backward or self jump; only strictly forward top-level jumps are suppo",
+        "count": 3
+      },
+      {
+        "reason": "GO TO PARAGRAPH-NAME-5 is a backward or self jump; only strictly forward top-level jumps are support",
+        "count": 3
+      },
+      {
+        "reason": "GO TO PARAGRAPH-NAME-11 is a backward or self jump; only strictly forward top-level jumps are suppor",
         "count": 3
       },
       {
         "reason": "PERFORM VARYING ... WITH TEST AFTER",
         "count": 3
+      },
+      {
+        "reason": "GO TO BUILD-TABLE is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 3
+      },
+      {
+        "reason": "GO TO SORT-FAIL inside PERFORM-reachable paragraph COMPARE-VALUES is neither a structured range earl",
+        "count": 3
+      },
+      {
+        "reason": "GO TO REL-TEST-006-R is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 3
+      },
+      {
+        "reason": "GO TO REL-TEST-008-R is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 3
+      },
+      {
+        "reason": "GO TO TEST-5 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 3
+      },
+      {
+        "reason": "GO TO TEST-25-READ is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 3
+      },
+      {
+        "reason": "GO TO CLOSE-1 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 3
+      },
+      {
+        "reason": "GO TO CLOSE-2 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 3
+      },
+      {
+        "reason": "GO TO SEQ-TEST-GF-02-02-LOOP is a backward or self jump; only strictly forward top-level jumps are s",
+        "count": 3
+      },
+      {
+        "reason": "GO TO SEQ-TEST-GF-04 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 3
+      },
+      {
+        "reason": "GO TO SEQ-TEST-GF-05 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 3
+      },
+      {
+        "reason": "GO TO SEQ-TEST-GF-06 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 3
+      },
+      {
+        "reason": "GO TO SEQ-TEST-GF-07 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 3
+      },
+      {
+        "reason": "GO TO READ-SQ-FS5-EXIT inside PERFORM-reachable paragraph READ-SQ-FS5 is neither a structured range ",
+        "count": 3
+      },
+      {
+        "reason": "GO TO CHECK-RECORD-FAIL inside PERFORM-reachable paragraph CHECK-RECORD is neither a structured rang",
+        "count": 3
+      },
+      {
+        "reason": "GO TO REWRITE-TEST-GF-03 is a backward or self jump; only strictly forward top-level jumps are suppo",
+        "count": 3
+      },
+      {
+        "reason": "GO TO REWRITE-TEST-GF-06 is a backward or self jump; only strictly forward top-level jumps are suppo",
+        "count": 3
+      },
+      {
+        "reason": "GO TO REWRITE-TEST-GF-08 is a backward or self jump; only strictly forward top-level jumps are suppo",
+        "count": 3
+      },
+      {
+        "reason": "GO TO READ-TEST-001 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 3
+      },
+      {
+        "reason": "GO TO READ-TEST-GF-01-09 is a backward or self jump; only strictly forward top-level jumps are suppo",
+        "count": 3
+      },
+      {
+        "reason": "GO TO READ-TEST-GF-02-09 is a backward or self jump; only strictly forward top-level jumps are suppo",
+        "count": 3
+      },
+      {
+        "reason": "GO TO READ-TEST-GF-01-01 is a backward or self jump; only strictly forward top-level jumps are suppo",
+        "count": 3
+      },
+      {
+        "reason": "GO TO READ-TEST-GF-02-01 is a backward or self jump; only strictly forward top-level jumps are suppo",
+        "count": 3
+      },
+      {
+        "reason": "GO TO READ-TEST-F1-01-09 is a backward or self jump; only strictly forward top-level jumps are suppo",
+        "count": 3
+      },
+      {
+        "reason": "GO TO READ-TEST-F1-02-09 is a backward or self jump; only strictly forward top-level jumps are suppo",
+        "count": 3
+      },
+      {
+        "reason": "GO TO BUILD-FILE is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 3
+      },
+      {
+        "reason": "GO TO BUILD-LOOP is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 3
+      },
+      {
+        "reason": "GO TO LOG-INIT is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 2
+      },
+      {
+        "reason": "GO TO LOOK-FOR-LATE-TRANSMISSIONS is a backward or self jump; only strictly forward top-level jumps ",
+        "count": 2
+      },
+      {
+        "reason": "GO TO PROC-000-PFM-D-15 is a backward or self jump; only strictly forward top-level jumps are suppor",
+        "count": 2
+      },
+      {
+        "reason": "GO TO PROC-064-PFM-WRITE-5 is a backward or self jump; only strictly forward top-level jumps are sup",
+        "count": 2
+      },
+      {
+        "reason": "GO TO LINK-TEST-12 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 2
       },
       {
         "reason": "88-level CON-YEAR with multiple values or a THRU range",
@@ -528,7 +1028,63 @@
         "count": 2
       },
       {
+        "reason": "GO TO DELETE-TEST-GF-01 is a backward or self jump; only strictly forward top-level jumps are suppor",
+        "count": 2
+      },
+      {
+        "reason": "GO TO READ-TEST-F2-08 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 2
+      },
+      {
+        "reason": "GO TO READ-TEST-F2-01-R is a backward or self jump; only strictly forward top-level jumps are suppor",
+        "count": 2
+      },
+      {
+        "reason": "GO TO READ-TEST-F2-02-R is a backward or self jump; only strictly forward top-level jumps are suppor",
+        "count": 2
+      },
+      {
+        "reason": "GO TO DELETE-TEST-GF-01-R is a backward or self jump; only strictly forward top-level jumps are supp",
+        "count": 2
+      },
+      {
+        "reason": "GO TO READ-TEST-F1-01-1 is a backward or self jump; only strictly forward top-level jumps are suppor",
+        "count": 2
+      },
+      {
+        "reason": "GO TO READ-TEST-F1 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 2
+      },
+      {
+        "reason": "GO TO RWRT-TEST-GF-01 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 2
+      },
+      {
+        "reason": "GO TO PFM-D-F1-10 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 2
+      },
+      {
+        "reason": "GO TO PFM-WRITE-F1-4 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 2
+      },
+      {
         "reason": "PERFORM TIMES operand \"…\" (qualified/subscripted)",
+        "count": 2
+      },
+      {
+        "reason": "GO TO IND-FAIL-GF-29 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 2
+      },
+      {
+        "reason": "GO TO IND-FAIL-GF-30 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 2
+      },
+      {
+        "reason": "GO TO SYNTAX-CHECK-WRITE inside PERFORM-reachable paragraph SYNTAX-CHECK is neither a structured ran",
+        "count": 2
+      },
+      {
+        "reason": "GO TO TEST-WRITE inside PERFORM-reachable paragraph TEST-CHECK is neither a structured range early-e",
         "count": 2
       },
       {
@@ -536,7 +1092,167 @@
         "count": 2
       },
       {
+        "reason": "GO TO IF-TEST-GF-Y is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 2
+      },
+      {
+        "reason": "EVALUATE FALSE",
+        "count": 2
+      },
+      {
+        "reason": "GO TO SPECIAL-2-LEVEL-SEARCH is a backward or self jump; only strictly forward top-level jumps are s",
+        "count": 2
+      },
+      {
+        "reason": "88-level condition name EQUALS-A is declared more than once",
+        "count": 2
+      },
+      {
+        "reason": "88-level condition name EQUALS-C is declared more than once",
+        "count": 2
+      },
+      {
+        "reason": "88-level condition name EQUALS-M is declared more than once",
+        "count": 2
+      },
+      {
+        "reason": "GO TO TEST-25 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 2
+      },
+      {
+        "reason": "GO TO D2-BAIL-OUT-WRITE inside PERFORM-reachable paragraph D2-BAIL-OUT is neither a structured range",
+        "count": 2
+      },
+      {
+        "reason": "GO TO REL-TEST-013-R is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 2
+      },
+      {
         "reason": "PERFORM TEST-7-1 THRU TEST-7-4 is a backward or non-contiguous range",
+        "count": 2
+      },
+      {
+        "reason": "GO TO TEST-6-2 targets a name that is not a paragraph",
+        "count": 2
+      },
+      {
+        "reason": "GO TO TEST-1-WRITE inside PERFORM-reachable paragraph SEG-TEST-1 is neither a structured range early",
+        "count": 2
+      },
+      {
+        "reason": "GO TO TEST-8-BRANCH targets a name that is not a paragraph",
+        "count": 2
+      },
+      {
+        "reason": "GO TO TEST-3-WRITE inside PERFORM-reachable paragraph TEST-3B is neither a structured range early-ex",
+        "count": 2
+      },
+      {
+        "reason": "GO TO PARA-7B is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 2
+      },
+      {
+        "reason": "GO TO PARA-32 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 2
+      },
+      {
+        "reason": "GO TO PARA-40B is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 2
+      },
+      {
+        "reason": "GO TO SRT-3 targets a name that is not a paragraph",
+        "count": 2
+      },
+      {
+        "reason": "GO TO CLOSE-3 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 2
+      },
+      {
+        "reason": "GO TO SEQ-TEST-020 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 2
+      },
+      {
+        "reason": "GO TO SEQ-TEST-013 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 2
+      },
+      {
+        "reason": "GO TO SEQ-TEST-024 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 2
+      },
+      {
+        "reason": "GO TO REWRITE-TEST-GF-05 is a backward or self jump; only strictly forward top-level jumps are suppo",
+        "count": 2
+      },
+      {
+        "reason": "GO TO REWRITE-TEST-GF-07 is a backward or self jump; only strictly forward top-level jumps are suppo",
+        "count": 2
+      },
+      {
+        "reason": "GO TO WRITE-TEST-GF-03 is a backward or self jump; only strictly forward top-level jumps are support",
+        "count": 2
+      },
+      {
+        "reason": "GO TO WRITE-TEST-GF-04 is a backward or self jump; only strictly forward top-level jumps are support",
+        "count": 2
+      },
+      {
+        "reason": "GO TO WRITE-TEST-GF-05 is a backward or self jump; only strictly forward top-level jumps are support",
+        "count": 2
+      },
+      {
+        "reason": "GO TO WRITE-TEST-GF-06 is a backward or self jump; only strictly forward top-level jumps are support",
+        "count": 2
+      },
+      {
+        "reason": "GO TO WRITE-TEST-GF-07 is a backward or self jump; only strictly forward top-level jumps are support",
+        "count": 2
+      },
+      {
+        "reason": "GO TO FAIL-ROUTINE-WRITE1 inside PERFORM-reachable paragraph FAIL-ROUTINE1 is neither a structured r",
+        "count": 2
+      },
+      {
+        "reason": "GO TO READ-REC-1-ERROR inside PERFORM-reachable paragraph READ-REC-1 is neither a structured range e",
+        "count": 2
+      },
+      {
+        "reason": "GO TO READ-REC-2-ERROR inside PERFORM-reachable paragraph READ-REC-2 is neither a structured range e",
+        "count": 2
+      },
+      {
+        "reason": "GO TO READ-REC-2-EXIT inside PERFORM-reachable paragraph READ-REC-2 is neither a structured range ea",
+        "count": 2
+      },
+      {
+        "reason": "GO TO INFO-INIT-003-1 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 2
+      },
+      {
+        "reason": "GO TO SORT-TEST-1 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 2
+      },
+      {
+        "reason": "GO TO ZERO-IS-LESS-THAN-SPACE targets a name that is not a paragraph",
+        "count": 2
+      },
+      {
+        "reason": "GO TO INPROC-LOOP is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 2
+      },
+      {
+        "reason": "GO TO CLOSE-SORT-FILES is a backward or self jump; only strictly forward top-level jumps are support",
+        "count": 2
+      },
+      {
+        "reason": "GO TO RETURN-THE-OLD-RECORDS is a backward or self jump; only strictly forward top-level jumps are s",
+        "count": 2
+      },
+      {
+        "reason": "GO TO R2-EXIT inside PERFORM-reachable paragraph RD-2 is neither a structured range early-exit nor a",
+        "count": 2
+      },
+      {
+        "reason": "GO TO R3-EXIT inside PERFORM-reachable paragraph RD-3 is neither a structured range early-exit nor a",
         "count": 2
       },
       {
@@ -556,7 +1272,55 @@
         "count": 2
       },
       {
+        "reason": "GO TO DELAY-FOR-30-SECS inside PERFORM-reachable paragraph DELAY-FOR-30-SECS is neither a structured",
+        "count": 1
+      },
+      {
+        "reason": "GO TO RECEIVE-ECHO-AND-LOG is a backward or self jump; only strictly forward top-level jumps are sup",
+        "count": 1
+      },
+      {
+        "reason": "GO TO CM104M-POLL-1 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO BUILD-UP-QUEUES inside PERFORM-reachable paragraph BUILD-UP-QUEUES is neither a structured ran",
+        "count": 1
+      },
+      {
+        "reason": "GO TO TAKE-NEXT-MSG is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO RECEIVE-TEST-01 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 1
+      },
+      {
+        "reason": "GO TO RECEIVE-TEST-02 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 1
+      },
+      {
+        "reason": "GO TO RECEIVE-TEST-03 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 1
+      },
+      {
+        "reason": "GO TO TEST-ELAPSED-TIME is a backward or self jump; only strictly forward top-level jumps are suppor",
+        "count": 1
+      },
+      {
         "reason": "PURGE statement",
+        "count": 1
+      },
+      {
+        "reason": "GO TO GEN-LOOP inside PERFORM-reachable paragraph GEN-LOOP is neither a structured range early-exit ",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SORT-USE-TEST is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SORT-OUT-6 is a backward or self jump; only strictly forward top-level jumps are supported",
         "count": 1
       },
       {
@@ -588,6 +1352,118 @@
         "count": 1
       },
       {
+        "reason": "GO TO PROC-018-GO--PASS-3 targets a name that is not a paragraph",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PROC-031-ALTER-G is a backward or self jump; only strictly forward top-level jumps are support",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PROC-043-PFM-TEST-2 is a backward or self jump; only strictly forward top-level jumps are supp",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PROC-215-PFM-E-15 is a backward or self jump; only strictly forward top-level jumps are suppor",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PROC-217-PFM-B-15 is a backward or self jump; only strictly forward top-level jumps are suppor",
+        "count": 1
+      },
+      {
+        "reason": "GO TO EMPTY-THE-STACK is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 1
+      },
+      {
+        "reason": "GO TO NAME-LISTER-1 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PROC-055-PFM-TEST-4 is a backward or self jump; only strictly forward top-level jumps are supp",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PROC-060-PFM-WRITE-4 is a backward or self jump; only strictly forward top-level jumps are sup",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PROC-069-PFM-WRITE-6 is a backward or self jump; only strictly forward top-level jumps are sup",
+        "count": 1
+      },
+      {
+        "reason": "GO TO G-T-D-2-DELETE is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO G-T-D-8 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO READ-TEST-2-INIT is a backward or self jump; only strictly forward top-level jumps are support",
+        "count": 1
+      },
+      {
+        "reason": "GO TO BEGIN-DB204A-TESTS targets a name that is not a paragraph",
+        "count": 1
+      },
+      {
+        "reason": "GO TO RETURN-RECORDS is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO RECEIVE-TEST-1-INIT is a backward or self jump; only strictly forward top-level jumps are supp",
+        "count": 1
+      },
+      {
+        "reason": "GO TO D11-1-READ-POPFILE is a backward or self jump; only strictly forward top-level jumps are suppo",
+        "count": 1
+      },
+      {
+        "reason": "GO TO D30-1-CHECK-HEADER-TYPE is a backward or self jump; only strictly forward top-level jumps are ",
+        "count": 1
+      },
+      {
+        "reason": "GO TO D32-40-PROGRAM-CHECK is a backward or self jump; only strictly forward top-level jumps are sup",
+        "count": 1
+      },
+      {
+        "reason": "GO TO D33-1-MODULE-CHECK is a backward or self jump; only strictly forward top-level jumps are suppo",
+        "count": 1
+      },
+      {
+        "reason": "GO TO D40-1-CHECK-UPDATE-AND-POP is a backward or self jump; only strictly forward top-level jumps a",
+        "count": 1
+      },
+      {
+        "reason": "GO TO D62-1-CHECK-FOR-WITHIN-RANGE is a backward or self jump; only strictly forward top-level jumps",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SECT-IC103-0002 targets a name that is not a paragraph",
+        "count": 1
+      },
+      {
+        "reason": "GO TO LINK-TEST-08 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO LINK-EXIT-08 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO LINK-FAIL-12 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO LINK-TEST-10 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO LINK-TEST-11 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
         "reason": "stacked/nested program units (4)",
         "count": 1
       },
@@ -597,6 +1473,214 @@
       },
       {
         "reason": "88-level CON-OFFSET2 with multiple values or a THRU range",
+        "count": 1
+      },
+      {
+        "reason": "EVALUATE subject \"…\"ABCDEFGHIJKLMNOPQRST\"…\" (qualified/subscripted or expression)",
+        "count": 1
+      },
+      {
+        "reason": "EVALUATE subject \"…\"M\"…\" (qualified/subscripted or expression)",
+        "count": 1
+      },
+      {
+        "reason": "GO TO INX-TEST-006-R is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO DELETE-TEST-GF-04 is a backward or self jump; only strictly forward top-level jumps are suppor",
+        "count": 1
+      },
+      {
+        "reason": "GO TO READ-TEST-F2-09 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 1
+      },
+      {
+        "reason": "GO TO READ-TEST-F2-10 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 1
+      },
+      {
+        "reason": "GO TO READ-TEST-F2-11 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 1
+      },
+      {
+        "reason": "GO TO REA-TEST-F1-01-0 is a backward or self jump; only strictly forward top-level jumps are support",
+        "count": 1
+      },
+      {
+        "reason": "GO TO REA-TEST-F1-04-0 is a backward or self jump; only strictly forward top-level jumps are support",
+        "count": 1
+      },
+      {
+        "reason": "GO TO READ-TEST-F1-01-R is a backward or self jump; only strictly forward top-level jumps are suppor",
+        "count": 1
+      },
+      {
+        "reason": "GO TO DELETE-TEST-GF-04-R is a backward or self jump; only strictly forward top-level jumps are supp",
+        "count": 1
+      },
+      {
+        "reason": "GO TO READ-TEST-F1-01-3 is a backward or self jump; only strictly forward top-level jumps are suppor",
+        "count": 1
+      },
+      {
+        "reason": "GO TO WRITE-TEST-GF-01-R1 is a backward or self jump; only strictly forward top-level jumps are supp",
+        "count": 1
+      },
+      {
+        "reason": "GO TO READ-TEST-F1-01-R2 is a backward or self jump; only strictly forward top-level jumps are suppo",
+        "count": 1
+      },
+      {
+        "reason": "GO TO READ-TEST-F1-02-R3 is a backward or self jump; only strictly forward top-level jumps are suppo",
+        "count": 1
+      },
+      {
+        "reason": "GO TO READ-TEST-F1-03-R4 is a backward or self jump; only strictly forward top-level jumps are suppo",
+        "count": 1
+      },
+      {
+        "reason": "GO TO READ-TEST-F1-04-R5 is a backward or self jump; only strictly forward top-level jumps are suppo",
+        "count": 1
+      },
+      {
+        "reason": "GO TO WRITE-TEST-GF-02-R1 is a backward or self jump; only strictly forward top-level jumps are supp",
+        "count": 1
+      },
+      {
+        "reason": "GO TO READ-TEST-F1-04-R2 is a backward or self jump; only strictly forward top-level jumps are suppo",
+        "count": 1
+      },
+      {
+        "reason": "GO TO READ-TEST-F1-05-R3 is a backward or self jump; only strictly forward top-level jumps are suppo",
+        "count": 1
+      },
+      {
+        "reason": "GO TO WRITE-TEST-GF-00 is a backward or self jump; only strictly forward top-level jumps are support",
+        "count": 1
+      },
+      {
+        "reason": "GO TO WRITE-TEST-GF-02-1 is a backward or self jump; only strictly forward top-level jumps are suppo",
+        "count": 1
+      },
+      {
+        "reason": "GO TO READ-TEST-F2-02 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 1
+      },
+      {
+        "reason": "GO TO READ-TEST-F2-03 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 1
+      },
+      {
+        "reason": "GO TO READ-TEST-F2-04 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 1
+      },
+      {
+        "reason": "GO TO START-TEST-GF-01 is a backward or self jump; only strictly forward top-level jumps are support",
+        "count": 1
+      },
+      {
+        "reason": "GO TO START-TEST-GF-02 is a backward or self jump; only strictly forward top-level jumps are support",
+        "count": 1
+      },
+      {
+        "reason": "GO TO START-TEST-GF-03 is a backward or self jump; only strictly forward top-level jumps are support",
+        "count": 1
+      },
+      {
+        "reason": "GO TO START-TEST-GF-04 is a backward or self jump; only strictly forward top-level jumps are support",
+        "count": 1
+      },
+      {
+        "reason": "GO TO START-TEST-GF-05 is a backward or self jump; only strictly forward top-level jumps are support",
+        "count": 1
+      },
+      {
+        "reason": "GO TO START-TEST-GF-06 is a backward or self jump; only strictly forward top-level jumps are support",
+        "count": 1
+      },
+      {
+        "reason": "GO TO START-TEST-GF-07 is a backward or self jump; only strictly forward top-level jumps are support",
+        "count": 1
+      },
+      {
+        "reason": "GO TO START-TEST-GF-08 is a backward or self jump; only strictly forward top-level jumps are support",
+        "count": 1
+      },
+      {
+        "reason": "GO TO START-TEST-GF-09 is a backward or self jump; only strictly forward top-level jumps are support",
+        "count": 1
+      },
+      {
+        "reason": "GO TO START-TEST-GF-10 is a backward or self jump; only strictly forward top-level jumps are support",
+        "count": 1
+      },
+      {
+        "reason": "GO TO START-TEST-GF-11 is a backward or self jump; only strictly forward top-level jumps are support",
+        "count": 1
+      },
+      {
+        "reason": "GO TO START-TEST-GF-12 is a backward or self jump; only strictly forward top-level jumps are support",
+        "count": 1
+      },
+      {
+        "reason": "GO TO START-TEST-GF-13 is a backward or self jump; only strictly forward top-level jumps are support",
+        "count": 1
+      },
+      {
+        "reason": "GO TO START-TEST-GF-14 is a backward or self jump; only strictly forward top-level jumps are support",
+        "count": 1
+      },
+      {
+        "reason": "GO TO START-TEST-GF-15 is a backward or self jump; only strictly forward top-level jumps are support",
+        "count": 1
+      },
+      {
+        "reason": "GO TO START-TEST-GF-16 is a backward or self jump; only strictly forward top-level jumps are support",
+        "count": 1
+      },
+      {
+        "reason": "GO TO START-TEST-GF-17 is a backward or self jump; only strictly forward top-level jumps are support",
+        "count": 1
+      },
+      {
+        "reason": "GO TO START-TEST-GF-18 is a backward or self jump; only strictly forward top-level jumps are support",
+        "count": 1
+      },
+      {
+        "reason": "GO TO START-TEST-GF-19 is a backward or self jump; only strictly forward top-level jumps are support",
+        "count": 1
+      },
+      {
+        "reason": "GO TO READ-TEST-F1-R1 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 1
+      },
+      {
+        "reason": "GO TO READ-TEST-F1-02-R1 is a backward or self jump; only strictly forward top-level jumps are suppo",
+        "count": 1
+      },
+      {
+        "reason": "GO TO READ-TEST-F1-O3-R1 is a backward or self jump; only strictly forward top-level jumps are suppo",
+        "count": 1
+      },
+      {
+        "reason": "GO TO WRITE-INIT-GF-01 is a backward or self jump; only strictly forward top-level jumps are support",
+        "count": 1
+      },
+      {
+        "reason": "GO TO WRITE-TEST-GF-01-02-PASS inside PERFORM-reachable paragraph WRITE-TEST-GF-01-02 is neither a s",
+        "count": 1
+      },
+      {
+        "reason": "GO TO WRITE-TEST-GF-01-02-WRITE inside PERFORM-reachable paragraph WRITE-TEST-GF-01-02-FAIL is neith",
+        "count": 1
+      },
+      {
+        "reason": "GO TO WRI-TEST-GF-01 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO WRI-TEST-GF-02 is a backward or self jump; only strictly forward top-level jumps are supported",
         "count": 1
       },
       {
@@ -624,6 +1708,46 @@
         "count": 1
       },
       {
+        "reason": "GO TO GO--PASS-F1-1 is not in tail position (statements follow it in the same block)",
+        "count": 1
+      },
+      {
+        "reason": "GO TO GO--PASS-F1-2 is not in tail position (statements follow it in the same block)",
+        "count": 1
+      },
+      {
+        "reason": "GO TO GO--PASS-F1-2 targets a name that is not a paragraph",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PFM-TEST-F1-2 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PFM-E-F1-10 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PFM-B-F1-10 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PFM-TEST-F1-3 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PFM-WRITE-F3-4 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PFM-WRITE-F1-5 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SUB-B-F1-20 inside PERFORM-reachable paragraph SUB-A-F1-20 is neither a structured range early",
+        "count": 1
+      },
+      {
         "reason": "ACCEPT target \"…\" (qualified/subscripted)",
         "count": 1
       },
@@ -632,7 +1756,211 @@
         "count": 1
       },
       {
+        "reason": "ACCEPT ACCEPT-D1 textually follows a GO TO - stdin positions would become path-dependent",
+        "count": 1
+      },
+      {
+        "reason": "ACCEPT ACCEPT-D3 textually follows a GO TO - stdin positions would become path-dependent",
+        "count": 1
+      },
+      {
+        "reason": "ACCEPT ACCEPT-D5 textually follows a GO TO - stdin positions would become path-dependent",
+        "count": 1
+      },
+      {
+        "reason": "ACCEPT ACCEPT-D7 textually follows a GO TO - stdin positions would become path-dependent",
+        "count": 1
+      },
+      {
+        "reason": "ACCEPT ACCEPT-D9 textually follows a GO TO - stdin positions would become path-dependent",
+        "count": 1
+      },
+      {
+        "reason": "ACCEPT ACCEPT-D11 textually follows a GO TO - stdin positions would become path-dependent",
+        "count": 1
+      },
+      {
+        "reason": "ACCEPT ACCEPT-D13 textually follows a GO TO - stdin positions would become path-dependent",
+        "count": 1
+      },
+      {
+        "reason": "ACCEPT ACCEPT-D15 textually follows a GO TO - stdin positions would become path-dependent",
+        "count": 1
+      },
+      {
+        "reason": "ACCEPT ACCEPT-D17 textually follows a GO TO - stdin positions would become path-dependent",
+        "count": 1
+      },
+      {
+        "reason": "ACCEPT X80-CHARACTER-FIELD textually follows a GO TO - stdin positions would become path-dependent",
+        "count": 1
+      },
+      {
+        "reason": "GO TO MAR-TEST-5 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO MAR-TEST-12 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO MAR-TEST-11 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO MAR-TEST-8 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO EDI-INIT-GF-14 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO L is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO M is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO CCCC inside PERFORM-reachable paragraph PRINT-TABLE is neither a structured range early-exit n",
+        "count": 1
+      },
+      {
+        "reason": "GO TO END-TAB inside PERFORM-reachable paragraph PRINT-TABLE is neither a structured range early-exi",
+        "count": 1
+      },
+      {
+        "reason": "GO TO DDD inside PERFORM-reachable paragraph CCCC is neither a structured range early-exit nor a top",
+        "count": 1
+      },
+      {
+        "reason": "GO TO END-TAB inside PERFORM-reachable paragraph CCCC is neither a structured range early-exit nor a",
+        "count": 1
+      },
+      {
+        "reason": "GO TO AAAA inside PERFORM-reachable paragraph TABLE-BUILD-2 is neither a structured range early-exit",
+        "count": 1
+      },
+      {
+        "reason": "GO TO FINE inside PERFORM-reachable paragraph TABLE-BUILD-2 is neither a structured range early-exit",
+        "count": 1
+      },
+      {
+        "reason": "GO TO BBB inside PERFORM-reachable paragraph AAAA is neither a structured range early-exit nor a top",
+        "count": 1
+      },
+      {
+        "reason": "GO TO FINE inside PERFORM-reachable paragraph AAAA is neither a structured range early-exit nor a to",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SECT-TH109-0002 targets a name that is not a paragraph",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SEP-INIT-007 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SECT-TH111-0002 targets a name that is not a paragraph",
+        "count": 1
+      },
+      {
+        "reason": "GO TO TEST-CHECK inside PERFORM-reachable paragraph TEST-CHECK1 is neither a structured range early-",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SWH-DELETE-7 is not in tail position (statements follow it in the same block)",
+        "count": 1
+      },
+      {
+        "reason": "GO TO ADD-B-F1-19 inside PERFORM-reachable paragraph ADD-A-F1-19 is neither a structured range early",
+        "count": 1
+      },
+      {
         "reason": "PERFORM VARYING control variable \"…\" (qualified/subscripted)",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PFM-WRITE-F3-1 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PFM-WRITE-F3-2 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PFM-WRITE-F4-1 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PFM-WRITE-F4-2 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PFM-WRITE-F4-3 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PFM-WRITE-F4-4 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PFM-PART-A targets a name that is not a paragraph",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PFM-F4-9-B inside PERFORM-reachable paragraph PFM-F4-9-A is neither a structured range early-e",
+        "count": 1
+      },
+      {
+        "reason": "GO TO IF-INIT-GF-X is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO TEST-EXIT inside PERFORM-reachable paragraph IF-WRITE-GF-Y is neither a structured range early",
+        "count": 1
+      },
+      {
+        "reason": "GO TO REF-INIT-GF-3 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "EVALUATE WHEN with multiple values in one phrase (OR)",
+        "count": 1
+      },
+      {
+        "reason": "GO TO EVA-INIT-GF-16 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SCH-WRITE-F1-6 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO BUILD-LOOP-1 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO BUILD-ENTRY-2 inside PERFORM-reachable paragraph BUILD-ENTRY-2 is neither a structured range e",
+        "count": 1
+      },
+      {
+        "reason": "GO TO BUILD-ENTRY is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SECT-TH219-0002 targets a name that is not a paragraph",
+        "count": 1
+      },
+      {
+        "reason": "GO TO IF--WRITE-11 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO IF--WRITE-120 is a backward or self jump; only strictly forward top-level jumps are supported",
         "count": 1
       },
       {
@@ -640,11 +1968,707 @@
         "count": 1
       },
       {
+        "reason": "GO TO NC302M-PROC2 inside PERFORM-reachable paragraph NC302M-PROC1 is neither a structured range ear",
+        "count": 1
+      },
+      {
+        "reason": "GO TO ALTER-G is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO ALTER-C-2 inside PERFORM-reachable paragraph ALTER-A-2 is neither a structured range early-exi",
+        "count": 1
+      },
+      {
+        "reason": "GO TO ALTER-F-2 inside PERFORM-reachable paragraph ALTER-D-2 is neither a structured range early-exi",
+        "count": 1
+      },
+      {
+        "reason": "GO TO TEST-6B is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO TEST-9B is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO TEST-10B is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO ALTER-WRITE-10 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO TEST-12A is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO TEST-13C is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PARA-6D is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO READ-TEST-01 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO READ-TEST-02 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO READ-TEST-03 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO READ-TEST-04 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SEQ-TEST-006 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO REL-TEST-2 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO REL-TEST-5 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO REL-TEST-9 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO REL-TEST-12 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO REL-TEST-16 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO READ-FOR-TEST-17 is a backward or self jump; only strictly forward top-level jumps are support",
+        "count": 1
+      },
+      {
+        "reason": "GO TO TEST-3 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO TEST-4 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO TEST-6 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO TEST-7 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO TEST-8 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO TEST-13 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO TEST-14 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO TEST-15 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO TEST-16 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO TEST-17 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO REL-TEST-2-0 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO REL-TEST-001-R1 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 1
+      },
+      {
+        "reason": "GO TO REL-TEST-001-R2 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 1
+      },
+      {
+        "reason": "GO TO REL-TEST-002-R1 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 1
+      },
+      {
+        "reason": "GO TO REL-TEST-002-R2 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 1
+      },
+      {
+        "reason": "GO TO REL-TEST-002-R3 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 1
+      },
+      {
+        "reason": "GO TO REL-TEST-002-R5 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 1
+      },
+      {
+        "reason": "GO TO REL-TEST-002-R6 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 1
+      },
+      {
+        "reason": "GO TO REL-TEST-002-R7 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 1
+      },
+      {
+        "reason": "GO TO REL-TEST-002-R8 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 1
+      },
+      {
+        "reason": "GO TO REL-TEST-002-R9 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 1
+      },
+      {
+        "reason": "GO TO REL-TEST-003-R1 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 1
+      },
+      {
+        "reason": "GO TO REL-TEST-003-R2 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 1
+      },
+      {
+        "reason": "GO TO REL-TEST-003-R3 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 1
+      },
+      {
+        "reason": "GO TO REL-TEST-003-R4 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 1
+      },
+      {
+        "reason": "GO TO REL-TEST-003-R5 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 1
+      },
+      {
+        "reason": "GO TO REL-TEST-003-R6 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 1
+      },
+      {
+        "reason": "GO TO REL-TEST-003-R7 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 1
+      },
+      {
+        "reason": "GO TO REL-TEST-003-R8 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 1
+      },
+      {
+        "reason": "GO TO REL-TEST-003-R9 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 1
+      },
+      {
+        "reason": "GO TO REL-TEST-003-R10 is a backward or self jump; only strictly forward top-level jumps are support",
+        "count": 1
+      },
+      {
+        "reason": "GO TO REL-TEST-003-R11 is a backward or self jump; only strictly forward top-level jumps are support",
+        "count": 1
+      },
+      {
+        "reason": "GO TO REL-TEST-003-R12 is a backward or self jump; only strictly forward top-level jumps are support",
+        "count": 1
+      },
+      {
+        "reason": "GO TO REL-TEST-003-R13 is a backward or self jump; only strictly forward top-level jumps are support",
+        "count": 1
+      },
+      {
+        "reason": "GO TO REL-TEST-003-R14 is a backward or self jump; only strictly forward top-level jumps are support",
+        "count": 1
+      },
+      {
+        "reason": "GO TO REL-TEST-003-R15 is a backward or self jump; only strictly forward top-level jumps are support",
+        "count": 1
+      },
+      {
+        "reason": "GO TO REL-TEST-003-R16 is a backward or self jump; only strictly forward top-level jumps are support",
+        "count": 1
+      },
+      {
+        "reason": "GO TO REL-TEST-003-R17 is a backward or self jump; only strictly forward top-level jumps are support",
+        "count": 1
+      },
+      {
+        "reason": "GO TO REL-TEST-003-R18 is a backward or self jump; only strictly forward top-level jumps are support",
+        "count": 1
+      },
+      {
+        "reason": "GO TO REL-TEST-003-R19 is a backward or self jump; only strictly forward top-level jumps are support",
+        "count": 1
+      },
+      {
+        "reason": "GO TO REL-TEST-012-R is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO REL-TEST-014-R is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO REL-TEST-001-1 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO REL-INIT-1 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SECOND-HALF targets a name that is not a paragraph",
+        "count": 1
+      },
+      {
+        "reason": "GO TO TEST-6E inside PERFORM-reachable paragraph TEST-6B is neither a structured range early-exit no",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SEG-TEST-2 inside PERFORM-reachable paragraph TEST-1-WRITE is neither a structured range early",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SEG-TEST8 targets a name that is not a paragraph",
+        "count": 1
+      },
+      {
+        "reason": "GO TO TEST-4A is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO TEST-4B is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO TEST-3B inside PERFORM-reachable paragraph TEST-3A is neither a structured range early-exit no",
+        "count": 1
+      },
+      {
+        "reason": "GO TO TEST-3B inside PERFORM-reachable paragraph TEST-3D is neither a structured range early-exit no",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SEG-TEST-5 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SEG-TEST-7 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO TEST-5A inside PERFORM-reachable paragraph TEST-5B is neither a structured range early-exit no",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SEG-99B inside PERFORM-reachable paragraph SEG-99A is neither a structured range early-exit no",
+        "count": 1
+      },
+      {
+        "reason": "GO TO GO-TO-RETURN is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO P9303 inside PERFORM-reachable paragraph P9301 is neither a structured range early-exit nor a ",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PARA-7A is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
         "reason": "PERFORM P4501 THRU P0003 is a backward or non-contiguous range",
         "count": 1
       },
       {
+        "reason": "GO TO P4801 inside PERFORM-reachable paragraph P0004 is neither a structured range early-exit nor a ",
+        "count": 1
+      },
+      {
+        "reason": "GO TO TEST-1-WRITE inside PERFORM-reachable paragraph TEST-1 is neither a structured range early-exi",
+        "count": 1
+      },
+      {
+        "reason": "GO TO TEST-2-WRITE inside PERFORM-reachable paragraph TEST-2 is neither a structured range early-exi",
+        "count": 1
+      },
+      {
+        "reason": "GO TO TEST-3-WRITE inside PERFORM-reachable paragraph TEST-3 is neither a structured range early-exi",
+        "count": 1
+      },
+      {
+        "reason": "GO TO TEST-4-WRITE inside PERFORM-reachable paragraph TEST-4 is neither a structured range early-exi",
+        "count": 1
+      },
+      {
+        "reason": "GO TO TEST-5-WRITE inside PERFORM-reachable paragraph P2801 is neither a structured range early-exit",
+        "count": 1
+      },
+      {
+        "reason": "GO TO CLOSE-FILES inside PERFORM-reachable paragraph CLOSE-ROUTINE is neither a structured range ear",
+        "count": 1
+      },
+      {
+        "reason": "GO TO P3902 inside PERFORM-reachable paragraph P3901 is neither a structured range early-exit nor a ",
+        "count": 1
+      },
+      {
+        "reason": "GO TO P4002 inside PERFORM-reachable paragraph P4001 is neither a structured range early-exit nor a ",
+        "count": 1
+      },
+      {
+        "reason": "GO TO P4004 inside PERFORM-reachable paragraph P4002 is neither a structured range early-exit nor a ",
+        "count": 1
+      },
+      {
+        "reason": "GO TO P0003 inside PERFORM-reachable paragraph P4502 is neither a structured range early-exit nor a ",
+        "count": 1
+      },
+      {
         "reason": "PERFORM 45A THRU 45B is a backward or non-contiguous range",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PARA-54 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PARA-99 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PARA-32A inside PERFORM-reachable paragraph PARA-32 is neither a structured range early-exit n",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PARA-32 inside PERFORM-reachable paragraph PARA-32B is neither a structured range early-exit n",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PARA-32C is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PARA-58B inside PERFORM-reachable paragraph PARA-58A is neither a structured range early-exit ",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PARA-58D inside PERFORM-reachable paragraph PARA-58B is neither a structured range early-exit ",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PARA-39B inside PERFORM-reachable paragraph PARA-39A is neither a structured range early-exit ",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PARA-39D inside PERFORM-reachable paragraph PARA-39B is neither a structured range early-exit ",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PARA-40A is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PARA-41C inside PERFORM-reachable paragraph PARA-41B is neither a structured range early-exit ",
+        "count": 1
+      },
+      {
+        "reason": "GO TO TEST-16 targets a name that is not a paragraph",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SEQ-TEST-GF-02-LOOP is a backward or self jump; only strictly forward top-level jumps are supp",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SEQ-TEST-GF-05-LOOP is a backward or self jump; only strictly forward top-level jumps are supp",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SEQ-TEST-GF-08-LOOP is a backward or self jump; only strictly forward top-level jumps are supp",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SEQ-TEST-GF-09-LOOP is a backward or self jump; only strictly forward top-level jumps are supp",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SEQ-TEST-03-LOOP is a backward or self jump; only strictly forward top-level jumps are support",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SEQ-TEST-07-LOOP is a backward or self jump; only strictly forward top-level jumps are support",
+        "count": 1
+      },
+      {
+        "reason": "GO TO INFO-INIT-006-1 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SEQ-TEST-019 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO READ-TEST-GF-07 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 1
+      },
+      {
+        "reason": "GO TO READ-TEST-GF-08 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 1
+      },
+      {
+        "reason": "GO TO READ-TEST-GF-09 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 1
+      },
+      {
+        "reason": "GO TO READ-TEST-GF-10 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 1
+      },
+      {
+        "reason": "GO TO OPEN-FAIL-GF-02 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SEQ-TEST-023 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO READ-SQ-FS6-EXIT inside PERFORM-reachable paragraph READ-SQ-FS6 is neither a structured range ",
+        "count": 1
+      },
+      {
+        "reason": "GO TO REWRITE-INIT-GF-02-A is a backward or self jump; only strictly forward top-level jumps are sup",
+        "count": 1
+      },
+      {
+        "reason": "GO TO REWRITE-INIT-GF-03-A is a backward or self jump; only strictly forward top-level jumps are sup",
+        "count": 1
+      },
+      {
+        "reason": "GO TO REWRITE-INIT-GF-04-A is a backward or self jump; only strictly forward top-level jumps are sup",
+        "count": 1
+      },
+      {
+        "reason": "GO TO REWRITE-INIT-GF-05-A is a backward or self jump; only strictly forward top-level jumps are sup",
+        "count": 1
+      },
+      {
+        "reason": "GO TO WRITE-INIT-GF-02-A is a backward or self jump; only strictly forward top-level jumps are suppo",
+        "count": 1
+      },
+      {
+        "reason": "GO TO WRITE-INIT-GF-03-A is a backward or self jump; only strictly forward top-level jumps are suppo",
+        "count": 1
+      },
+      {
+        "reason": "GO TO WRITE-INIT-GF-04-A is a backward or self jump; only strictly forward top-level jumps are suppo",
+        "count": 1
+      },
+      {
+        "reason": "GO TO WRITE-INIT-GF-05-A is a backward or self jump; only strictly forward top-level jumps are suppo",
+        "count": 1
+      },
+      {
+        "reason": "GO TO WRITE-INIT-GF-06-A is a backward or self jump; only strictly forward top-level jumps are suppo",
+        "count": 1
+      },
+      {
+        "reason": "GO TO OPN-TEST-GF-01-1 is a backward or self jump; only strictly forward top-level jumps are support",
+        "count": 1
+      },
+      {
+        "reason": "GO TO OPEN-TEST-GF-03-1 is a backward or self jump; only strictly forward top-level jumps are suppor",
+        "count": 1
+      },
+      {
+        "reason": "GO TO WRI-TEST-001 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO READ-TEST-GF-04-02 is a backward or self jump; only strictly forward top-level jumps are suppo",
+        "count": 1
+      },
+      {
+        "reason": "GO TO WRITE-TEST-001-01 is a backward or self jump; only strictly forward top-level jumps are suppor",
+        "count": 1
+      },
+      {
+        "reason": "GO TO WRITE-TEST-001-04 is a backward or self jump; only strictly forward top-level jumps are suppor",
+        "count": 1
+      },
+      {
+        "reason": "GO TO READ-TEST-GF-01-07 is a backward or self jump; only strictly forward top-level jumps are suppo",
+        "count": 1
+      },
+      {
+        "reason": "GO TO WRITE-TEST-GF-02-01 is a backward or self jump; only strictly forward top-level jumps are supp",
+        "count": 1
+      },
+      {
+        "reason": "GO TO WRITE-TEST-GF-02-04 is a backward or self jump; only strictly forward top-level jumps are supp",
+        "count": 1
+      },
+      {
+        "reason": "GO TO READ-TEST-GF-02-07 is a backward or self jump; only strictly forward top-level jumps are suppo",
+        "count": 1
+      },
+      {
+        "reason": "GO TO WRITE-TEST-GF-01-01 is a backward or self jump; only strictly forward top-level jumps are supp",
+        "count": 1
+      },
+      {
+        "reason": "cannot synthesize a unique name for duplicated data item DUMP-AREA.REC-FILLER (candidate \"…\")",
+        "count": 1
+      },
+      {
+        "reason": "GO TO BAIL-OUT-WRITE1 inside PERFORM-reachable paragraph BAIL-OUT1 is neither a structured range ear",
+        "count": 1
+      },
+      {
+        "reason": "GO TO OPEN-TEST-01-01 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 1
+      },
+      {
+        "reason": "GO TO OPEN-TEST-01-04 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 1
+      },
+      {
+        "reason": "GO TO READ-TEST-F1-01-07 is a backward or self jump; only strictly forward top-level jumps are suppo",
+        "count": 1
+      },
+      {
+        "reason": "GO TO WRITE-TEST-GF-01-1 is a backward or self jump; only strictly forward top-level jumps are suppo",
+        "count": 1
+      },
+      {
+        "reason": "GO TO DECL-OPEN-02 inside PERFORM-reachable paragraph OUTPUT-ERROR-PROCESS is neither a structured r",
+        "count": 1
+      },
+      {
+        "reason": "GO TO DECL-TEST-01-END inside PERFORM-reachable paragraph DECL-DELETE-02 is neither a structured ran",
+        "count": 1
+      },
+      {
+        "reason": "GO TO INPROC-EXIT targets a name that is not a paragraph",
+        "count": 1
+      },
+      {
+        "reason": "GO TO BUILD-REEL is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SRT-TEST-001-01 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SRT-INIT-01 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO INT-TEST-4-1 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SORT-INIT-11 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO INT-TEST-2-1 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SORT-TEST-11-1 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO INPT-TEST-2-1 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO ZERO-IS-LESS-THAN-SPACE-2 targets a name that is not a paragraph",
+        "count": 1
+      },
+      {
+        "reason": "GO TO CONTINUE-TESTING-2 targets a name that is not a paragraph",
+        "count": 1
+      },
+      {
+        "reason": "GO TO ZERO-IS-LESS-THAN-SPACE-3 targets a name that is not a paragraph",
+        "count": 1
+      },
+      {
+        "reason": "GO TO CONTINUE-TESTING-3 targets a name that is not a paragraph",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SRT-5 targets a name that is not a paragraph",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SRT-6 targets a name that is not a paragraph",
+        "count": 1
+      },
+      {
+        "reason": "GO TO TAPECOPY-LOOP is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SORT-EXIT-A is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SORT-EXIT-B is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SORT-CLOSE-19 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO CLOSE-AND-STOP targets a name that is not a paragraph",
+        "count": 1
+      },
+      {
+        "reason": "GO TO CREATE-LOOP is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO OUTPROC-LOOP is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO CLOSE-AND-STOP-PARA is a backward or self jump; only strictly forward top-level jumps are supp",
+        "count": 1
+      },
+      {
+        "reason": "GO TO OUTPROC-RETURN is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SORT-TESTS targets a name that is not a paragraph",
+        "count": 1
+      },
+      {
+        "reason": "GO TO S-I-P-2 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO S-O-P-2 is a backward or self jump; only strictly forward top-level jumps are supported",
         "count": 1
       },
       {
@@ -657,6 +2681,7 @@
       }
     ],
     "irCompleteFiles": [
+      "src/test/resources/gov/nist/NC110M.CBL",
       "src/test/resources/io/proleap/cobol/asg/call/ParagraphCall.cbl",
       "src/test/resources/io/proleap/cobol/asg/procedure/Paragraph.cbl",
       "src/test/resources/io/proleap/cobol/asg/procedure/ParagraphRedefined.cbl",
