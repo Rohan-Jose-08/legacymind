@@ -1,7 +1,7 @@
 {
   "tool": "legacymind benchmark",
   "version": "0.1.0",
-  "generatedAt": "2026-07-09T20:15:28.865Z",
+  "generatedAt": "2026-07-10T08:08:32.459Z",
   "toolchain": {
     "parser": "proleap engine (ProLeap ANTLR4 COBOL85 grammar + reference-format preprocessor, JVM)",
     "legacy": "GnuCOBOL 3.1.2 (debian:bookworm-slim, sandboxed: --network none, --rm)",
@@ -14,7 +14,7 @@
       "programId": "PAYROLL",
       "source": "examples/payroll.cbl",
       "loc": 59,
-      "wallSeconds": 69.1,
+      "wallSeconds": 72,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -75,7 +75,7 @@
       "programId": "INTEREST",
       "source": "benchmark/modules/interest.cbl",
       "loc": 53,
-      "wallSeconds": 74.9,
+      "wallSeconds": 71.1,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -134,7 +134,7 @@
       "programId": "DISCOUNT",
       "source": "benchmark/modules/discount.cbl",
       "loc": 54,
-      "wallSeconds": 81.8,
+      "wallSeconds": 75.1,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -195,7 +195,7 @@
       "programId": "LEDGER",
       "source": "benchmark/modules/ledger.cbl",
       "loc": 72,
-      "wallSeconds": 104.9,
+      "wallSeconds": 72.2,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -256,7 +256,7 @@
       "programId": "COMPOUND",
       "source": "benchmark/modules/compound.cbl",
       "loc": 52,
-      "wallSeconds": 81.2,
+      "wallSeconds": 69.2,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -315,7 +315,7 @@
       "programId": "TAXCALC",
       "source": "benchmark/modules/taxcalc.cbl",
       "loc": 58,
-      "wallSeconds": 71,
+      "wallSeconds": 73.2,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -374,7 +374,7 @@
       "programId": "GRADE",
       "source": "benchmark/modules/grade.cbl",
       "loc": 47,
-      "wallSeconds": 79,
+      "wallSeconds": 62.5,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -436,7 +436,7 @@
       "programId": "COMMISSION",
       "source": "benchmark/modules/commission.cbl",
       "loc": 49,
-      "wallSeconds": 86,
+      "wallSeconds": 66,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -483,9 +483,7 @@
         },
         "capacityWarnings": 0
       },
-      "gaps": [
-        "layer C: 1 obligation-path combination(s) unrealized (see report)"
-      ],
+      "gaps": [],
       "signature": {
         "algorithm": "ed25519",
         "keyId": "9b70a354efb9feab",
@@ -497,7 +495,7 @@
       "programId": "SENIOR",
       "source": "benchmark/modules/senior.cbl",
       "loc": 38,
-      "wallSeconds": 91.9,
+      "wallSeconds": 64.2,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -559,7 +557,7 @@
       "programId": "TIER",
       "source": "benchmark/modules/tier.cbl",
       "loc": 37,
-      "wallSeconds": 78.8,
+      "wallSeconds": 67.9,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -618,7 +616,7 @@
       "programId": "INVOICE",
       "source": "benchmark/modules/invoice.cbl",
       "loc": 41,
-      "wallSeconds": 71.3,
+      "wallSeconds": 62.2,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -677,7 +675,7 @@
       "programId": "SHIPPING",
       "source": "benchmark/modules/shipping.cbl",
       "loc": 55,
-      "wallSeconds": 76,
+      "wallSeconds": 65.5,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -710,7 +708,7 @@
         },
         "paths": {
           "total": 3,
-          "covered": 2,
+          "covered": 3,
           "unknown": 0,
           "infeasible": 0
         }
@@ -725,8 +723,7 @@
         "capacityWarnings": 0
       },
       "gaps": [
-        "layer C: 1 obligation(s) could not be realized as inputs (see report)",
-        "layer C: 1 obligation-path combination(s) unrealized (see report)"
+        "layer C: 1 obligation(s) could not be realized as inputs (see report)"
       ],
       "signature": {
         "algorithm": "ed25519",

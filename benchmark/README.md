@@ -122,13 +122,17 @@ strictly-forward recursion. The frontend gate admits only this shape:
 the GO TO's paragraph must not be PERFORM-reachable, the target must
 be strictly later, every GO TO must sit in tail position, and no
 ACCEPT may textually follow a GO TO (stdin positions would become
-path-dependent). Layer C enumerates the reject/capped/standard paths
-and verifies the zero-weight boundary and the cost rounding; the cap
-boundary itself is honestly disclosed as unrealized — no on-grid
-weight lands 4.75·w within a half-cent of 200.00, so the boundary is
-proven unreachable rather than faked, and the dynamic layers cover the
-cap region. Candidate B drops the zero-weight guard and prices the
-empty package; layer B catches it on every zero case.
+path-dependent). Layer C enumerates and covers the
+reject/capped/standard paths — the capped-path witness and the capped
+half-cent obligations are realized by solving through the rounded
+store (an on-grid probe of the rounding's preimage for witnesses, and
+a congruence lower bound derived by inverting the rounding) — and
+verifies the zero-weight boundary and the cost rounding on every path.
+The cap boundary itself is honestly disclosed as unrealized: no
+on-grid weight lands 4.75·w within a half-cent of 200.00, so the
+boundary is proven unreachable rather than faked, and the dynamic
+layers cover the cap region. Candidate B drops the zero-weight guard
+and prices the empty package; layer B catches it on every zero case.
 
 ## Running
 

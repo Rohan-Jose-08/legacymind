@@ -1180,32 +1180,125 @@ const negateOp = (op: CmpOp): CmpOp =>
 const flipOp = (op: CmpOp): CmpOp =>
   ({ ">": "<", ">=": "<=", "<": ">", "<=": ">=", "=": "=", "<>": "<>" } as const)[op];
 
+/** Smallest multiple of grid `g` that is >= v (or > v when `strict`). */
+function gridCeil(v: Rat, g: Rat, strict: boolean): Rat {
+  const q = rDiv(v, g);
+  let n = q.n > 0n ? (q.n + q.d - 1n) / q.d : q.n / q.d; // ceil for either sign
+  if (strict && q.n % q.d === 0n) n += 1n;
+  return rMul({ n, d: 1n }, g);
+}
+
+/**
+ * Lower bound on input `j` implied by one constraint, or null. Two decidable
+ * shapes: a drift-free single-variable affine decision value (WS-SCORE >= 60),
+ * and a constant plus ONE rounded term whose inner is drift-free
+ * single-variable (round(WS-WEIGHT * 4.75) > 200) — the rounding is inverted
+ * exactly (half-up: round(y) >= t ⟺ y >= t − ½ulp; truncation: y >= t).
+ */
+function singleVarLowerBound(c: Constraint, j: number): Rat | null {
+  // --- pure affine decision value ---
+  if (rIsZero(c.diff.fuzz) && (!c.exact || c.exact.rounds.length === 0)) {
+    if (c.diff.terms.size !== 1) return null;
+    const A = c.diff.terms.get(j);
+    if (A === undefined || rIsZero(A)) return null;
+    const xStar = rDiv(rNeg(c.diff.c), A); // boundary value of x_j
+    const effOp = c.taken ? c.op : negateOp(c.op);
+    const rel = rCmp(A, R0) > 0 ? effOp : flipOp(effOp); // x_j `rel` xStar
+    return rel === ">" || rel === ">=" || rel === "=" ? xStar : null;
+  }
+  // --- constant + k·round(a·x_j + b): invert the rounding ---
+  if (!c.exact || c.exact.rounds.length !== 1) return null;
+  const ex = c.exact;
+  if (ex.affine.terms.size > 0 || !rIsZero(ex.affine.fuzz)) return null;
+  const rt = ex.rounds[0]!;
+  if (!rIsZero(rt.inner.fuzz) || rt.inner.terms.size !== 1 || rIsZero(rt.coeff)) return null;
+  const a = rt.inner.terms.get(j);
+  if (a === undefined || rCmp(a, R0) <= 0) return null; // a<0 gives an upper bound; skip
+  const effOp = c.taken ? c.op : negateOp(c.op);
+  const rel = rCmp(rt.coeff, R0) > 0 ? effOp : flipOp(effOp); // round(inner) `rel` v
+  if (rel !== ">" && rel !== ">=" && rel !== "=") return null;
+  const v = rDiv(rNeg(ex.affine.c), rt.coeff);
+  const g = ulpOf(rt.scale);
+  const t = gridCeil(v, g, rel === ">"); // smallest admissible round(inner)
+  const innerLo = rt.mode === "half-up" ? rSub(t, rDiv(g, { n: 2n, d: 1n })) : t;
+  return rDiv(rSub(innerLo, rt.inner.c), a);
+}
+
 /**
  * A conservative lower bound (scaled to the free variable's PICTURE grid)
- * on input `j`, derived from single-variable drift-free path constraints
- * such as `WS-SCORE >= 60`. Returns null when no such lower bound exists.
- * Under-estimates on purpose (floors to the grid): a loose bound only moves
- * the search start; correctness comes from the caller's constraint filter.
+ * on input `j`, derived from single-variable path constraints — directly
+ * affine ones (WS-SCORE >= 60), or through one rounded store
+ * (round(WS-WEIGHT * 4.75) > 200). Returns null when no such lower bound
+ * exists. Under-estimates on purpose (floors to the grid): a loose bound only
+ * moves the search start; correctness comes from the caller's constraint
+ * filter.
  */
 function freeVarLowerBoundScaled(constraints: Constraint[], j: number, scale: number): bigint | null {
   let lo: Rat | null = null;
   for (const c of constraints) {
-    if (!rIsZero(c.diff.fuzz)) continue;
-    if (c.exact && c.exact.rounds.length > 0) continue;
-    if (c.diff.terms.size !== 1) continue; // single-variable constraints only
-    const A = c.diff.terms.get(j);
-    if (A === undefined || rIsZero(A)) continue;
-    const xStar = rDiv(rNeg(c.diff.c), A); // boundary value of x_j
-    const effOp = c.taken ? c.op : negateOp(c.op);
-    const rel = rCmp(A, R0) > 0 ? effOp : flipOp(effOp); // x_j `rel` xStar
-    if ((rel === ">" || rel === ">=" || rel === "=") && (lo === null || rCmp(xStar, lo) > 0)) {
-      lo = xStar;
+    const cand = singleVarLowerBound(c, j);
+    if (cand !== null && (lo === null || rCmp(cand, lo) > 0)) {
+      lo = cand;
     }
   }
   if (lo === null) return null;
   const scaled = rMul(lo, { n: 10n ** BigInt(scale), d: 1n });
   // floor toward -inf so the bound never overshoots the smallest valid grid point
   return scaled.n >= 0n ? scaled.n / scaled.d : -((-scaled.n + scaled.d - 1n) / scaled.d);
+}
+
+/**
+ * On-grid candidates for repairing a constraint whose decision value goes
+ * through rounding: solveEquality demands an assignment landing EXACTLY on
+ * the target, which the affine proxy of a rounded value rarely does on the
+ * input grid. But the exact form decides any concrete assignment, so probing
+ * the grid neighbors of the affine preimage finds an in-region point whenever
+ * one exists nearby. Only candidates where THIS constraint verifiably holds
+ * are returned; the caller's outer loop revalidates the full constraint set,
+ * so a bad probe can never corrupt a witness — it just gets filtered.
+ */
+function probeGridNeighbors(
+  c: Constraint,
+  target: Rat,
+  inputs: InputVar[],
+  base: Assignment,
+  maxSteps = 8,
+): Assignment[] {
+  if (!c.exact || c.exact.rounds.length === 0) return [];
+  const out: Assignment[] = [];
+  for (const [j, cj] of c.diff.terms) {
+    const spec = inputs[j];
+    if (!spec?.numeric || rIsZero(cj)) continue;
+    let rest = c.diff.c;
+    let usable = true;
+    for (const [i, ci] of c.diff.terms) {
+      if (i === j) continue;
+      const v = base[i];
+      if (v === null || v === undefined) {
+        usable = false;
+        break;
+      }
+      rest = rAdd(rest, rMul(ci, v));
+    }
+    if (!usable) continue;
+    const xStar = rDiv(rSub(target, rest), cj); // affine preimage (may be off-grid)
+    const g = 10n ** BigInt(spec.scale);
+    const scaled = rMul(xStar, { n: g, d: 1n });
+    const floor = scaled.n >= 0n ? scaled.n / scaled.d : -((-scaled.n + scaled.d - 1n) / scaled.d);
+    for (let k = 0n; k <= BigInt(maxSteps); k++) {
+      for (const candScaled of k === 0n ? [floor] : [floor + k, floor - k]) {
+        const xj = rat(candScaled, g);
+        if (rCmp(xj, R0) < 0 || rCmp(xj, spec.max) > 0) continue;
+        const x: Assignment = [...base];
+        x[j] = xj;
+        if (constraintHolds(c, x) === true) {
+          out.push(x);
+          if (out.length >= 3) return out;
+        }
+      }
+    }
+  }
+  return out;
 }
 
 // ---------------------------------------------------------------------------
@@ -1417,7 +1510,14 @@ export function runSymExec(configPath: string, outPath: string): number {
           target = margin; // "=" not-taken / "<>" taken
         }
         const solved = solveEquality(c.diff, target, inputs, [x], []);
-        if (solved) tried.push(solved);
+        if (solved) {
+          tried.push(solved);
+        } else {
+          // Rounded decision value: the affine preimage of the target is
+          // usually off-grid — probe its on-grid neighbors instead (each
+          // candidate decided exactly via the constraint's exact form).
+          tried.push(...probeGridNeighbors(c, target, inputs, x));
+        }
         break;
       }
     }
