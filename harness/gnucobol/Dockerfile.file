@@ -1,0 +1,38 @@
+# LegacyMind legacy-execution image for FILE-WRITING modules (file I/O
+# stage 1: one LINE SEQUENTIAL output file).
+#
+# Same sandbox as the base image (no network, no mounts, no credentials).
+# The entrypoint wrapper defines the observable contract for file modules:
+# run the program (stdin passed through), then serialize the output file to
+# stdout AFTER the program's own DISPLAY lines. Both sides of every
+# differential comparison honor the same contract, so the KV stream stays
+# the single observable and no verifier needs file awareness. The file is
+# removed before each run so a crash before OPEN OUTPUT can never leak a
+# previous case's records into the stream (persistent-container mode runs
+# many cases in one container).
+
+FROM debian:bookworm-slim
+
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends gnucobol3 libfaketime \
+ && rm -rf /var/lib/apt/lists/*
+
+# Path of the COBOL source within the build context (repo root), and the
+# file name the program ASSIGNs its output to (relative to CWD = /tmp).
+ARG SOURCE=benchmark/modules/payslip.cbl
+ARG OUTFILE=slip.dat
+COPY ${SOURCE} /opt/legacy/program.cbl
+
+RUN cobc -x -o /opt/legacy/program /opt/legacy/program.cbl \
+ && cobc --version | head -n 1 > /opt/legacy/cobc-version.txt
+
+RUN { echo '#!/bin/sh'; \
+      echo 'cd /tmp'; \
+      echo "rm -f ${OUTFILE}"; \
+      echo '/opt/legacy/program'; \
+      echo 'rc=$?'; \
+      echo "cat ${OUTFILE} 2>/dev/null"; \
+      echo 'exit $rc'; } > /opt/legacy/run.sh \
+ && chmod +x /opt/legacy/run.sh
+
+ENTRYPOINT ["/opt/legacy/run.sh"]

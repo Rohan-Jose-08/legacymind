@@ -1,0 +1,59 @@
+{
+  "$comment": "Layer B selection cases for PAYSLIP vs the real GnuCOBOL harness image (file I/O stage 1). The legacy side runs the wrapper entrypoint: program output (EMP_ID/ROWS) followed by the serialized slip.dat records (GRS/TAX/NET), one KV stream. A candidate that loses the last record ships a slip without NET and reports ROWS=2 - caught on every case. Cases cover a typical slip, a half-cent ROUNDED tax, a tax rounding to zero, and zero gross.",
+  "legacy": {
+    "image": "legacymind/legacy-payslip",
+    "label": "COBOL 85 PAYSLIP (GnuCOBOL via harness image legacymind/legacy-payslip, file-serializing wrapper)"
+  },
+  "modern": {
+    "argv": [
+      "java",
+      "-cp",
+      "../../out/bench/payslip/migrate/candidate-a",
+      "Payslip"
+    ],
+    "label": "Java 21 payslip (migrated candidate A)"
+  },
+  "protocol": {
+    "input": "stdin-lines",
+    "output": "kv-lines"
+  },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "cases": [
+    {
+      "id": "typical",
+      "stdin": [
+        "EMP00001",
+        "1000.00"
+      ]
+    },
+    {
+      "id": "half-cent-exact",
+      "stdin": [
+        "EMP00002",
+        "0.50"
+      ]
+    },
+    {
+      "id": "tax-rounds-to-zero",
+      "stdin": [
+        "EMP00003",
+        "0.04"
+      ]
+    },
+    {
+      "id": "mid",
+      "stdin": [
+        "EMP00004",
+        "12.55"
+      ]
+    },
+    {
+      "id": "zero",
+      "stdin": [
+        "EMP00005",
+        "0.00"
+      ]
+    }
+  ]
+}

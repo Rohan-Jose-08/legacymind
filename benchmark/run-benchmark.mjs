@@ -60,8 +60,13 @@ for (const m of modules) {
     `parse (${ENGINE} engine)`,
   );
   if (!SKIP_IMAGES) {
+    // File-writing modules use the wrapper Dockerfile (run, then serialize
+    // the output file to stdout) selected per module via "dockerfile".
     steps.image = run(
-      ["docker", "build", "-f", "harness/gnucobol/Dockerfile", "--build-arg", `SOURCE=${m.source}`, "-t", m.imageTag, "."],
+      ["docker", "build", "-f", m.dockerfile ?? "harness/gnucobol/Dockerfile",
+        "--build-arg", `SOURCE=${m.source}`,
+        ...(m.outFile ? ["--build-arg", `OUTFILE=${m.outFile}`] : []),
+        "-t", m.imageTag, "."],
       `harness image ${m.imageTag}`,
     );
   }

@@ -8,6 +8,21 @@
   "additionalProperties": false,
   "properties": {
     "irVersion": { "const": "0.1.0" },
+    "files": {
+      "type": "array",
+      "description": "File I/O stage 1: LINE SEQUENTIAL OUTPUT files only (SELECT/FD + OPEN OUTPUT/WRITE/CLOSE). Each FD's single 01 record is lowered into dataDivision.items as ordinary storage and referenced here by name. Input files, multiple records per FD, WRITE FROM/ADVANCING, and the file-status protocol are outside the subset; runtime file semantics are ground-truthed by layer B (the harness serializes the output file after the KV stdout stream).",
+      "items": {
+        "type": "object",
+        "required": ["name", "assign", "organization", "record"],
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string", "pattern": "^[A-Z][A-Z0-9-]*$" },
+          "assign": { "type": "string", "description": "ASSIGN TO literal, quotes stripped." },
+          "organization": { "const": "line-sequential" },
+          "record": { "type": "string", "pattern": "^[A-Z][A-Z0-9-]*$" }
+        }
+      }
+    },
     "module": {
       "type": "object",
       "required": ["programId", "dialect", "source"],
@@ -308,6 +323,31 @@
           "properties": {
             "kind": { "const": "go-to" },
             "target": { "type": "string", "pattern": "^[A-Z][A-Z0-9-]*$" },
+            "text": { "type": "string" },
+            "span": { "$ref": "#/$defs/span" }
+          }
+        },
+        {
+          "type": "object",
+          "description": "OPEN OUTPUT <file> / CLOSE <file> (file I/O stage 1). Flow-neutral for the symbolic layers; runtime semantics (truncation on OPEN OUTPUT, flush on CLOSE) are ground-truthed by layer B.",
+          "required": ["kind", "file", "text", "span"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "enum": ["open", "close"] },
+            "file": { "type": "string", "pattern": "^[A-Z][A-Z0-9-]*$" },
+            "text": { "type": "string" },
+            "span": { "$ref": "#/$defs/span" }
+          }
+        },
+        {
+          "type": "object",
+          "description": "WRITE <record> (file I/O stage 1): appends the record's current storage to its FD's file. The record is ordinary storage in dataDivision.items, so the MOVEs populating it are fully modeled; the write itself is flow-neutral for the symbolic layers.",
+          "required": ["kind", "record", "file", "text", "span"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "const": "write" },
+            "record": { "type": "string", "pattern": "^[A-Z][A-Z0-9-]*$" },
+            "file": { "type": "string", "pattern": "^[A-Z][A-Z0-9-]*$" },
             "text": { "type": "string" },
             "span": { "$ref": "#/$defs/span" }
           }

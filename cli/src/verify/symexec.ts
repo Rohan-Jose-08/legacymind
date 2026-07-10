@@ -907,7 +907,12 @@ function execute(stmts: Statement[], state: PathState, ctx: ExecCtx, out: PathSt
       }
       case "display":
       case "exit":
-        break; // flow-neutral for the symbolic store
+      case "open":
+      case "write":
+      case "close":
+        // Flow-neutral for the symbolic store: WRITE copies already-modeled
+        // record storage to the file; layer B ground-truths file semantics.
+        break;
       case "stop-run":
       case "goback":
         // Program end: this path is complete here — statements after it (the

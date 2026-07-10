@@ -242,6 +242,12 @@ public class ProLeapFrontend {
 		final Map<String, List<Object[]>> leafIndex = new LinkedHashMap<>();
 		/** Leaf names declared more than once: bare references to them are ambiguous. */
 		final Set<String> duplicatedLeaves = new LinkedHashSet<>();
+		/** File I/O stage 1: SELECT name -> assign literal (quotes stripped). */
+		final Map<String, String> selectedFiles = new LinkedHashMap<>();
+		/** Pending FD links: {fdName, recordItemMap} — record names finalize later. */
+		final List<Object[]> pendingFds = new ArrayList<>();
+		/** Final record name -> file name (built after finalizeNames). */
+		final Map<String, String> recordToFile = new LinkedHashMap<>();
 
 		/** preprocessed line number (1-based) -> original line number; null when inexact. */
 		int[] lineMap;
@@ -348,6 +354,52 @@ public class ProLeapFrontend {
 			unsupported.add(what + " (line " + mapLine(ctx.getStart().getLine()) + ")");
 		}
 
+		/**
+		 * ENVIRONMENT DIVISION, file I/O stage 1: lower FILE-CONTROL SELECT
+		 * entries for LINE SEQUENTIAL files assigned to a string literal.
+		 * The configuration section is warned (not modeled); other
+		 * organizations and non-literal ASSIGNs are rejected.
+		 */
+		void lowerEnvironment(final io.proleap.cobol.asg.metamodel.environment.EnvironmentDivision ed) {
+			if (ed.getConfigurationSection() != null) {
+				final ParserRuleContext cctx = ed.getConfigurationSection().getCtx();
+				warnings.add("CONFIGURATION SECTION present (line " + mapLine(cctx.getStart().getLine())
+						+ ") but not modeled");
+			}
+			final io.proleap.cobol.asg.metamodel.environment.inputoutput.InputOutputSection ios = ed
+					.getInputOutputSection();
+			if (ios == null || ios.getFileControlParagraph() == null) {
+				return;
+			}
+			for (final io.proleap.cobol.asg.metamodel.environment.inputoutput.filecontrol.FileControlEntry e : ios
+					.getFileControlParagraph().getFileControlEntries()) {
+				final ParserRuleContext ctx = e.getCtx();
+				final String name = e.getName() != null ? e.getName().toUpperCase() : null;
+				if (name == null || !ID_ONLY.matcher(name).matches()) {
+					reject(ctx, "SELECT with an unrepresentable file name");
+					continue;
+				}
+				if (e.getAssignClause() == null || e.getAssignClause().getToValueStmt() == null) {
+					reject(ctx, "SELECT " + name + " without an ASSIGN TO clause");
+					continue;
+				}
+				final String assignText = textOf(e.getAssignClause().getToValueStmt().getCtx());
+				if (!(assignText.startsWith("\"") || assignText.startsWith("'"))) {
+					reject(ctx, "SELECT " + name + " ASSIGN TO a non-literal (" + assignText + ")");
+					continue;
+				}
+				final String orgText = e.getOrganizationClause() != null
+						? textOf(e.getOrganizationClause().getCtx())
+						: "";
+				if (!orgText.contains("LINE SEQUENTIAL")) {
+					reject(ctx, "SELECT " + name
+							+ " with organization other than LINE SEQUENTIAL (file I/O stage 1)");
+					continue;
+				}
+				selectedFiles.put(name, assignText.substring(1, assignText.length() - 1));
+			}
+		}
+
 		Map<String, Object> lower() {
 			final List<CompilationUnit> units = program.getCompilationUnits();
 			if (units.isEmpty()) {
@@ -374,9 +426,7 @@ public class ProLeapFrontend {
 			}
 
 			if (pu.getEnvironmentDivision() != null) {
-				final ParserRuleContext ctx = pu.getEnvironmentDivision().getCtx();
-				warnings.add("ENVIRONMENT DIVISION present (lines " + mapLine(ctx.getStart().getLine()) + "-"
-						+ mapLine(ctx.getStop().getLine()) + ") but not modeled");
+				lowerEnvironment(pu.getEnvironmentDivision());
 			}
 
 			// --- DATA DIVISION ---
@@ -384,7 +434,29 @@ public class ProLeapFrontend {
 			final DataDivision dd = pu.getDataDivision();
 			if (dd != null) {
 				if (dd.getFileSection() != null) {
-					reject(dd.getFileSection().getCtx(), "FILE SECTION");
+					// File I/O stage 1: each FD must match a lowered SELECT and
+					// carry exactly one 01 record, which becomes ordinary storage.
+					for (final io.proleap.cobol.asg.metamodel.data.file.FileDescriptionEntry fd : dd.getFileSection()
+							.getFileDescriptionEntries()) {
+						final ParserRuleContext fctx = ((io.proleap.cobol.asg.metamodel.ASGElement) fd).getCtx();
+						final String fdName = fd.getName() != null ? fd.getName().toUpperCase() : null;
+						if (fdName == null || !selectedFiles.containsKey(fdName)) {
+							reject(fctx, "FD " + fdName + " without a matching LINE SEQUENTIAL SELECT");
+							continue;
+						}
+						final List<io.proleap.cobol.asg.metamodel.data.datadescription.DataDescriptionEntry> recs = fd
+								.getRootDataDescriptionEntries();
+						if (recs.size() != 1) {
+							reject(fctx, "FD " + fdName + " with " + recs.size()
+									+ " record layouts (file I/O stage 1 supports exactly one)");
+							continue;
+						}
+						final Object rec = lowerDataItem(recs.get(0), null);
+						if (rec != null) {
+							items.add(rec);
+							pendingFds.add(new Object[] { fdName, rec });
+						}
+					}
 				}
 				if (dd.getLinkageSection() != null) {
 					reject(dd.getLinkageSection().getCtx(), "LINKAGE SECTION");
@@ -410,6 +482,28 @@ public class ProLeapFrontend {
 			// Unique final names (duplicated leaves renamed), declared set,
 			// leaf index for OF/IN resolution, and 88-level captures.
 			finalizeNames();
+
+			// File I/O stage 1: link each FD's (now final) record name to its
+			// file and build the files block; every SELECT needs an FD.
+			final List<Object> files = new ArrayList<>();
+			for (final Object[] pf : pendingFds) {
+				@SuppressWarnings("unchecked")
+				final Map<String, Object> rec = (Map<String, Object>) pf[1];
+				final String fdName = (String) pf[0];
+				final String recName = (String) rec.get("name");
+				recordToFile.put(recName, fdName);
+				final Map<String, Object> f = new LinkedHashMap<>();
+				f.put("name", fdName);
+				f.put("assign", selectedFiles.get(fdName));
+				f.put("organization", "line-sequential");
+				f.put("record", recName);
+				files.add(f);
+			}
+			for (final String sel : selectedFiles.keySet()) {
+				if (!recordToFile.containsValue(sel)) {
+					unsupported.add("SELECT " + sel + " has no FD in the FILE SECTION");
+				}
+			}
 
 			// --- PROCEDURE DIVISION ---
 			final List<Object> paragraphs = new ArrayList<>();
@@ -481,6 +575,9 @@ public class ProLeapFrontend {
 			// --- assemble (key order = stub parser output order) ---
 			final Map<String, Object> ir = new LinkedHashMap<>();
 			ir.put("irVersion", "0.1.0");
+			if (!files.isEmpty()) {
+				ir.put("files", files); // omitted entirely for file-less modules (stub parity)
+			}
 			final Map<String, Object> module = new LinkedHashMap<>();
 			module.put("programId", programId);
 			module.put("dialect", "cobol85-" + format.name().toLowerCase());
@@ -1031,6 +1128,83 @@ public class ProLeapFrontend {
 			case EVALUATE:
 				lowerEvaluate((EvaluateStatement) s, out);
 				return;
+			case OPEN: {
+				// File I/O stage 1: OPEN OUTPUT of lowered files only.
+				final io.proleap.cobol.asg.metamodel.procedure.open.OpenStatement o =
+						(io.proleap.cobol.asg.metamodel.procedure.open.OpenStatement) s;
+				if (!o.getInputPhrases().isEmpty() || !o.getInputOutputPhrases().isEmpty()
+						|| !o.getExtendPhrases().isEmpty()) {
+					reject(ctx, "OPEN INPUT/I-O/EXTEND (file I/O stage 1 supports OPEN OUTPUT only)");
+					return;
+				}
+				for (final io.proleap.cobol.asg.metamodel.procedure.open.OutputPhrase op : o.getOutputPhrases()) {
+					for (final io.proleap.cobol.asg.metamodel.procedure.open.Output ou : op.getOutputs()) {
+						final String f = ou.getFileCall() != null && ou.getFileCall().getName() != null
+								? ou.getFileCall().getName().toUpperCase()
+								: null;
+						if (f == null || !selectedFiles.containsKey(f)) {
+							reject(ctx, "OPEN OUTPUT of \"" + f + "\" which is not a lowered file");
+							return;
+						}
+						final Map<String, Object> m = new LinkedHashMap<>();
+						m.put("kind", "open");
+						m.put("file", f);
+						m.put("text", textOf(ctx));
+						m.put("span", span(ctx));
+						out.add(m);
+					}
+				}
+				return;
+			}
+			case WRITE: {
+				final io.proleap.cobol.asg.metamodel.procedure.write.WriteStatement w =
+						(io.proleap.cobol.asg.metamodel.procedure.write.WriteStatement) s;
+				if (w.getFrom() != null || w.getAdvancingPhrase() != null || w.getAtEndOfPagePhrase() != null
+						|| w.getNotAtEndOfPagePhrase() != null || w.getInvalidKeyPhrase() != null
+						|| w.getNotInvalidKeyPhrase() != null) {
+					reject(ctx, "WRITE with FROM/ADVANCING/END-OF-PAGE/INVALID KEY (outside file I/O stage 1)");
+					return;
+				}
+				final String recText = w.getRecordCall() != null
+						? resolveQualified(textOf(w.getRecordCall().getCtx()), ctx)
+						: null;
+				if (recText == null) {
+					return;
+				}
+				final String file = recordToFile.get(recText);
+				if (file == null) {
+					reject(ctx, "WRITE " + recText + " which is not a file record");
+					return;
+				}
+				final Map<String, Object> m = new LinkedHashMap<>();
+				m.put("kind", "write");
+				m.put("record", recText);
+				m.put("file", file);
+				m.put("text", textOf(ctx));
+				m.put("span", span(ctx));
+				out.add(m);
+				return;
+			}
+			case CLOSE: {
+				final io.proleap.cobol.asg.metamodel.procedure.close.CloseStatement c =
+						(io.proleap.cobol.asg.metamodel.procedure.close.CloseStatement) s;
+				for (final io.proleap.cobol.asg.metamodel.procedure.close.CloseFile cf : c.getCloseFiles()) {
+					final String f = cf.getFileCall() != null && cf.getFileCall().getName() != null
+							? cf.getFileCall().getName().toUpperCase()
+							: null;
+					if (f == null || !selectedFiles.containsKey(f)) {
+						reject(ctx, "CLOSE of \"" + f + "\" which is not a lowered file");
+						return;
+					}
+					final Map<String, Object> m = new LinkedHashMap<>();
+					m.put("kind", "close");
+					m.put("file", f);
+					m.put("text", textOf(ctx));
+					m.put("span", span(ctx));
+					out.add(m);
+				}
+				return;
+			}
 			default:
 				reject(ctx, type + " statement");
 			}

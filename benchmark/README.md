@@ -172,6 +172,23 @@ the dollar settle moves the base (10.56 → 9.504 settles to 10), the
 tax differs by whole cents (0.78 vs the correct 0.83) — caught by
 layer B on the curated settle cases.
 
+The PAYSLIP module opens the file I/O family (stage 1: one LINE
+SEQUENTIAL output file — SELECT/ASSIGN, FD, OPEN OUTPUT, WRITE, CLOSE).
+The pay slip's three KEY=VALUE records go to `slip.dat`; the module's
+harness image (`Dockerfile.file`) wraps the program so each run
+serializes the output file to stdout after the program's own DISPLAY
+lines, making the file part of the single observable KV stream — the
+differential layers compare file contents on every case with no
+verifier changes (OPEN/WRITE/CLOSE are flow-neutral for the symbolic
+store; the record's MOVEs are ordinary modeled storage). The FD record
+lowers into the data division; the frontend rejects everything beyond
+the stage-1 subset (OPEN INPUT/I-O/EXTEND, READ, WRITE FROM/ADVANCING,
+non-LINE-SEQUENTIAL organizations, multiple record layouts). Layer D
+covers the program's stdout keys; the file records are dynamic-layer
+territory at this stage, disclosed in the config. Candidate B loses the
+slip's last record — the classic unflushed-buffer migration bug — and
+is caught on every case (NET missing, ROWS diverging).
+
 ## Running
 
 ```

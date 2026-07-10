@@ -1,0 +1,19 @@
+{
+  "$comment": "Layer A for PAYSLIP vs the real GnuCOBOL harness image. Generated gross values span the PIC 9(7)V99 range; every generated case exercises the full file round trip (write, close, serialize) on the legacy side and the mirrored temp-file round trip on the modern side.",
+  "legacy": {
+    "image": "legacymind/legacy-payslip",
+    "label": "COBOL 85 PAYSLIP (GnuCOBOL via harness image legacymind/legacy-payslip, file-serializing wrapper)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/payslip/migrate/candidate-a", "Payslip"],
+    "label": "Java 21 payslip (migrated candidate A)"
+  },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "generator": {
+    "ir": "../../out/ir/PAYSLIP.ir.json",
+    "stdinFields": ["WS-EMP-ID", "WS-GROSS"],
+    "count": 200,
+    "seed": 20260710
+  }
+}

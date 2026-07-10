@@ -77,6 +77,10 @@ export type Statement =
    * inlineStatements before execution, so no verifier engine sees it directly.
    */
   | { kind: "go-to"; target: string; text: string; span: Span }
+  /** File I/O stage 1 (proleap engine only): OPEN OUTPUT / WRITE record / CLOSE for LINE SEQUENTIAL output files. Flow-neutral for the symbolic layers; layer B is ground truth for file semantics. */
+  | { kind: "open"; file: string; text: string; span: Span }
+  | { kind: "write"; record: string; file: string; text: string; span: Span }
+  | { kind: "close"; file: string; text: string; span: Span }
   /** PERFORM loops (proleap engine only; TEST BEFORE semantics). `thru` marks a THRU paragraph range. */
   | { kind: "perform-times"; target: string; thru?: string; times: OperandExpr; text: string; span: Span }
   | { kind: "perform-until"; target: string; thru?: string; condition: OperandExpr; text: string; span: Span }
@@ -98,6 +102,8 @@ export interface Paragraph {
 
 export interface ModuleIR {
   irVersion: "0.1.0";
+  /** File I/O stage 1 (proleap engine only): LINE SEQUENTIAL output files. */
+  files?: { name: string; assign: string; organization: "line-sequential"; record: string }[];
   module: {
     programId: string;
     dialect: "cobol85-fixed";

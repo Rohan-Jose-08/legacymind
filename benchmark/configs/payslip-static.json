@@ -1,0 +1,7 @@
+{
+  "$comment": "Layer D for PAYSLIP: static data-flow equivalence for the PROGRAM outputs (EMP_ID, ROWS). The slip file's GRS/TAX/NET records are outside layer D at file I/O stage 1 - the candidate serializes them via System.out.write, which the extractor deliberately does not treat as key derivation - and are covered dynamically by layers A/B/C on every case through the file-serializing wrapper.",
+  "static": {
+    "ir": "../../out/ir/PAYSLIP.ir.json",
+    "modernJava": "../../out/bench/payslip/migrate/candidate-a/Payslip.java"
+  }
+}

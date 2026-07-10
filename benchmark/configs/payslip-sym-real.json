@@ -1,0 +1,19 @@
+{
+  "$comment": "Layer C for PAYSLIP vs the real GnuCOBOL harness image. OPEN/WRITE/CLOSE are flow-neutral for the symbolic store (the record's MOVEs are ordinary modeled storage); the tax's ROUNDED half-cent boundary is congruence-solved on the single path, and every realized case runs through the file-serializing wrapper differentially.",
+  "legacy": {
+    "image": "legacymind/legacy-payslip",
+    "label": "COBOL 85 PAYSLIP (GnuCOBOL via harness image legacymind/legacy-payslip, file-serializing wrapper)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/payslip/migrate/candidate-a", "Payslip"],
+    "label": "Java 21 payslip (migrated candidate A)"
+  },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "symbolic": {
+    "ir": "../../out/ir/PAYSLIP.ir.json",
+    "stdinFields": ["WS-EMP-ID", "WS-GROSS"],
+    "baseCase": ["EMP00001", "1000.00"],
+    "maxBoundarySolutions": 5
+  }
+}

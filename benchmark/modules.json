@@ -166,5 +166,19 @@
     "staticConfig": "benchmark/configs/retail-static.json",
     "migrateOut": "out/bench/retail/migrate",
     "certCopy": "out/certification-retail.json"
+  },
+  {
+    "id": "payslip",
+    "programId": "PAYSLIP",
+    "source": "benchmark/modules/payslip.cbl",
+    "imageTag": "legacymind/legacy-payslip",
+    "dockerfile": "harness/gnucobol/Dockerfile.file",
+    "outFile": "slip.dat",
+    "diffConfig": "benchmark/configs/payslip-diff-real.json",
+    "propConfig": "benchmark/configs/payslip-prop-real.json",
+    "symConfig": "benchmark/configs/payslip-sym-real.json",
+    "staticConfig": "benchmark/configs/payslip-static.json",
+    "migrateOut": "out/bench/payslip/migrate",
+    "certCopy": "out/certification-payslip.json"
   }
 ]
