@@ -81,10 +81,18 @@ function genValue(field: DataItem, rng: () => number): string {
   return fmt(n / 10 ** scale, scale);
 }
 
+export interface ResolvedRecords {
+  domain: DataItem;
+  min: number;
+  max: number;
+}
+
 export interface ResolvedGenerator {
   ir: ModuleIR;
   irPath: string;
   fields: DataItem[];
+  /** Record-stream mode (docs/record-protocol.md): variable-length cases of file records. */
+  records: ResolvedRecords | null;
   count: number;
   seed: number;
 }
@@ -95,31 +103,60 @@ export function resolveGenerator(
   overrides: { count?: number; seed?: number },
 ): ResolvedGenerator {
   const gen = config.generator;
-  if (!gen) throw new DiffExecError('layer A needs a "generator" block in the config (ir, stdinFields)');
+  if (!gen) throw new DiffExecError('layer A needs a "generator" block in the config (ir, stdinFields or records)');
+  if (!!gen.records === !!gen.stdinFields) {
+    throw new DiffExecError('layer A: the generator needs exactly one of "stdinFields" or "records"');
+  }
   const irPath = resolve(baseDir, gen.ir);
   const ir = JSON.parse(readFileSync(irPath, "utf8")) as ModuleIR;
-  const fields = gen.stdinFields.map((name) => {
-    const item = findItem(ir.dataDivision.items, name);
-    if (!item) throw new DiffExecError(`generator: field ${name} not found in the data division of ${gen.ir}`);
-    return item;
-  });
+  let fields: DataItem[] = [];
+  let records: ResolvedRecords | null = null;
+  if (gen.records) {
+    const domain = findItem(ir.dataDivision.items, gen.records.domain);
+    if (!domain) throw new DiffExecError(`generator: records.domain ${gen.records.domain} not found in ${gen.ir}`);
+    records = { domain, min: gen.records.min ?? 0, max: gen.records.max };
+  } else {
+    fields = gen.stdinFields!.map((name) => {
+      const item = findItem(ir.dataDivision.items, name);
+      if (!item) throw new DiffExecError(`generator: field ${name} not found in the data division of ${gen.ir}`);
+      return item;
+    });
+  }
   return {
     ir,
     irPath,
     fields,
+    records,
     count: overrides.count ?? gen.count ?? 200,
     seed: overrides.seed ?? gen.seed ?? 1,
   };
 }
 
-export function generateCases(fields: DataItem[], count: number, seed: number): DiffCase[] {
+export function generateCases(
+  fields: DataItem[],
+  count: number,
+  seed: number,
+  records: ResolvedRecords | null = null,
+): DiffCase[] {
   const rng = mulberry32(seed);
   const cases: DiffCase[] = [];
   for (let i = 0; i < count; i++) {
-    cases.push({
-      id: `gen-${String(i).padStart(4, "0")}`,
-      stdin: fields.map((f) => genValue(f, rng)),
-    });
+    let stdin: string[];
+    if (records) {
+      // Record counts bias toward the edges where batch translations break:
+      // the empty file, the single record, and the configured maximum.
+      const roll = rng();
+      const span = records.max - records.min;
+      let n: number;
+      if (roll < 0.08) n = records.min;
+      else if (roll < 0.16) n = Math.min(records.min + 1, records.max);
+      else if (roll < 0.24) n = records.max;
+      else n = records.min + Math.floor(rng() * (span + 1));
+      stdin = Array.from({ length: n }, () => genValue(records.domain, rng));
+    } else {
+      stdin = fields.map((f) => genValue(f, rng));
+    }
+    cases.push({ id: `gen-${String(i).padStart(4, "0")}`, stdin });
   }
   return cases;
 }
@@ -144,7 +181,7 @@ export function runPropGen(
 ): number {
   const config = loadConfig(configPath);
   const baseDir = dirname(resolve(configPath));
-  const { ir: _ir, irPath, fields, count, seed } = resolveGenerator(config, baseDir, overrides);
+  const { ir: _ir, irPath, fields, records, count, seed } = resolveGenerator(config, baseDir, overrides);
   const gen = config.generator!;
 
   const numericIdx = fields
@@ -155,12 +192,16 @@ export function runPropGen(
   console.log(`legacymind verify (layer A: property-based, seed=${seed}, count=${count})`);
   console.log(`  legacy: ${sideLabel(config.legacy)}`);
   console.log(`  modern: ${sideLabel(config.modern)}`);
-  console.log(`  domain: ${fields.map((f) => `${f.name} PIC ${f.type?.category}`).join(", ")}`);
+  console.log(
+    records
+      ? `  domain: record stream of ${records.domain.name} PIC ${records.domain.type?.category}, ${records.min}..${records.max} records/case`
+      : `  domain: ${fields.map((f) => `${f.name} PIC ${f.type?.category}`).join(", ")}`,
+  );
   console.log("");
 
   // --- generate + execute -----------------------------------------------------
   const results = [];
-  for (const cs of generateCases(fields, count, seed)) {
+  for (const cs of generateCases(fields, count, seed, records)) {
     const r = runCase(config, baseDir, cs);
     results.push(r);
     if (r.status !== "PASS") {
@@ -190,8 +231,26 @@ export function runPropGen(
     let changed = true;
     while (changed && runs < MAX_SHRINK_RUNS) {
       changed = false;
-      for (const idx of numericIdx) {
-        const scale = fields[idx]!.type?.scale ?? 0;
+      // Records mode: the most valuable simplification is DROPPING a record
+      // (fewer lines is a strictly smaller counterexample).
+      if (records) {
+        for (let drop = 0; drop < current.length && runs < MAX_SHRINK_RUNS; drop++) {
+          const trial = current.filter((_, i) => i !== drop);
+          if (trial.length < records.min) continue;
+          runs++;
+          const probe = failsWith(trial);
+          if (probe.fails) {
+            current = trial;
+            currentDiffs = probe.diffs;
+            changed = true;
+            break;
+          }
+        }
+        if (changed) continue;
+      }
+      const idxs = records ? current.map((_, i) => i) : numericIdx;
+      for (const idx of idxs) {
+        const scale = records ? records.domain.type?.scale ?? 0 : fields[idx]!.type?.scale ?? 0;
         for (const candidate of simplify(current[idx]!, scale)) {
           if (runs >= MAX_SHRINK_RUNS) break;
           const trial = [...current];
@@ -229,7 +288,8 @@ export function runPropGen(
     generator: {
       ir: gen.ir,
       irSha256: createHash("sha256").update(readFileSync(irPath)).digest("hex"),
-      stdinFields: gen.stdinFields,
+      stdinFields: gen.stdinFields ?? null,
+      records: gen.records ?? null,
       seed,
       count,
       note: "deterministic: identical seed + count + IR reproduce identical cases",

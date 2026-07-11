@@ -81,6 +81,8 @@ export type Statement =
   | { kind: "open"; file: string; text: string; span: Span }
   | { kind: "write"; record: string; file: string; text: string; span: Span }
   | { kind: "close"; file: string; text: string; span: Span }
+  /** READ <file> AT END ... NOT AT END ... (file I/O stage 2a): consumes the next record into the FD record item; the branches are statement lists like IF arms. */
+  | { kind: "read"; file: string; record: string; atEnd: Statement[]; notAtEnd: Statement[]; text: string; span: Span }
   /** PERFORM loops (proleap engine only; TEST BEFORE semantics). `thru` marks a THRU paragraph range. */
   | { kind: "perform-times"; target: string; thru?: string; times: OperandExpr; text: string; span: Span }
   | { kind: "perform-until"; target: string; thru?: string; condition: OperandExpr; text: string; span: Span }
@@ -102,8 +104,8 @@ export interface Paragraph {
 
 export interface ModuleIR {
   irVersion: "0.1.0";
-  /** File I/O stage 1 (proleap engine only): LINE SEQUENTIAL output files. */
-  files?: { name: string; assign: string; organization: "line-sequential"; record: string }[];
+  /** File I/O (proleap engine only): LINE SEQUENTIAL files; mode from the OPEN statement. */
+  files?: { name: string; assign: string; organization: "line-sequential"; record: string; mode: "input" | "output" }[];
   module: {
     programId: string;
     dialect: "cobol85-fixed";

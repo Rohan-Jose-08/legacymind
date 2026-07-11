@@ -250,6 +250,10 @@ public class ProLeapFrontend {
 		final Map<String, String> recordToFile = new LinkedHashMap<>();
 		/** Section name -> its LAST paragraph (or itself when it has none): the THRU endpoint a section PERFORM expands to. */
 		final Map<String, String> sectionEnd = new LinkedHashMap<>();
+		/** File name -> its IR entry map (mutable: OPEN sets "mode" when lowered). */
+		final Map<String, Map<String, Object>> fileEntries = new LinkedHashMap<>();
+		/** File name -> its FD record's item map (for stage-2a shape checks). */
+		final Map<String, Map<String, Object>> fileRecordItems = new LinkedHashMap<>();
 
 		/** preprocessed line number (1-based) -> original line number; null when inexact. */
 		int[] lineMap;
@@ -512,7 +516,11 @@ public class ProLeapFrontend {
 				f.put("assign", selectedFiles.get(fdName));
 				f.put("organization", "line-sequential");
 				f.put("record", recName);
+				// "mode" is set by the OPEN statement's lowering; validated by
+				// gateFiles() once the whole procedure division is lowered.
 				files.add(f);
+				fileEntries.put(fdName, f);
+				fileRecordItems.put(fdName, rec);
 			}
 			for (final String sel : selectedFiles.keySet()) {
 				if (!recordToFile.containsValue(sel)) {
@@ -617,6 +625,8 @@ public class ProLeapFrontend {
 			// PERFORM THRU range survives; every other shape is enumerated as
 			// unsupported here so IR-completeness keeps implying verify-soundness.
 			gateGotos(paragraphs);
+			// File I/O gate: modes, stage-2a READ placement, ACCEPT exclusion.
+			gateFiles(paragraphs);
 
 			if (!unsupported.isEmpty()) {
 				return null;
@@ -1179,31 +1189,83 @@ public class ProLeapFrontend {
 				lowerEvaluate((EvaluateStatement) s, out);
 				return;
 			case OPEN: {
-				// File I/O stage 1: OPEN OUTPUT of lowered files only.
+				// File I/O: OPEN OUTPUT (stage 1) and OPEN INPUT (stage 2a) of
+				// lowered files; the phrase sets the file's mode, and gateFiles()
+				// checks every file ends up with exactly one consistent mode.
 				final io.proleap.cobol.asg.metamodel.procedure.open.OpenStatement o =
 						(io.proleap.cobol.asg.metamodel.procedure.open.OpenStatement) s;
-				if (!o.getInputPhrases().isEmpty() || !o.getInputOutputPhrases().isEmpty()
-						|| !o.getExtendPhrases().isEmpty()) {
-					reject(ctx, "OPEN INPUT/I-O/EXTEND (file I/O stage 1 supports OPEN OUTPUT only)");
+				if (!o.getInputOutputPhrases().isEmpty() || !o.getExtendPhrases().isEmpty()) {
+					reject(ctx, "OPEN I-O/EXTEND (outside the file I/O subset)");
 					return;
 				}
+				final List<String[]> opens = new ArrayList<>(); // {fileName, mode}
 				for (final io.proleap.cobol.asg.metamodel.procedure.open.OutputPhrase op : o.getOutputPhrases()) {
 					for (final io.proleap.cobol.asg.metamodel.procedure.open.Output ou : op.getOutputs()) {
-						final String f = ou.getFileCall() != null && ou.getFileCall().getName() != null
-								? ou.getFileCall().getName().toUpperCase()
-								: null;
-						if (f == null || !selectedFiles.containsKey(f)) {
-							reject(ctx, "OPEN OUTPUT of \"" + f + "\" which is not a lowered file");
-							return;
-						}
-						final Map<String, Object> m = new LinkedHashMap<>();
-						m.put("kind", "open");
-						m.put("file", f);
-						m.put("text", textOf(ctx));
-						m.put("span", span(ctx));
-						out.add(m);
+						opens.add(new String[] { ou.getFileCall() != null && ou.getFileCall().getName() != null
+								? ou.getFileCall().getName().toUpperCase() : null, "output" });
 					}
 				}
+				for (final io.proleap.cobol.asg.metamodel.procedure.open.InputPhrase ip : o.getInputPhrases()) {
+					for (final io.proleap.cobol.asg.metamodel.procedure.open.Input iu : ip.getInputs()) {
+						opens.add(new String[] { iu.getFileCall() != null && iu.getFileCall().getName() != null
+								? iu.getFileCall().getName().toUpperCase() : null, "input" });
+					}
+				}
+				for (final String[] open : opens) {
+					final String f = open[0];
+					final Map<String, Object> entry = f != null ? fileEntries.get(f) : null;
+					if (entry == null) {
+						reject(ctx, "OPEN of \"" + f + "\" which is not a lowered file");
+						return;
+					}
+					final Object prior = entry.get("mode");
+					if (prior != null && !prior.equals(open[1])) {
+						reject(ctx, "file " + f + " opened in conflicting modes (" + prior + " and " + open[1] + ")");
+						return;
+					}
+					entry.put("mode", open[1]);
+					final Map<String, Object> m = new LinkedHashMap<>();
+					m.put("kind", "open");
+					m.put("file", f);
+					m.put("text", textOf(ctx));
+					m.put("span", span(ctx));
+					out.add(m);
+				}
+				return;
+			}
+			case READ: {
+				// File I/O stage 2a (docs/record-protocol.md): READ <file>
+				// AT END ... NOT AT END ... over a single-elementary-record
+				// input file; structural placement is checked by gateFiles().
+				final io.proleap.cobol.asg.metamodel.procedure.read.ReadStatement r =
+						(io.proleap.cobol.asg.metamodel.procedure.read.ReadStatement) s;
+				if (r.getInto() != null) {
+					reject(ctx, "READ ... INTO (outside file I/O stage 2a)");
+					return;
+				}
+				if (r.getKey() != null || r.getInvalidKeyPhrase() != null || r.getNotInvalidKeyPhrase() != null) {
+					reject(ctx, "READ ... KEY/INVALID KEY (indexed reads are outside the subset)");
+					return;
+				}
+				final String f = r.getFileCall() != null && r.getFileCall().getName() != null
+						? r.getFileCall().getName().toUpperCase()
+						: null;
+				final Map<String, Object> entry = f != null ? fileEntries.get(f) : null;
+				if (entry == null) {
+					reject(ctx, "READ of \"" + f + "\" which is not a lowered file");
+					return;
+				}
+				final Map<String, Object> m = new LinkedHashMap<>();
+				m.put("kind", "read");
+				m.put("file", f);
+				m.put("record", entry.get("record"));
+				m.put("atEnd", r.getAtEnd() != null ? lowerStatements(r.getAtEnd().getStatements()) : new ArrayList<>());
+				m.put("notAtEnd", r.getNotAtEndPhrase() != null
+						? lowerStatements(r.getNotAtEndPhrase().getStatements())
+						: new ArrayList<>());
+				m.put("text", textOf(ctx));
+				m.put("span", span(ctx));
+				out.add(m);
 				return;
 			}
 			case WRITE: {
@@ -2284,6 +2346,136 @@ public class ProLeapFrontend {
 						unsupported.add("GO TO " + target
 								+ " is a backward or self jump; only strictly forward top-level jumps are supported (line "
 								+ line + ")");
+					}
+				}
+			}
+		}
+
+		/** Collect READ sites: {stmtMap, paragraphName, indexInParagraphTopLevel or -1 when nested}. */
+		void collectReads(final List<?> stmts, final String para, final boolean topLevel, final List<Object[]> out) {
+			for (int i = 0; i < stmts.size(); i++) {
+				final Map<?, ?> s = (Map<?, ?>) stmts.get(i);
+				final String kind = (String) s.get("kind");
+				if ("read".equals(kind)) {
+					out.add(new Object[] { s, para, topLevel ? Integer.valueOf(i) : Integer.valueOf(-1) });
+					collectReads((List<?>) s.get("atEnd"), para, false, out);
+					collectReads((List<?>) s.get("notAtEnd"), para, false, out);
+				} else if ("if".equals(kind)) {
+					collectReads((List<?>) s.get("then"), para, false, out);
+					if (s.get("else") != null) {
+						collectReads((List<?>) s.get("else"), para, false, out);
+					}
+				}
+			}
+		}
+
+		/** True if any ACCEPT appears anywhere (IF and READ branches included). */
+		boolean containsAcceptStmt(final List<?> stmts) {
+			for (final Object so : stmts) {
+				final Map<?, ?> s = (Map<?, ?>) so;
+				final String kind = (String) s.get("kind");
+				if ("accept".equals(kind)) {
+					return true;
+				}
+				if ("if".equals(kind) && (containsAcceptStmt((List<?>) s.get("then"))
+						|| (s.get("else") != null && containsAcceptStmt((List<?>) s.get("else"))))) {
+					return true;
+				}
+				if ("read".equals(kind) && (containsAcceptStmt((List<?>) s.get("atEnd"))
+						|| containsAcceptStmt((List<?>) s.get("notAtEnd")))) {
+					return true;
+				}
+			}
+			return false;
+		}
+
+		/**
+		 * File I/O gate. Stage 1+2a rules: every lowered file is opened in
+		 * exactly one mode; at most ONE input file; with an input file present
+		 * the module has no ACCEPT (stdin belongs to the record stream), the
+		 * FD record is a single elementary field (one line = one value), and
+		 * there is exactly one READ site, heading the body of a top-level
+		 * PERFORM UNTIL loop — the canonical batch archetype the record
+		 * protocol models (docs/record-protocol.md).
+		 */
+		void gateFiles(final List<Object> paragraphs) {
+			if (fileEntries.isEmpty()) {
+				return;
+			}
+			final List<String> inputFiles = new ArrayList<>();
+			for (final Map.Entry<String, Map<String, Object>> e : fileEntries.entrySet()) {
+				final Object mode = e.getValue().get("mode");
+				if (mode == null) {
+					unsupported.add("file " + e.getKey() + " is never opened");
+				} else if ("input".equals(mode)) {
+					inputFiles.add(e.getKey());
+				}
+			}
+			if (inputFiles.isEmpty()) {
+				return;
+			}
+			if (inputFiles.size() > 1) {
+				unsupported.add("more than one input file (" + String.join(", ", inputFiles)
+						+ ") - file I/O stage 2a supports exactly one");
+				return;
+			}
+			final String inFile = inputFiles.get(0);
+			final Map<String, Object> rec = fileRecordItems.get(inFile);
+			final List<?> recChildren = rec != null ? (List<?>) rec.get("children") : null;
+			if (rec == null || recChildren == null || !recChildren.isEmpty() || rec.get("picture") == null) {
+				unsupported.add("input file " + inFile
+						+ "'s record is not a single elementary field (multi-field records are file I/O stage 2b)");
+			}
+			final List<Object[]> reads = new ArrayList<>();
+			boolean anyAccept = false;
+			for (final Object po : paragraphs) {
+				final Map<?, ?> pm = (Map<?, ?>) po;
+				final List<?> stmts = (List<?>) pm.get("statements");
+				collectReads(stmts, (String) pm.get("name"), true, reads);
+				anyAccept = anyAccept || containsAcceptStmt(stmts);
+			}
+			if (anyAccept) {
+				unsupported.add("ACCEPT alongside an input file - stdin belongs to the record stream (stage 2a)");
+			}
+			if (reads.size() != 1) {
+				unsupported.add(reads.size() + " READ site(s) - file I/O stage 2a supports exactly one");
+				return;
+			}
+			final Object[] site = reads.get(0);
+			final String readPara = (String) site[1];
+			final int idx = (Integer) site[2];
+			if (idx != 0) {
+				unsupported.add("the READ must be the first statement of its paragraph (stage 2a)");
+				return;
+			}
+			// The read's paragraph must head the range of a perform-until loop.
+			boolean loopDriven = false;
+			for (final Object po : paragraphs) {
+				final List<Object[]> loops = new ArrayList<>();
+				collectLoopTargets((List<?>) ((Map<?, ?>) po).get("statements"), loops);
+				for (final Object[] lt : loops) {
+					if (readPara.equals(lt[0])) {
+						loopDriven = true;
+					}
+				}
+			}
+			if (!loopDriven) {
+				unsupported.add("the READ's paragraph " + readPara
+						+ " is not the target of a PERFORM UNTIL loop (stage 2a models the canonical batch loop)");
+			}
+		}
+
+		/** Collect perform-until loop targets {targetName}. */
+		void collectLoopTargets(final List<?> stmts, final List<Object[]> out) {
+			for (final Object so : stmts) {
+				final Map<?, ?> s = (Map<?, ?>) so;
+				final String kind = (String) s.get("kind");
+				if ("perform-until".equals(kind)) {
+					out.add(new Object[] { s.get("target") });
+				} else if ("if".equals(kind)) {
+					collectLoopTargets((List<?>) s.get("then"), out);
+					if (s.get("else") != null) {
+						collectLoopTargets((List<?>) s.get("else"), out);
 					}
 				}
 			}

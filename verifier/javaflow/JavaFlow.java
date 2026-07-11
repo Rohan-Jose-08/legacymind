@@ -190,8 +190,14 @@ public final class JavaFlow {
                 walkBranch(loop.getStatement());
                 walkStatements(loop.getUpdate());
             } else if (st instanceof WhileLoopTree loop) {
+                // The canonical stream-read loop assigns inside the
+                // condition: while ((line = in.readLine()) != null). Scan the
+                // condition for assignments so the input position is counted
+                // at its single syntactic site.
+                scanConditionAssignments(loop.getCondition());
                 walkBranch(loop.getStatement());
             } else if (st instanceof DoWhileLoopTree loop) {
+                scanConditionAssignments(loop.getCondition());
                 walkBranch(loop.getStatement());
             } else {
                 // No hidden failures: an unmodeled statement kind must
@@ -204,6 +210,18 @@ public final class JavaFlow {
     private void walkBranch(StatementTree branch) {
         if (branch instanceof BlockTree block) walkStatements(block.getStatements());
         else walkStatements(List.of(branch));
+    }
+
+    /** Assignments embedded in a loop condition merge like statement-level ones. */
+    private void scanConditionAssignments(ExpressionTree cond) {
+        if (cond instanceof ParenthesizedTree p) {
+            scanConditionAssignments(p.getExpression());
+        } else if (cond instanceof BinaryTree bin) {
+            scanConditionAssignments(bin.getLeftOperand());
+            scanConditionAssignments(bin.getRightOperand());
+        } else if (cond instanceof AssignmentTree assign && assign.getVariable() instanceof IdentifierTree id) {
+            merged(id.getName().toString()).mergeFrom(flowOf(assign.getExpression(), Map.of(), 0));
+        }
     }
 
     private Flow merged(String name) {
@@ -357,6 +375,7 @@ public final class JavaFlow {
                     case "HALF_UP" -> flow.rounding.add("half-up");
                     case "HALF_EVEN" -> flow.rounding.add("half-even");
                     case "DOWN", "FLOOR" -> { /* truncation: not compared (often a numeric no-op) */ }
+                    case "UNNECESSARY" -> { /* asserts exactness: no rounding occurs by definition */ }
                     default -> flow.unresolved.add("unrecognized rounding mode: " + mode);
                 }
             }

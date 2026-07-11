@@ -13,13 +13,14 @@
       "description": "File I/O stage 1: LINE SEQUENTIAL OUTPUT files only (SELECT/FD + OPEN OUTPUT/WRITE/CLOSE). Each FD's single 01 record is lowered into dataDivision.items as ordinary storage and referenced here by name. Input files, multiple records per FD, WRITE FROM/ADVANCING, and the file-status protocol are outside the subset; runtime file semantics are ground-truthed by layer B (the harness serializes the output file after the KV stdout stream).",
       "items": {
         "type": "object",
-        "required": ["name", "assign", "organization", "record"],
+        "required": ["name", "assign", "organization", "record", "mode"],
         "additionalProperties": false,
         "properties": {
           "name": { "type": "string", "pattern": "^[A-Z][A-Z0-9-]*$" },
           "assign": { "type": "string", "description": "ASSIGN TO literal, quotes stripped." },
           "organization": { "const": "line-sequential" },
-          "record": { "type": "string", "pattern": "^[A-Z][A-Z0-9-]*$" }
+          "record": { "type": "string", "pattern": "^[A-Z][A-Z0-9-]*$" },
+          "mode": { "enum": ["input", "output"], "description": "From the OPEN statement; each file must be opened in exactly one mode." }
         }
       }
     },
@@ -348,6 +349,21 @@
             "kind": { "const": "write" },
             "record": { "type": "string", "pattern": "^[A-Z][A-Z0-9-]*$" },
             "file": { "type": "string", "pattern": "^[A-Z][A-Z0-9-]*$" },
+            "text": { "type": "string" },
+            "span": { "$ref": "#/$defs/span" }
+          }
+        },
+        {
+          "type": "object",
+          "description": "READ <file> AT END ... NOT AT END ... (file I/O stage 2a, docs/record-protocol.md): consumes the next record of a LINE SEQUENTIAL input file into the FD record item; the branches are statement lists. Stage 2a admits exactly one READ site, heading the body of one top-level PERFORM UNTIL loop, over a single-elementary-field record, with no ACCEPT in the module. READ INTO / KEY / INVALID KEY / NEXT RECORD are outside the subset.",
+          "required": ["kind", "file", "record", "atEnd", "notAtEnd", "text", "span"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "const": "read" },
+            "file": { "type": "string", "pattern": "^[A-Z][A-Z0-9-]*$" },
+            "record": { "type": "string", "pattern": "^[A-Z][A-Z0-9-]*$" },
+            "atEnd": { "type": "array", "items": { "$ref": "#/$defs/statement" } },
+            "notAtEnd": { "type": "array", "items": { "$ref": "#/$defs/statement" } },
             "text": { "type": "string" },
             "span": { "$ref": "#/$defs/span" }
           }

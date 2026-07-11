@@ -1,0 +1,7 @@
+{
+  "$comment": "Layer D for BATCHSUM: static data-flow equivalence between the IR and migrated candidate A. The READ's record area is one logical input position (unioned over iterations, symmetric with the modern side's single in-loop read); COUNT derives from the constant 1, TOTAL from the record input.",
+  "static": {
+    "ir": "../../out/ir/BATCHSUM.ir.json",
+    "modernJava": "../../out/bench/batchsum/migrate/candidate-a/Batchsum.java"
+  }
+}

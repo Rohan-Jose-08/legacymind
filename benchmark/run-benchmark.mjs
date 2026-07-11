@@ -66,6 +66,7 @@ for (const m of modules) {
       ["docker", "build", "-f", m.dockerfile ?? "harness/gnucobol/Dockerfile",
         "--build-arg", `SOURCE=${m.source}`,
         ...(m.outFile ? ["--build-arg", `OUTFILE=${m.outFile}`] : []),
+        ...(m.inFile ? ["--build-arg", `INFILE=${m.inFile}`] : []),
         "-t", m.imageTag, "."],
       `harness image ${m.imageTag}`,
     );

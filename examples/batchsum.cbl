@@ -1,10 +1,12 @@
       * BATCHSUM - the batch archetype, used as the record-protocol
-      * design's ground-truth probe (docs/record-protocol.md): READ a
-      * LINE SEQUENTIAL input file to end-of-file, accumulate, report.
-      * Run through harness/gnucobol/Dockerfile.infile, whose wrapper
-      * turns the case's stdin into the input file's records. Outputs
-      * COUNT and TOTAL as KV lines. Not yet inside the IR subset -
-      * READ lowering is file I/O stage 2, designed in the doc above.
+      * design's ground-truth probe (docs/record-protocol.md) and as the
+      * first file-READING benchmark module: READ a LINE SEQUENTIAL input
+      * file to end-of-file, accumulate, report. Run through
+      * harness/gnucobol/Dockerfile.infile, whose wrapper turns the
+      * case's stdin into the input file's records. Outputs COUNT and
+      * TOTAL as KV lines. The canonical stage-2a shape: one input file,
+      * a single elementary-field record, one READ site heading the body
+      * of one top-level PERFORM UNTIL loop, no ACCEPT.
        IDENTIFICATION DIVISION.
        PROGRAM-ID. BATCHSUM.
        ENVIRONMENT DIVISION.
@@ -25,18 +27,18 @@
        PROCEDURE DIVISION.
        MAIN-PARA.
            OPEN INPUT IN-FILE
-           PERFORM UNTIL WS-EOF = 1
-               READ IN-FILE
-                   AT END
-                       MOVE 1 TO WS-EOF
-                   NOT AT END
-                       COMPUTE WS-AMT = FUNCTION NUMVAL(IN-REC)
-                       ADD WS-AMT TO WS-TOTAL
-                       ADD 1 TO WS-COUNT
-               END-READ
-           END-PERFORM
+           PERFORM READ-PARA UNTIL WS-EOF = 1
            CLOSE IN-FILE
            MOVE WS-TOTAL TO WS-TOT-OUT
            DISPLAY "COUNT=" WS-COUNT
            DISPLAY "TOTAL=" WS-TOT-OUT
            STOP RUN.
+       READ-PARA.
+           READ IN-FILE
+               AT END
+                   MOVE 1 TO WS-EOF
+               NOT AT END
+                   COMPUTE WS-AMT = FUNCTION NUMVAL(IN-REC)
+                   ADD WS-AMT TO WS-TOTAL
+                   ADD 1 TO WS-COUNT
+           END-READ.

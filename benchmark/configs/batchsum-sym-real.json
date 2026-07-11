@@ -1,0 +1,19 @@
+{
+  "$comment": "Layer C for BATCHSUM vs the real GnuCOBOL harness image: the record protocol's first symbolic outing. Record slot k is input variable k (domain from WS-AMT, the record's numeric twin); the READ inside the PERFORM UNTIL loop forks the record count through the unroller - the NOT AT END arm binds slot k, the AT END arm fixes the case at k records - so paths enumerate files of 0..max records and every realized case emits exactly that many stdin lines.",
+  "legacy": {
+    "image": "legacymind/legacy-batchsum",
+    "label": "COBOL 85 BATCHSUM (GnuCOBOL via harness image legacymind/legacy-batchsum, record-stream wrapper)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/batchsum/migrate/candidate-a", "Batchsum"],
+    "label": "Java 21 batchsum (migrated candidate A)"
+  },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "symbolic": {
+    "ir": "../../out/ir/BATCHSUM.ir.json",
+    "records": { "domain": "WS-AMT", "max": 6 },
+    "baseCase": ["10.50", "20.25", "5.00"],
+    "annotations": ["WS-AMT", "WS-TOTAL"]
+  }
+}

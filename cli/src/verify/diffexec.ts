@@ -44,11 +44,26 @@ export interface SideConfig {
   env?: Record<string, string>;
 }
 
+/**
+ * Record-stream input (file I/O stage 2a, docs/record-protocol.md): the
+ * case's stdin lines are the input FILE's records. `domain` names the
+ * data-division item whose PICTURE defines each record line's value domain
+ * (the numeric twin the record's NUMVAL lands in, not the X-typed record
+ * itself).
+ */
+export interface RecordsConfig {
+  domain: string;
+  min?: number;
+  max: number;
+}
+
 export interface GeneratorConfig {
   /** Path to the module's IR (relative to the config file). */
   ir: string;
   /** Data-division item names, one per stdin line, defining the input domain. */
-  stdinFields: string[];
+  stdinFields?: string[];
+  /** Record-stream mode: variable-length cases of file records (mutually exclusive with stdinFields). */
+  records?: RecordsConfig;
   count?: number;
   seed?: number;
 }
@@ -62,7 +77,9 @@ export interface SymbolicConfig {
   /** Path to the module's IR (relative to the config file). */
   ir: string;
   /** Data-division item names, one per stdin line, defining the input domain. */
-  stdinFields: string[];
+  stdinFields?: string[];
+  /** Record-stream mode (mutually exclusive with stdinFields): slots 0..max-1 become the input variables and the record count renders through the loop unroller. */
+  records?: RecordsConfig;
   /** A known-good input assignment; boundary cases mutate it one field at a time. */
   baseCase: string[];
   /** Regex marking money-touching fields (default covers IBM copybook conventions). */
@@ -249,7 +266,10 @@ export function runSide(side: SideConfig, stdinLines: string[], baseDir: string,
   }
   const res = spawnSync(argv0, argvRest, {
     cwd: baseDir,
-    input: stdinLines.join("\n") + "\n",
+    // A zero-line case is a genuinely EMPTY stream: a bare trailing newline
+    // would read as one blank record under the record protocol (caught by
+    // the BATCHSUM empty-file case, where the legacy side counted 1).
+    input: stdinLines.length > 0 ? stdinLines.join("\n") + "\n" : "",
     encoding: "utf8",
     timeout: timeoutMs,
     env: { ...process.env, ...(side.image ? {} : side.env ?? {}) },

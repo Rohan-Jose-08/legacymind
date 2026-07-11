@@ -1,0 +1,21 @@
+{
+  "$comment": "Layer B selection cases for BATCHSUM vs the real GnuCOBOL harness image (record protocol: the case's stdin lines ARE the input file's records via the Dockerfile.infile wrapper). A candidate with a discarded priming read loses the first record from COUNT and TOTAL on every non-empty file; the empty file agrees by accident, which is why it is mandatory but not sufficient. Cases cover the empty file (AT END on the first READ), a single record, a typical batch, and a truncating record value.",
+  "legacy": {
+    "image": "legacymind/legacy-batchsum",
+    "label": "COBOL 85 BATCHSUM (GnuCOBOL via harness image legacymind/legacy-batchsum, record-stream wrapper)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/batchsum/migrate/candidate-a", "Batchsum"],
+    "label": "Java 21 batchsum (migrated candidate A)"
+  },
+  "protocol": { "input": "stdin-lines", "output": "kv-lines" },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "cases": [
+    { "id": "empty-file", "stdin": [] },
+    { "id": "one-record", "stdin": ["7"] },
+    { "id": "typical", "stdin": ["10.50", "20.25", "5.00"] },
+    { "id": "truncating-record", "stdin": ["3.999"] },
+    { "id": "ten-records", "stdin": ["1.00", "2.00", "3.00", "4.00", "5.00", "6.00", "7.00", "8.00", "9.00", "10.00"] }
+  ]
+}

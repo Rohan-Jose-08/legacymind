@@ -274,8 +274,8 @@ export async function runMigrate(opts: {
     if (opts.propConfigPath && verdict === "PASS") {
       const propConfig = loadConfig(opts.propConfigPath);
       const propBaseDir = dirname(resolve(opts.propConfigPath));
-      const { fields, count, seed } = resolveGenerator(propConfig, propBaseDir, {});
-      const genCases = generateCases(fields, count, seed);
+      const { fields, records, count, seed } = resolveGenerator(propConfig, propBaseDir, {});
+      const genCases = generateCases(fields, count, seed, records);
       const propCandConfig: DiffConfig = {
         ...propConfig,
         modern: { argv: ["java", "-cp", candDir, emittedClass], label: `candidate ${cand.id} (${cand.label})` },

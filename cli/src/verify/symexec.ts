@@ -436,6 +436,10 @@ interface PathState {
   conds: CondOutcome[];
   computes: SymCompute[];
   notes: string[];
+  /** Records consumed so far on this path (records mode; slot of the next READ). */
+  readCount: number;
+  /** AT END has fired on this path: the case has exactly readCount records. */
+  eofSeen: boolean;
 }
 
 /**
@@ -649,6 +653,12 @@ export function inlineStatements(stmts: Statement[], paras: Map<string, Paragrap
         then: inlineStatements(s.then, paras, stack),
         ...(s.else ? { else: inlineStatements(s.else, paras, stack) } : {}),
       });
+    } else if (s.kind === "read") {
+      out.push({
+        ...s,
+        atEnd: inlineStatements(s.atEnd, paras, stack),
+        notAtEnd: inlineStatements(s.notAtEnd, paras, stack),
+      });
     } else {
       out.push(s);
     }
@@ -667,6 +677,8 @@ interface ExecCtx {
   maxUnroll: number;
   /** Cache of inlined loop bodies by target paragraph. */
   loopBodies: Map<string, Statement[]>;
+  /** Records mode (docs/record-protocol.md): slot k of the input file is input variable k. */
+  records: { max: number; recordName: string } | null;
 }
 
 function exprCtxFor(state: PathState, ctx: ExecCtx): ExprCtx {
@@ -697,11 +709,12 @@ function loopBody(ctx: ExecCtx, s: LoopStmt): Statement[] {
   return body;
 }
 
-/** True if a stop-run/goback appears in `stmts` or nested IF branches. */
+/** True if a stop-run/goback appears in `stmts` or nested IF/READ branches. */
 function containsStop(stmts: Statement[]): boolean {
   for (const s of stmts) {
     if (s.kind === "stop-run" || s.kind === "goback") return true;
     if (s.kind === "if" && (containsStop(s.then) || containsStop(s.else ?? []))) return true;
+    if (s.kind === "read" && (containsStop(s.atEnd) || containsStop(s.notAtEnd))) return true;
   }
   return false;
 }
@@ -711,6 +724,9 @@ function containsAccept(stmts: Statement[], ctx: ExecCtx, seen: Set<string>): bo
     if (s.kind === "accept") return true;
     if (s.kind === "if") {
       if (containsAccept(s.then, ctx, seen) || containsAccept(s.else ?? [], ctx, seen)) return true;
+    }
+    if (s.kind === "read") {
+      if (containsAccept(s.atEnd, ctx, seen) || containsAccept(s.notAtEnd, ctx, seen)) return true;
     }
     if (s.kind === "perform-times" || s.kind === "perform-until" || s.kind === "perform-varying") {
       const names = rangeNames(s.target, s.thru, ctx.paras);
@@ -738,7 +754,11 @@ function collectWrites(stmts: Statement[], out: Set<string>, ctx: ExecCtx, seen:
     if (s.kind === "move") for (const t of s.to) out.add(t);
     else if (s.kind === "compute") out.add(s.target);
     else if (s.kind === "accept") out.add(s.target);
-    else if (s.kind === "if") {
+    else if (s.kind === "read") {
+      out.add(s.record); // the READ writes the record area
+      collectWrites(s.atEnd, out, ctx, seen);
+      collectWrites(s.notAtEnd, out, ctx, seen);
+    } else if (s.kind === "if") {
       collectWrites(s.then, out, ctx, seen);
       collectWrites(s.else ?? [], out, ctx, seen);
     } else if (s.kind === "perform-times" || s.kind === "perform-until" || s.kind === "perform-varying") {
@@ -759,6 +779,8 @@ function cloneState(s: PathState): PathState {
     conds: [...s.conds],
     computes: [...s.computes],
     notes: [...s.notes],
+    readCount: s.readCount,
+    eofSeen: s.eofSeen,
   };
 }
 
@@ -913,6 +935,38 @@ function execute(stmts: Statement[], state: PathState, ctx: ExecCtx, out: PathSt
         // Flow-neutral for the symbolic store: WRITE copies already-modeled
         // record storage to the file; layer B ground-truths file semantics.
         break;
+      case "read": {
+        // Records mode (docs/record-protocol.md): the READ forks the record
+        // count. On the available arm the record area binds to slot
+        // readCount (an ordinary input variable); on the AT END arm the
+        // case's record count is fixed at readCount. Structural — no affine
+        // constraint is pushed, so witnesses stay solvable.
+        if (!ctx.records) {
+          throw new DiffExecError('layer C: READ requires a "records" block in the symbolic config');
+        }
+        if (state.eofSeen) {
+          throw new DiffExecError("layer C: READ after AT END on the same path (outside the stage-2a shape)");
+        }
+        const restAfterRead = stmts.slice(si + 1);
+        if (state.readCount < ctx.records.max) {
+          const avail = cloneState(state);
+          avail.env.set(s.record, { kind: "text", input: avail.readCount });
+          avail.readCount += 1;
+          execute([...s.notAtEnd, ...restAfterRead], avail, ctx, out);
+          if (out.length > MAX_PATHS) {
+            throw new DiffExecError(`layer C: more than ${MAX_PATHS} paths; lower the records max`);
+          }
+        }
+        const eof = cloneState(state);
+        eof.eofSeen = true;
+        if (state.readCount >= ctx.records.max) {
+          eof.notes.push(
+            `cases with more than ${ctx.records.max} records are not enumerated symbolically (records.max)`,
+          );
+        }
+        execute([...s.atEnd, ...restAfterRead], eof, ctx, out);
+        return; // both arms continued with the rest of the statements
+      }
       case "stop-run":
       case "goback":
         // Program end: this path is complete here — statements after it (the
@@ -1380,8 +1434,15 @@ export function runSymExec(configPath: string, outPath: string): number {
   const config = loadConfig(configPath);
   const baseDir = dirname(resolve(configPath));
   const sym = config.symbolic;
-  if (!sym) throw new DiffExecError('layer C needs a "symbolic" block in the config (ir, stdinFields, baseCase)');
-  if (!Array.isArray(sym.baseCase) || sym.baseCase.length !== sym.stdinFields.length) {
+  if (!sym) throw new DiffExecError('layer C needs a "symbolic" block in the config (ir, stdinFields or records, baseCase)');
+  const recordsMode = !!sym.records;
+  if (recordsMode === !!sym.stdinFields) {
+    throw new DiffExecError('layer C: the symbolic config needs exactly one of "stdinFields" or "records"');
+  }
+  if (!Array.isArray(sym.baseCase)) {
+    throw new DiffExecError('layer C: "symbolic.baseCase" must be an array of stdin lines');
+  }
+  if (!recordsMode && sym.baseCase.length !== sym.stdinFields!.length) {
     throw new DiffExecError('layer C: "symbolic.baseCase" must have one value per entry in "stdinFields"');
   }
 
@@ -1392,21 +1453,50 @@ export function runSymExec(configPath: string, outPath: string): number {
   const annotations = new Set(sym.annotations ?? []);
   const maxSolutions = sym.maxBoundarySolutions ?? 5;
 
-  const inputItems = sym.stdinFields.map((n) => {
-    const item = findItem(items, n);
-    if (!item) throw new DiffExecError(`layer C: field ${n} not found in the data division of ${sym.ir}`);
-    return item;
-  });
-  const inputs: InputVar[] = inputItems.map((item, idx) => ({
-    idx,
-    name: item.name,
-    scale: item.type?.scale ?? 0,
-    max:
-      item.type?.digits !== undefined
-        ? rat(10n ** BigInt(item.type.digits) - 1n, 10n ** BigInt(item.type?.scale ?? 0))
-        : R0,
-    numeric: item.type?.category === "numeric",
-  }));
+  // Records mode (docs/record-protocol.md): slot k of the input file is
+  // input variable k, drawing its value domain from the record's numeric
+  // twin; the record count renders through the loop unroller.
+  let recordName: string | null = null;
+  let inputs: InputVar[];
+  if (recordsMode) {
+    const rc = sym.records!;
+    const domain = findItem(items, rc.domain);
+    if (!domain || domain.type?.category !== "numeric") {
+      throw new DiffExecError(`layer C: records.domain ${rc.domain} is not a numeric data item in ${sym.ir}`);
+    }
+    const inEntry = (ir.files ?? []).find((f) => f.mode === "input");
+    if (!inEntry) throw new DiffExecError(`layer C: records mode but ${sym.ir} has no input-mode file`);
+    recordName = inEntry.record;
+    if (sym.baseCase.length > rc.max) {
+      throw new DiffExecError(`layer C: baseCase has ${sym.baseCase.length} records but records.max is ${rc.max}`);
+    }
+    inputs = Array.from({ length: rc.max }, (_, k) => ({
+      idx: k,
+      name: `${recordName}[${k}]`,
+      scale: domain.type?.scale ?? 0,
+      max:
+        domain.type?.digits !== undefined
+          ? rat(10n ** BigInt(domain.type.digits) - 1n, 10n ** BigInt(domain.type?.scale ?? 0))
+          : R0,
+      numeric: true,
+    }));
+  } else {
+    const inputItems = sym.stdinFields!.map((n) => {
+      const item = findItem(items, n);
+      if (!item) throw new DiffExecError(`layer C: field ${n} not found in the data division of ${sym.ir}`);
+      return item;
+    });
+    inputs = inputItems.map((item, idx) => ({
+      idx,
+      name: item.name,
+      scale: item.type?.scale ?? 0,
+      max:
+        item.type?.digits !== undefined
+          ? rat(10n ** BigInt(item.type.digits) - 1n, 10n ** BigInt(item.type?.scale ?? 0))
+          : R0,
+      numeric: item.type?.category === "numeric",
+    }));
+  }
 
   const assigned = new Set<string>();
   const collectAssigned = (stmts: Statement[]): void => {
@@ -1415,7 +1505,11 @@ export function runSymExec(configPath: string, outPath: string): number {
       else if (s.kind === "compute") assigned.add(s.target);
       else if (s.kind === "accept") assigned.add(s.target);
       else if (s.kind === "perform-varying") assigned.add(s.varying.var);
-      else if (s.kind === "if") {
+      else if (s.kind === "read") {
+        assigned.add(s.record);
+        collectAssigned(s.atEnd);
+        collectAssigned(s.notAtEnd);
+      } else if (s.kind === "if") {
         collectAssigned(s.then);
         collectAssigned(s.else ?? []);
       }
@@ -1444,6 +1538,9 @@ export function runSymExec(configPath: string, outPath: string): number {
     }
   };
   collectAccepts(tree);
+  if (recordsMode && acceptOrder.length > 0) {
+    throw new DiffExecError("layer C: ACCEPT alongside an input file (the frontend gate should have rejected this)");
+  }
 
   const ctx: ExecCtx = {
     items,
@@ -1451,11 +1548,30 @@ export function runSymExec(configPath: string, outPath: string): number {
     acceptOrder,
     inputScales: inputs.map((s) => s.scale),
     paras,
-    maxUnroll: sym.maxLoopUnroll ?? 12,
+    // In records mode the unroll bound may not exceed the slot count, so
+    // beyond-bound truncation (the honest disclosure) always fires first.
+    maxUnroll: recordsMode ? Math.min(sym.maxLoopUnroll ?? 12, sym.records!.max) : sym.maxLoopUnroll ?? 12,
     loopBodies: new Map(),
+    records: recordsMode ? { max: sym.records!.max, recordName: recordName! } : null,
   };
+  // WORKING-STORAGE VALUE clauses define the initial program state: seed the
+  // symbolic environment with every numeric initializer, exactly. Without
+  // this, a flag relying on its VALUE ZERO (never re-MOVEd before its first
+  // test) is opaque at that test and path pruning collapses.
+  const initialEnv = new Map<string, SymVal>();
+  const seedInitialValues = (list: DataItem[]): void => {
+    for (const it of list) {
+      if (it.type?.category === "numeric" && it.value) {
+        const r = /^zero(s|es)?$/i.test(it.value) ? R0 : ratOf(it.value);
+        if (r) initialEnv.set(it.name, { kind: "affine", a: affineConst(r) });
+      }
+      seedInitialValues(it.children ?? []);
+    }
+  };
+  seedInitialValues(items);
+
   const states: PathState[] = [];
-  execute(tree, { env: new Map(), constraints: [], conds: [], computes: [], notes: [] }, ctx, states);
+  execute(tree, { env: initialEnv, constraints: [], conds: [], computes: [], notes: [], readCount: 0, eofSeen: false }, ctx, states);
   const paths = states.map((st, i) => ({ id: i, state: st }));
 
   console.log(`legacymind verify (layer C: path-sensitive symbolic engine)`);
@@ -1465,12 +1581,25 @@ export function runSymExec(configPath: string, outPath: string): number {
   console.log("");
 
   // Fixed-value candidates for the solver: the base case, then zeros.
-  const baseAssign: Assignment = sym.baseCase.map((v, i) => (inputs[i]!.numeric ? ratOf(v) : null));
+  // Records mode fills slots beyond the base case with zero so every slot
+  // has a value (constraints only reference slots below a path's count).
+  const baseAssign: Assignment = recordsMode
+    ? inputs.map((_, k) => (k < sym.baseCase.length ? ratOf(sym.baseCase[k]!) : R0))
+    : sym.baseCase.map((v, i) => (inputs[i]!.numeric ? ratOf(v) : null));
   const zeroAssign: Assignment = inputs.map((s) => (s.numeric ? R0 : null));
   const fixedCandidates = [baseAssign, zeroAssign];
 
-  const toStdin = (x: Assignment): string[] =>
-    x.map((v, i) => (v === null ? sym.baseCase[i]! : ratToDecimal(v, inputs[i]!.scale) ?? sym.baseCase[i]!));
+  /** Case lines for an assignment; in records mode a path's case has exactly
+   *  `count` lines (its record count), otherwise one line per stdin field. */
+  const toStdin = (x: Assignment, count: number): string[] =>
+    recordsMode
+      ? Array.from({ length: count }, (_, k) => {
+          const v = x[k];
+          return v != null
+            ? ratToDecimal(v, inputs[k]!.scale) ?? sym.baseCase[k] ?? "0"
+            : sym.baseCase[k] ?? "0";
+        })
+      : x.map((v, i) => (v === null ? sym.baseCase[i]! : ratToDecimal(v, inputs[i]!.scale) ?? sym.baseCase[i]!));
 
   // --- 2. infeasible paths (proved, not guessed) -------------------------------
   // Two proof shapes, both exact; a failed witness search alone is never
@@ -1533,7 +1662,7 @@ export function runSymExec(configPath: string, outPath: string): number {
       if (x.some((v, i) => inputs[i]!.numeric && v === null)) continue;
       const ok = allConstraintsHold(p.state.constraints, x);
       if (ok === true) {
-        return { path: p.id, stdin: toStdin(x), assign: x, note: `witness for path #${p.id}` };
+        return { path: p.id, stdin: toStdin(x, p.state.readCount), assign: x, note: `witness for path #${p.id}` };
       }
       // Find the first violated/marginal constraint and repair just that
       // one, queuing the result UNVALIDATED — the outer loop re-checks
@@ -1704,7 +1833,7 @@ export function runSymExec(configPath: string, outPath: string): number {
       if (solved) {
         ob.cases.push({
           id: `sym-${ob.id}-${suffix}`,
-          stdin: toStdin(solved),
+          stdin: toStdin(solved, paths[solvedPath]!.state.readCount),
           note: `${condText} decision value at ${label} (path #${solvedPath}, ${how})`,
         });
       } else {
@@ -1831,7 +1960,7 @@ export function runSymExec(configPath: string, outPath: string): number {
             if (allConstraintsHold(path.state.constraints, x) !== true) continue;
             ob.cases.push({
               id: `sym-${ob.id}-p${pathId}-${ob.cases.length}`,
-              stdin: toStdin(x),
+              stdin: toStdin(x, path.state.readCount),
               note: `${spec.name} = ${ratToDecimal(x[j]!, spec.scale)} lands ${cmp.target} on a half-${st === 0 ? "unit" : "cent"} (path #${pathId}${viaNote})`,
             });
             realizedOnPath = true;

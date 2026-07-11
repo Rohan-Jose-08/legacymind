@@ -94,7 +94,11 @@ function collectAssigned(stmts: Statement[], out: Set<string>): void {
     else if (s.kind === "compute") out.add(s.target);
     else if (s.kind === "accept") out.add(s.target);
     else if (s.kind === "perform-varying") out.add(s.varying.var);
-    else if (s.kind === "if") {
+    else if (s.kind === "read") {
+      out.add(s.record);
+      collectAssigned(s.atEnd, out);
+      collectAssigned(s.notAtEnd, out);
+    } else if (s.kind === "if") {
       collectAssigned(s.then, out);
       collectAssigned(s.else ?? [], out);
     }
@@ -157,6 +161,13 @@ export function extractLegacyFlows(ir: ModuleIR): { outputs: Map<string, FlowRec
     for (const s of stmts) {
       if (s.kind === "accept") {
         merged(s.target).inputs.add(stdinCounter++);
+      } else if (s.kind === "read") {
+        // The record area is written from the input stream: one logical
+        // input position, unioned over all iterations (flow-insensitive) —
+        // symmetric with the modern side's single in-loop read.
+        merged(s.record).inputs.add(stdinCounter++);
+        walk(s.atEnd);
+        walk(s.notAtEnd);
       } else if (s.kind === "compute") {
         const flow = merged(s.target);
         const e = exprFlow(s.expression.text, s.expression.refs);

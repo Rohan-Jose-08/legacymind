@@ -205,6 +205,30 @@ solver depth. Candidate B is the classic section-vs-paragraph bug:
 `PERFORM CALC` translated as the section's first block only, skipping
 the uplift and total — caught by layer B on every non-zero case.
 
+The BATCHSUM module is the record protocol's first outing (file I/O
+stage 2a, docs/record-protocol.md): the true batch archetype — READ a
+LINE SEQUENTIAL input file to end-of-file, accumulate, report. The
+case's stdin lines ARE the input file's records (the
+`Dockerfile.infile` wrapper), so every layer's cases carry
+variable-length record streams: layer A's generator draws a per-case
+record count biased toward the empty file, one record, and the
+maximum, and shrinks failures by dropping records; layer C renders the
+record count through the loop unroller — record slot k is an ordinary
+input variable, the NOT AT END arm binds it, the AT END arm fixes the
+case at k records — so paths cover files of exactly 0..max records,
+each realized as a case with that many lines (the empty file
+included), with the beyond-bound region disclosed as unknown coverage.
+Building it caught and fixed three latent issues: a zero-line case
+previously piped a bare newline (one blank record — the legacy side
+counted 1); WORKING-STORAGE VALUE initializers were never seeded into
+the symbolic state (an EOF flag relying on VALUE ZERO was opaque at
+its first test); and the modern-side extractor now reads assignments
+inside loop conditions, the canonical Java stream-read idiom.
+Candidate B discards a priming read as if it were a header — every
+non-empty file loses its first record from COUNT and TOTAL; the empty
+file agrees by accident, which is exactly why it is a mandatory but
+insufficient case.
+
 ## Running
 
 ```

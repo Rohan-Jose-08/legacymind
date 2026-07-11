@@ -192,5 +192,19 @@
     "staticConfig": "benchmark/configs/bonus-static.json",
     "migrateOut": "out/bench/bonus/migrate",
     "certCopy": "out/certification-bonus.json"
+  },
+  {
+    "id": "batchsum",
+    "programId": "BATCHSUM",
+    "source": "examples/batchsum.cbl",
+    "imageTag": "legacymind/legacy-batchsum",
+    "dockerfile": "harness/gnucobol/Dockerfile.infile",
+    "inFile": "in.dat",
+    "diffConfig": "benchmark/configs/batchsum-diff-real.json",
+    "propConfig": "benchmark/configs/batchsum-prop-real.json",
+    "symConfig": "benchmark/configs/batchsum-sym-real.json",
+    "staticConfig": "benchmark/configs/batchsum-static.json",
+    "migrateOut": "out/bench/batchsum/migrate",
+    "certCopy": "out/certification-batchsum.json"
   }
 ]

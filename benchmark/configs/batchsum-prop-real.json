@@ -1,0 +1,19 @@
+{
+  "$comment": "Layer A for BATCHSUM vs the real GnuCOBOL harness image: the records generator draws a per-case record count (biased toward the empty file, the single record, and the maximum) and fills each record from WS-AMT's PICTURE domain. Failures shrink by dropping records first, then simplifying values.",
+  "legacy": {
+    "image": "legacymind/legacy-batchsum",
+    "label": "COBOL 85 BATCHSUM (GnuCOBOL via harness image legacymind/legacy-batchsum, record-stream wrapper)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/batchsum/migrate/candidate-a", "Batchsum"],
+    "label": "Java 21 batchsum (migrated candidate A)"
+  },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "generator": {
+    "ir": "../../out/ir/BATCHSUM.ir.json",
+    "records": { "domain": "WS-AMT", "min": 0, "max": 25 },
+    "count": 200,
+    "seed": 20260710
+  }
+}
