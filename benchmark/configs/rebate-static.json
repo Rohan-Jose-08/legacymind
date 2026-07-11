@@ -1,0 +1,7 @@
+{
+  "$comment": "Layer D for REBATE: static data-flow equivalence between the IR and migrated candidate A (file I/O stage 2b). Every non-filler field of the record reads the record's single logical input position (unioned over iterations, symmetric with the modern side's single in-loop read); REBATE derives from R-AMOUNT (the record input) and the rate/rounding, QUAL and RECS from the constant 1.",
+  "static": {
+    "ir": "../../out/ir/REBATE.ir.json",
+    "modernJava": "../../out/bench/rebate/migrate/candidate-a/Rebate.java"
+  }
+}

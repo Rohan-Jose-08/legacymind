@@ -22,7 +22,7 @@
 import { createHash } from "node:crypto";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
-import type { DataItem, ModuleIR } from "../parse/parser.js";
+import type { DataItem, LayoutSlot, ModuleIR } from "../parse/parser.js";
 import {
   DiffExecError,
   loadConfig,
@@ -82,9 +82,42 @@ function genValue(field: DataItem, rng: () => number): string {
 }
 
 export interface ResolvedRecords {
-  domain: DataItem;
+  /** Stage 2a: the record's single numeric twin. Null in stage 2b. */
+  domain: DataItem | null;
+  /** Stage 2b (docs/memory-layout.md): the fixed-width record layout. Null in 2a. */
+  layout: LayoutSlot[] | null;
+  /** Stage 2b record byte width (0 in 2a). */
+  recordWidth: number;
   min: number;
   max: number;
+}
+
+/** Generate one raw fixed-width record line (stage 2b): each numeric field a
+ *  random scaled value in its PICTURE range, alphanumeric fields random text,
+ *  fillers spaces. */
+function genRecordLine(records: ResolvedRecords, rng: () => number): string {
+  const chars = new Array<string>(records.recordWidth).fill(" ");
+  for (const slot of records.layout!) {
+    if (slot.decode === "filler") continue;
+    if (slot.decode === "num") {
+      const digits = slot.digits ?? slot.width;
+      const max = 10 ** digits - 1;
+      const roll = rng();
+      let n: number;
+      if (roll < 0.05) n = 0;
+      else if (roll < 0.1) n = max;
+      else if (roll < 0.2) n = Math.floor(rng() * 1000) % (max + 1);
+      else n = Math.floor(rng() * (max + 1));
+      const enc = String(n).padStart(slot.width, "0").slice(-slot.width);
+      for (let c = 0; c < slot.width; c++) chars[slot.offset + c] = enc[c]!;
+    } else {
+      // alphanumeric: a leading letter then filler digits, up to width
+      let s = String.fromCharCode(65 + Math.floor(rng() * 26));
+      while (s.length < slot.width) s += String(Math.floor(rng() * 10));
+      for (let c = 0; c < slot.width; c++) chars[slot.offset + c] = s[c]!;
+    }
+  }
+  return chars.join("");
 }
 
 export interface ResolvedGenerator {
@@ -112,9 +145,17 @@ export function resolveGenerator(
   let fields: DataItem[] = [];
   let records: ResolvedRecords | null = null;
   if (gen.records) {
-    const domain = findItem(ir.dataDivision.items, gen.records.domain);
-    if (!domain) throw new DiffExecError(`generator: records.domain ${gen.records.domain} not found in ${gen.ir}`);
-    records = { domain, min: gen.records.min ?? 0, max: gen.records.max };
+    const min = gen.records.min ?? 0;
+    const inEntry = (ir.files ?? []).find((f) => f.mode === "input");
+    if (inEntry?.layout) {
+      // Stage 2b: draw each record from the input file's fixed-width layout.
+      records = { domain: null, layout: inEntry.layout, recordWidth: inEntry.recordWidth ?? 0, min, max: gen.records.max };
+    } else {
+      if (!gen.records.domain) throw new DiffExecError(`generator: records.domain is required for a single-field record in ${gen.ir}`);
+      const domain = findItem(ir.dataDivision.items, gen.records.domain);
+      if (!domain) throw new DiffExecError(`generator: records.domain ${gen.records.domain} not found in ${gen.ir}`);
+      records = { domain, layout: null, recordWidth: 0, min, max: gen.records.max };
+    }
   } else {
     fields = gen.stdinFields!.map((name) => {
       const item = findItem(ir.dataDivision.items, name);
@@ -152,7 +193,9 @@ export function generateCases(
       else if (roll < 0.16) n = Math.min(records.min + 1, records.max);
       else if (roll < 0.24) n = records.max;
       else n = records.min + Math.floor(rng() * (span + 1));
-      stdin = Array.from({ length: n }, () => genValue(records.domain, rng));
+      stdin = Array.from({ length: n }, () =>
+        records.layout ? genRecordLine(records, rng) : genValue(records.domain!, rng),
+      );
     } else {
       stdin = fields.map((f) => genValue(f, rng));
     }
@@ -194,7 +237,11 @@ export function runPropGen(
   console.log(`  modern: ${sideLabel(config.modern)}`);
   console.log(
     records
-      ? `  domain: record stream of ${records.domain.name} PIC ${records.domain.type?.category}, ${records.min}..${records.max} records/case`
+      ? `  domain: record stream of ${
+          records.layout
+            ? `${records.layout.filter((s) => s.decode !== "filler").length}-field ${records.recordWidth}-byte records`
+            : `${records.domain!.name} PIC ${records.domain!.type?.category}`
+        }, ${records.min}..${records.max} records/case`
       : `  domain: ${fields.map((f) => `${f.name} PIC ${f.type?.category}`).join(", ")}`,
   );
   console.log("");
@@ -248,9 +295,11 @@ export function runPropGen(
         }
         if (changed) continue;
       }
-      const idxs = records ? current.map((_, i) => i) : numericIdx;
+      // Stage 2b lines are multi-field records, not simplifiable scalars;
+      // record-dropping above is the shrink. 2a/field mode simplifies values.
+      const idxs = records ? (records.layout ? [] : current.map((_, i) => i)) : numericIdx;
       for (const idx of idxs) {
-        const scale = records ? records.domain.type?.scale ?? 0 : fields[idx]!.type?.scale ?? 0;
+        const scale = records ? records.domain!.type?.scale ?? 0 : fields[idx]!.type?.scale ?? 0;
         for (const candidate of simplify(current[idx]!, scale)) {
           if (runs >= MAX_SHRINK_RUNS) break;
           const trial = [...current];

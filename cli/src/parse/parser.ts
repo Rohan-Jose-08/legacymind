@@ -102,10 +102,38 @@ export interface Paragraph {
   statements: Statement[];
 }
 
+/**
+ * One field slice of a fixed-width record (file I/O stage 2b,
+ * docs/memory-layout.md). Widths come from PICTUREs (numeric DISPLAY =
+ * digit count; V and S occupy no byte; alphanumeric = length), offsets
+ * from the running sum. `name` is the final (post-finalizeNames) leaf
+ * name statements reference; fillers have no name. Emitted only for
+ * multi-field group records — a single elementary record carries none,
+ * so stage-2a IR stays byte-identical.
+ */
+export interface LayoutSlot {
+  path: string;
+  offset: number;
+  width: number;
+  decode: "num" | "alnum" | "filler";
+  name?: string;
+  digits?: number;
+  scale?: number;
+}
+
 export interface ModuleIR {
   irVersion: "0.1.0";
   /** File I/O (proleap engine only): LINE SEQUENTIAL files; mode from the OPEN statement. */
-  files?: { name: string; assign: string; organization: "line-sequential"; record: string; mode: "input" | "output" }[];
+  files?: {
+    name: string;
+    assign: string;
+    organization: "line-sequential";
+    record: string;
+    mode: "input" | "output";
+    /** Multi-field records only (stage 2b): total record byte width and per-field layout. */
+    recordWidth?: number;
+    layout?: LayoutSlot[];
+  }[];
   module: {
     programId: string;
     dialect: "cobol85-fixed";

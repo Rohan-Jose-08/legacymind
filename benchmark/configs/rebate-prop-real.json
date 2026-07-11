@@ -1,0 +1,19 @@
+{
+  "$comment": "Layer A for REBATE vs the real GnuCOBOL harness image (file I/O stage 2b). The records generator draws a per-case record count (biased toward the empty file, the single record, and the maximum) and fills each record from the input file's fixed-width layout - each numeric field from its own PICTURE range, alphanumeric fields random text, fillers spaces. Failures shrink by dropping records first.",
+  "legacy": {
+    "image": "legacymind/legacy-rebate",
+    "label": "COBOL 85 REBATE (GnuCOBOL via harness image legacymind/legacy-rebate, record-stream wrapper)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/rebate/migrate/candidate-a", "Rebate"],
+    "label": "Java 21 rebate (migrated candidate A)"
+  },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "generator": {
+    "ir": "../../out/ir/REBATE.ir.json",
+    "records": { "min": 0, "max": 25 },
+    "count": 200,
+    "seed": 20260711
+  }
+}

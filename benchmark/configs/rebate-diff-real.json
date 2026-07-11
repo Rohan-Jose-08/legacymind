@@ -1,0 +1,23 @@
+{
+  "$comment": "Layer B selection cases for REBATE vs the real GnuCOBOL harness image (file I/O stage 2b, docs/memory-layout.md). Each stdin line is a fixed 13-byte record: R-ID(4) R-AMOUNT 9(5)V99 (7) FILLER(2). The canonical multi-field defect is a field-offset error: candidate B decodes R-AMOUNT one byte early, so the misread slice (last digit of R-ID plus six amount digits) parses to a wrong value on every record. The empty file agrees by accident; a single record diverges. Cases cover the empty file (AT END on the first READ), a qualifying record, a below-threshold record, the 100.00 threshold boundary, a rounding half-boundary, and a typical batch.",
+  "legacy": {
+    "image": "legacymind/legacy-rebate",
+    "label": "COBOL 85 REBATE (GnuCOBOL via harness image legacymind/legacy-rebate, record-stream wrapper)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/rebate/migrate/candidate-a", "Rebate"],
+    "label": "Java 21 rebate (migrated candidate A)"
+  },
+  "protocol": { "input": "stdin-lines", "output": "kv-lines" },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "cases": [
+    { "id": "empty-file", "stdin": [] },
+    { "id": "one-qualifying", "stdin": ["00420015025  "] },
+    { "id": "below-threshold", "stdin": ["00010009999  "] },
+    { "id": "threshold-boundary", "stdin": ["00020010000  "] },
+    { "id": "rounding-half-up", "stdin": ["00070015025  "] },
+    { "id": "rounding-half-down", "stdin": ["00080015024  "] },
+    { "id": "typical-batch", "stdin": ["00420015025  ", "00010009999  ", "00030020050  "] }
+  ]
+}

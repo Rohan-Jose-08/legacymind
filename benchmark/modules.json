@@ -206,5 +206,19 @@
     "staticConfig": "benchmark/configs/batchsum-static.json",
     "migrateOut": "out/bench/batchsum/migrate",
     "certCopy": "out/certification-batchsum.json"
+  },
+  {
+    "id": "rebate",
+    "programId": "REBATE",
+    "source": "examples/rebate.cbl",
+    "imageTag": "legacymind/legacy-rebate",
+    "dockerfile": "harness/gnucobol/Dockerfile.infile",
+    "inFile": "in.dat",
+    "diffConfig": "benchmark/configs/rebate-diff-real.json",
+    "propConfig": "benchmark/configs/rebate-prop-real.json",
+    "symConfig": "benchmark/configs/rebate-sym-real.json",
+    "staticConfig": "benchmark/configs/rebate-static.json",
+    "migrateOut": "out/bench/rebate/migrate",
+    "certCopy": "out/certification-rebate.json"
   }
 ]

@@ -45,14 +45,20 @@ export interface SideConfig {
 }
 
 /**
- * Record-stream input (file I/O stage 2a, docs/record-protocol.md): the
- * case's stdin lines are the input FILE's records. `domain` names the
- * data-division item whose PICTURE defines each record line's value domain
- * (the numeric twin the record's NUMVAL lands in, not the X-typed record
- * itself).
+ * Record-stream input: the case's stdin lines are the input FILE's
+ * records.
+ *
+ * Stage 2a (single elementary field, docs/record-protocol.md): `domain`
+ * names the numeric twin the record's NUMVAL lands in — the PICTURE that
+ * defines each record line's value domain.
+ *
+ * Stage 2b (multi-field fixed-width record, docs/memory-layout.md):
+ * `domain` is omitted — each field's own PICTURE bounds its domain, read
+ * from the input file's `layout` in the IR. baseCase lines are raw
+ * full-width records.
  */
 export interface RecordsConfig {
-  domain: string;
+  domain?: string;
   min?: number;
   max: number;
 }

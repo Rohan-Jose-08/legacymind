@@ -40,7 +40,7 @@
 import { createHash } from "node:crypto";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
-import type { DataItem, ModuleIR, Paragraph, Statement } from "../parse/parser.js";
+import type { DataItem, LayoutSlot, ModuleIR, Paragraph, Statement } from "../parse/parser.js";
 import {
   DiffExecError,
   loadConfig,
@@ -677,8 +677,20 @@ interface ExecCtx {
   maxUnroll: number;
   /** Cache of inlined loop bodies by target paragraph. */
   loopBodies: Map<string, Statement[]>;
-  /** Records mode (docs/record-protocol.md): slot k of the input file is input variable k. */
-  records: { max: number; recordName: string } | null;
+  /**
+   * Records mode: slot k of the input file forks the record count through
+   * the unroller. Stage 2a (docs/record-protocol.md): `fields` is null and
+   * the whole record binds to input variable k. Stage 2b
+   * (docs/memory-layout.md): `fields` are the record's non-filler leaves in
+   * order, and record k binds field j to input variable k*F+j.
+   */
+  records: { max: number; recordName: string; fields: FieldSlot[] | null } | null;
+}
+
+/** A non-filler record field for stage-2b binding (input var per record slot). */
+interface FieldSlot {
+  name: string;
+  numeric: boolean;
 }
 
 function exprCtxFor(state: PathState, ctx: ExecCtx): ExprCtx {
@@ -950,7 +962,24 @@ function execute(stmts: Statement[], state: PathState, ctx: ExecCtx, out: PathSt
         const restAfterRead = stmts.slice(si + 1);
         if (state.readCount < ctx.records.max) {
           const avail = cloneState(state);
-          avail.env.set(s.record, { kind: "text", input: avail.readCount });
+          const fields = ctx.records.fields;
+          if (fields) {
+            // Stage 2b (docs/memory-layout.md): record k binds each
+            // non-filler field j to input variable k*F+j. Numeric fields are
+            // used directly in arithmetic, so they bind as affine vars;
+            // alphanumeric fields stay text twins (NUMVAL / never solved).
+            const F = fields.length;
+            for (let j = 0; j < F; j++) {
+              const fld = fields[j]!;
+              const idx = avail.readCount * F + j;
+              avail.env.set(
+                fld.name,
+                fld.numeric ? { kind: "affine", a: affineVar(idx) } : { kind: "text", input: idx },
+              );
+            }
+          } else {
+            avail.env.set(s.record, { kind: "text", input: avail.readCount });
+          }
           avail.readCount += 1;
           execute([...s.notAtEnd, ...restAfterRead], avail, ctx, out);
           if (out.length > MAX_PATHS) {
@@ -1430,6 +1459,90 @@ interface Obligation {
   unrealizedPaths: { path: number; reason: string }[];
 }
 
+// ---------------------------------------------------------------------------
+// Fixed-width record layout (file I/O stage 2b, docs/memory-layout.md).
+// ---------------------------------------------------------------------------
+
+/**
+ * Recompute a record's byte layout from its DataItem tree, mirroring the
+ * frontend's computeLayout. Layer C asserts this equals the IR's `layout`
+ * so the two implementations can never silently diverge on field
+ * offsets, widths, or decode kinds.
+ */
+function computeLayout(record: DataItem): { recordWidth: number; slots: LayoutSlot[] } {
+  const slots: LayoutSlot[] = [];
+  let offset = 0;
+  const walk = (item: DataItem, isRoot: boolean): void => {
+    if (item.children && item.children.length > 0) {
+      for (const c of item.children) walk(c, false);
+      return;
+    }
+    if (isRoot) return; // childless root with no picture: nothing to slice
+    const t = item.type;
+    const width =
+      t?.category === "numeric" ? t.digits ?? -1 : t?.category === "alphanumeric" ? t.length ?? -1 : -1;
+    if (width < 0) {
+      // The frontend would have rejected this leaf; a marker slot makes the
+      // divergence fail loudly in assertLayoutMatches rather than silently.
+      slots.push({ path: item.path, offset, width, decode: "num" });
+      return;
+    }
+    if (item.filler) {
+      slots.push({ path: item.path, offset, width, decode: "filler" });
+    } else if (t?.category === "numeric") {
+      slots.push({ path: item.path, name: item.name, offset, width, decode: "num", digits: t.digits, scale: t.scale ?? 0 });
+    } else {
+      slots.push({ path: item.path, name: item.name, offset, width, decode: "alnum" });
+    }
+    offset += width;
+  };
+  walk(record, true);
+  return { recordWidth: offset, slots };
+}
+
+function assertLayoutMatches(
+  recomputed: { recordWidth: number; slots: LayoutSlot[] },
+  irWidth: number | undefined,
+  irSlots: LayoutSlot[],
+  irName: string,
+): void {
+  const mismatch = (why: string): never => {
+    throw new DiffExecError(`layer C: record layout drift in ${irName} (${why}); frontend and verifier disagree`);
+  };
+  if (recomputed.recordWidth !== irWidth) mismatch(`recordWidth ${recomputed.recordWidth} vs ${irWidth}`);
+  if (recomputed.slots.length !== irSlots.length) mismatch(`${recomputed.slots.length} slots vs ${irSlots.length}`);
+  for (let i = 0; i < irSlots.length; i++) {
+    const a = recomputed.slots[i]!;
+    const b = irSlots[i]!;
+    if (
+      a.offset !== b.offset ||
+      a.width !== b.width ||
+      a.decode !== b.decode ||
+      (a.name ?? null) !== (b.name ?? null) ||
+      (a.digits ?? null) !== (b.digits ?? null) ||
+      (a.scale ?? null) !== (b.scale ?? null)
+    ) {
+      mismatch(`slot ${i} (${b.path})`);
+    }
+  }
+}
+
+/** Decode a numeric field out of a raw fixed-width record line: the slice is
+ *  scaled DISPLAY digits with an implied decimal point at `scale`. */
+function decodeField(line: string, slot: LayoutSlot): Rat {
+  const raw = line.slice(slot.offset, slot.offset + slot.width);
+  const digits = raw.replace(/\D/g, "") || "0";
+  return rat(BigInt(digits), 10n ** BigInt(slot.scale ?? 0));
+}
+
+/** Encode a numeric field value as its fixed-width DISPLAY digits (no decimal
+ *  point; low-order truncation matches COBOL PICTURE capacity). */
+function encodeNumericField(v: Rat, slot: LayoutSlot): string {
+  const dec = ratToDecimal(v, slot.scale ?? 0) ?? "0";
+  const digits = dec.replace(/\D/g, "");
+  return digits.padStart(slot.width, "0").slice(-slot.width);
+}
+
 export function runSymExec(configPath: string, outPath: string): number {
   const config = loadConfig(configPath);
   const baseDir = dirname(resolve(configPath));
@@ -1453,33 +1566,76 @@ export function runSymExec(configPath: string, outPath: string): number {
   const annotations = new Set(sym.annotations ?? []);
   const maxSolutions = sym.maxBoundarySolutions ?? 5;
 
-  // Records mode (docs/record-protocol.md): slot k of the input file is
-  // input variable k, drawing its value domain from the record's numeric
-  // twin; the record count renders through the loop unroller.
+  // Records mode: slot k of the input file forks the record count through
+  // the loop unroller. Stage 2a (docs/record-protocol.md): the record is a
+  // single field whose numeric twin is `domain`, one input variable per
+  // slot. Stage 2b (docs/memory-layout.md): the record is a fixed-width
+  // group, and record k binds each non-filler field j to input variable
+  // k*F+j.
   let recordName: string | null = null;
   let inputs: InputVar[];
+  let fieldSlots: FieldSlot[] | null = null;
+  let fullLayout: LayoutSlot[] | null = null;
+  let nonFillerSlots: LayoutSlot[] | null = null;
+  let recordWidth = 0;
   if (recordsMode) {
     const rc = sym.records!;
-    const domain = findItem(items, rc.domain);
-    if (!domain || domain.type?.category !== "numeric") {
-      throw new DiffExecError(`layer C: records.domain ${rc.domain} is not a numeric data item in ${sym.ir}`);
-    }
     const inEntry = (ir.files ?? []).find((f) => f.mode === "input");
     if (!inEntry) throw new DiffExecError(`layer C: records mode but ${sym.ir} has no input-mode file`);
     recordName = inEntry.record;
     if (sym.baseCase.length > rc.max) {
       throw new DiffExecError(`layer C: baseCase has ${sym.baseCase.length} records but records.max is ${rc.max}`);
     }
-    inputs = Array.from({ length: rc.max }, (_, k) => ({
-      idx: k,
-      name: `${recordName}[${k}]`,
-      scale: domain.type?.scale ?? 0,
-      max:
-        domain.type?.digits !== undefined
-          ? rat(10n ** BigInt(domain.type.digits) - 1n, 10n ** BigInt(domain.type?.scale ?? 0))
-          : R0,
-      numeric: true,
-    }));
+    if (inEntry.layout) {
+      // Stage 2b: recompute the layout from the record's DataItem tree and
+      // assert it matches the IR's. Drift between the frontend computation
+      // and this one is a build error, never a silent divergence.
+      const recItem = findItem(items, recordName);
+      if (!recItem) throw new DiffExecError(`layer C: record ${recordName} not in the data division of ${sym.ir}`);
+      const recomputed = computeLayout(recItem);
+      assertLayoutMatches(recomputed, inEntry.recordWidth, inEntry.layout, sym.ir);
+      fullLayout = inEntry.layout;
+      recordWidth = inEntry.recordWidth!;
+      const nonFiller = fullLayout.filter((s) => s.decode !== "filler");
+      nonFillerSlots = nonFiller;
+      fieldSlots = nonFiller.map((s) => ({ name: s.name!, numeric: s.decode === "num" }));
+      const F = fieldSlots.length;
+      if (F === 0) throw new DiffExecError(`layer C: record ${recordName} has no non-filler fields`);
+      inputs = Array.from({ length: rc.max * F }, (_, i) => {
+        const j = i % F;
+        const s = nonFiller[j]!;
+        const numeric = s.decode === "num";
+        return {
+          idx: i,
+          name: `${recordName}[${Math.floor(i / F)}].${s.name}`,
+          scale: s.scale ?? 0,
+          max:
+            numeric && s.digits !== undefined
+              ? rat(10n ** BigInt(s.digits) - 1n, 10n ** BigInt(s.scale ?? 0))
+              : R0,
+          numeric,
+        };
+      });
+    } else {
+      // Stage 2a: single elementary field, its numeric twin `domain`.
+      if (!rc.domain) {
+        throw new DiffExecError(`layer C: records.domain is required for a single-field record in ${sym.ir}`);
+      }
+      const domain = findItem(items, rc.domain);
+      if (!domain || domain.type?.category !== "numeric") {
+        throw new DiffExecError(`layer C: records.domain ${rc.domain} is not a numeric data item in ${sym.ir}`);
+      }
+      inputs = Array.from({ length: rc.max }, (_, k) => ({
+        idx: k,
+        name: `${recordName}[${k}]`,
+        scale: domain.type?.scale ?? 0,
+        max:
+          domain.type?.digits !== undefined
+            ? rat(10n ** BigInt(domain.type.digits) - 1n, 10n ** BigInt(domain.type?.scale ?? 0))
+            : R0,
+        numeric: true,
+      }));
+    }
   } else {
     const inputItems = sym.stdinFields!.map((n) => {
       const item = findItem(items, n);
@@ -1516,6 +1672,9 @@ export function runSymExec(configPath: string, outPath: string): number {
     }
   };
   for (const p of ir.procedureDivision.paragraphs) collectAssigned(p.statements);
+  // Stage 2b: each READ writes the record's fields (not the group), so mark
+  // them assigned — they are inputs, never constants.
+  if (fieldSlots) for (const fs of fieldSlots) assigned.add(fs.name);
 
   // --- 1. symbolic execution over every path ---------------------------------
   const paras = new Map(ir.procedureDivision.paragraphs.map((p) => [p.name, p]));
@@ -1552,7 +1711,7 @@ export function runSymExec(configPath: string, outPath: string): number {
     // beyond-bound truncation (the honest disclosure) always fires first.
     maxUnroll: recordsMode ? Math.min(sym.maxLoopUnroll ?? 12, sym.records!.max) : sym.maxLoopUnroll ?? 12,
     loopBodies: new Map(),
-    records: recordsMode ? { max: sym.records!.max, recordName: recordName! } : null,
+    records: recordsMode ? { max: sym.records!.max, recordName: recordName!, fields: fieldSlots } : null,
   };
   // WORKING-STORAGE VALUE clauses define the initial program state: seed the
   // symbolic environment with every numeric initializer, exactly. Without
@@ -1583,23 +1742,72 @@ export function runSymExec(configPath: string, outPath: string): number {
   // Fixed-value candidates for the solver: the base case, then zeros.
   // Records mode fills slots beyond the base case with zero so every slot
   // has a value (constraints only reference slots below a path's count).
-  const baseAssign: Assignment = recordsMode
-    ? inputs.map((_, k) => (k < sym.baseCase.length ? ratOf(sym.baseCase[k]!) : R0))
-    : sym.baseCase.map((v, i) => (inputs[i]!.numeric ? ratOf(v) : null));
+  // Stage 2b baseCase lines are raw fixed-width records: each numeric field
+  // is decoded out of its slice; alphanumeric fields are never solved.
+  const baseAssign: Assignment = !recordsMode
+    ? sym.baseCase.map((v, i) => (inputs[i]!.numeric ? ratOf(v) : null))
+    : fieldSlots
+      ? inputs.map((spec, i) => {
+          if (!spec.numeric) return null;
+          const F = fieldSlots!.length;
+          const k = Math.floor(i / F);
+          if (k >= sym.baseCase.length) return R0;
+          return decodeField(sym.baseCase[k]!, nonFillerSlots![i % F]!);
+        })
+      : inputs.map((_, k) => (k < sym.baseCase.length ? ratOf(sym.baseCase[k]!) : R0));
   const zeroAssign: Assignment = inputs.map((s) => (s.numeric ? R0 : null));
   const fixedCandidates = [baseAssign, zeroAssign];
 
   /** Case lines for an assignment; in records mode a path's case has exactly
-   *  `count` lines (its record count), otherwise one line per stdin field. */
-  const toStdin = (x: Assignment, count: number): string[] =>
-    recordsMode
-      ? Array.from({ length: count }, (_, k) => {
-          const v = x[k];
-          return v != null
-            ? ratToDecimal(v, inputs[k]!.scale) ?? sym.baseCase[k] ?? "0"
-            : sym.baseCase[k] ?? "0";
-        })
-      : x.map((v, i) => (v === null ? sym.baseCase[i]! : ratToDecimal(v, inputs[i]!.scale) ?? sym.baseCase[i]!));
+   *  `count` lines (its record count), otherwise one line per stdin field.
+   *  Stage 2b renders each record as a canonical fixed-width line: numeric
+   *  fields encoded from the assignment, alphanumeric/filler bytes carried
+   *  from the base line. */
+  const toStdin = (x: Assignment, count: number): string[] => {
+    if (!recordsMode) {
+      return x.map((v, i) => (v === null ? sym.baseCase[i]! : ratToDecimal(v, inputs[i]!.scale) ?? sym.baseCase[i]!));
+    }
+    if (!fieldSlots) {
+      return Array.from({ length: count }, (_, k) => {
+        const v = x[k];
+        return v != null ? ratToDecimal(v, inputs[k]!.scale) ?? sym.baseCase[k] ?? "0" : sym.baseCase[k] ?? "0";
+      });
+    }
+    const F = fieldSlots.length;
+    return Array.from({ length: count }, (_, k) => {
+      const chars = new Array<string>(recordWidth).fill(" ");
+      const base = k < sym.baseCase.length ? sym.baseCase[k]! : "";
+      for (let j = 0; j < F; j++) {
+        const slot = nonFillerSlots![j]!;
+        if (slot.decode === "num") {
+          const enc = encodeNumericField(x[k * F + j] ?? R0, slot);
+          for (let c = 0; c < slot.width; c++) chars[slot.offset + c] = enc[c]!;
+        } else {
+          for (let c = 0; c < slot.width; c++) chars[slot.offset + c] = base[slot.offset + c] ?? " ";
+        }
+      }
+      return chars.join("");
+    });
+  };
+
+  /** Inverse of toStdin: decode a case's stdin lines back into an assignment.
+   *  Stage 2b decodes each record line's numeric fields through the layout
+   *  into a dense per-slot assignment (records beyond the case read as zero);
+   *  2a/field mode is one value per line. Used by the coverage check. */
+  const fromStdin = (stdin: string[]): Assignment => {
+    if (!recordsMode || !fieldSlots) {
+      return stdin.map((v, i) => (inputs[i]!.numeric ? ratOf(v) : null));
+    }
+    const F = fieldSlots.length;
+    const x: Assignment = inputs.map((s) => (s.numeric ? R0 : null));
+    for (let k = 0; k < stdin.length; k++) {
+      for (let j = 0; j < F; j++) {
+        const slot = nonFillerSlots![j]!;
+        if (slot.decode === "num") x[k * F + j] = decodeField(stdin[k]!, slot);
+      }
+    }
+    return x;
+  };
 
   // --- 2. infeasible paths (proved, not guessed) -------------------------------
   // Two proof shapes, both exact; a failed witness search alone is never
@@ -2025,10 +2233,18 @@ export function runSymExec(configPath: string, outPath: string): number {
       ob.status = "NOT-APPLICABLE";
       ob.notes.push("the expression is exact at the target scale on every path; no rounding boundary exists");
     } else if (!anySolvable) {
-      // v1 fallback: source * constant with an invertible producer.
-      ob.notes.push("affine engine: expression not solvable on any path; falling back to producer-inversion heuristic");
-      ob.unrealizedPaths = [];
-      legacyRoundingRealization(ob, cmp, paths, inputs, sym.baseCase, items, assigned, maxSolutions, st);
+      // v1 fallback: source * constant with an invertible producer. Its
+      // stdin model is positional (one value per line), so it does not fit
+      // multi-field records; disclose rather than mis-solve (stage 2b).
+      if (fieldSlots) {
+        ob.notes.push(
+          "affine engine: expression not solvable on any path; the producer-inversion fallback does not yet support multi-field records (file I/O stage 2b) - realized dynamically by layers A and B",
+        );
+      } else {
+        ob.notes.push("affine engine: expression not solvable on any path; falling back to producer-inversion heuristic");
+        ob.unrealizedPaths = [];
+        legacyRoundingRealization(ob, cmp, paths, inputs, sym.baseCase, items, assigned, maxSolutions, st);
+      }
     }
   }
 
@@ -2076,7 +2292,7 @@ export function runSymExec(configPath: string, outPath: string): number {
       return { id: p.id, conds, covered: "unknown" as const };
     }
     const accepts = (stdin: string[]): boolean => {
-      const x: Assignment = stdin.map((v, i) => (inputs[i]!.numeric ? ratOf(v) : null));
+      const x = fromStdin(stdin);
       return allConstraintsHold(p.state.constraints, x) === true;
     };
     const covered =

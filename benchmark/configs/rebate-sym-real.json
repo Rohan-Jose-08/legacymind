@@ -1,0 +1,19 @@
+{
+  "$comment": "Layer C for REBATE vs the real GnuCOBOL harness image (file I/O stage 2b, docs/memory-layout.md). The record is a fixed-width group: record k binds each non-filler field to input variable k*F+j (F = 2 numeric fields R-ID and R-AMOUNT). Layer C recomputes the byte layout from the DataItem tree and asserts it matches the IR's before executing. The READ inside the PERFORM UNTIL loop forks the record count through the unroller; per record the threshold branch (R-AMOUNT >= 100.00) and the 2% rebate rounding half-boundary are the obligations. baseCase lines are raw 13-byte records decoded through the layout.",
+  "legacy": {
+    "image": "legacymind/legacy-rebate",
+    "label": "COBOL 85 REBATE (GnuCOBOL via harness image legacymind/legacy-rebate, record-stream wrapper)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/rebate/migrate/candidate-a", "Rebate"],
+    "label": "Java 21 rebate (migrated candidate A)"
+  },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "symbolic": {
+    "ir": "../../out/ir/REBATE.ir.json",
+    "records": { "max": 4 },
+    "baseCase": ["00420015025  ", "00010009999  ", "00030020050  "],
+    "annotations": ["WS-REBATE", "WS-ONE-REB"]
+  }
+}

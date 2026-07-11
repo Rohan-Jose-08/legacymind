@@ -114,9 +114,11 @@ contract:
 The frontend computes it (it already gates on the record's shape);
 layer C recomputes from the DataItem tree and asserts equality — drift
 between the two computations is a build error, not a silent divergence.
-Emitting `layout` for input files re-keys the replay cache for BATCHSUM
-(IR content change, by design); the failure is loud and the fix is the
-standard re-record of its two candidates.
+`layout` and `recordWidth` are emitted **only for group records**, so a
+single-elementary-field record (the stage-2a shape) keeps byte-identical
+IR and its replay cache does not re-key. (An earlier draft of this
+document expected a BATCHSUM re-key; scoping layout to group records
+avoids it entirely — BATCHSUM is unchanged.)
 
 ## Layer-by-layer plan
 
@@ -142,13 +144,18 @@ standard re-record of its two candidates.
   as in 2a; the variable count grows to R×F, bounded by maxRecords and
   the existing MAX_PATHS guard.
 - **Layer D** — the record stays **one logical input position**: every
-  field reference reads it. The Java side's single `readLine` feeding
-  per-field substring parses unions to the same position by
-  construction, so summaries stay symmetric. This granularity cannot
-  see a candidate that swaps two same-typed fields — that is a value
-  bug, and layers B and C catch it (a design-stage candidate-B idea).
-  Field-granular flow (substring offset tracking in JavaFlow) is a
-  named future refinement, not silently promised.
+  field reference reads it. Implementing this took two symmetric
+  additions (stage 34): JavaFlow now treats `substring` as
+  value-preserving, so a Java field extraction derives from its record
+  line (the single input); and both sides model a numeric field's
+  implied `V` decimal as a decimal shift of the raw input bytes — the
+  legacy field carries a shift equal to its scale, matching the Java
+  candidate's explicit `movePointLeft`/scaling. Without the second the
+  implied decimal read as a spurious flow divergence. This granularity
+  cannot see a candidate that swaps two same-typed fields — that is a
+  value bug, and layers B and C catch it. Field-*granular* flow
+  (per-offset tracking in JavaFlow) remains a named future refinement,
+  not silently promised.
 - **Certificates** — coverage envelope adds the well-formed-record
   contract sentence and the record-count bound from 2a.
 

@@ -2422,9 +2422,37 @@ public class ProLeapFrontend {
 			final String inFile = inputFiles.get(0);
 			final Map<String, Object> rec = fileRecordItems.get(inFile);
 			final List<?> recChildren = rec != null ? (List<?>) rec.get("children") : null;
-			if (rec == null || recChildren == null || !recChildren.isEmpty() || rec.get("picture") == null) {
-				unsupported.add("input file " + inFile
-						+ "'s record is not a single elementary field (multi-field records are file I/O stage 2b)");
+			if (rec == null) {
+				unsupported.add("input file " + inFile + " has no record layout");
+			} else if (recChildren == null || recChildren.isEmpty()) {
+				// Single elementary field: the stage-2a shape (one line = one
+				// value, its symbolic twin the config's numeric domain). No
+				// layout is emitted, so stage-2a IR stays byte-identical.
+				if (rec.get("picture") == null) {
+					unsupported.add("input file " + inFile
+							+ "'s record is neither a group nor a typed elementary field");
+				}
+			} else {
+				// Multi-field group record (file I/O stage 2b,
+				// docs/memory-layout.md): compute the fixed-width byte layout
+				// and attach it to the file entry. The group record itself may
+				// not be referenced in the PROCEDURE DIVISION (only its
+				// fields) - the raw record line is not modeled.
+				final Map<String, Object> layout = computeLayout(rec);
+				if (layout != null) {
+					final Map<String, Object> fe = fileEntries.get(inFile);
+					fe.put("recordWidth", layout.get("recordWidth"));
+					fe.put("layout", layout.get("layout"));
+				}
+				final Set<String> refs = new LinkedHashSet<>();
+				for (final Object po : paragraphs) {
+					collectDataRefs((List<?>) ((Map<?, ?>) po).get("statements"), refs);
+				}
+				if (refs.contains((String) rec.get("name"))) {
+					unsupported.add("input record " + rec.get("name")
+							+ " is referenced as a group in the PROCEDURE DIVISION"
+							+ " (stage 2b models field references only)");
+				}
 			}
 			final List<Object[]> reads = new ArrayList<>();
 			boolean anyAccept = false;
@@ -2462,6 +2490,183 @@ public class ProLeapFrontend {
 			if (!loopDriven) {
 				unsupported.add("the READ's paragraph " + readPara
 						+ " is not the target of a PERFORM UNTIL loop (stage 2a models the canonical batch loop)");
+			}
+		}
+
+		/**
+		 * File I/O stage 2b (docs/memory-layout.md): compute the fixed-width
+		 * byte layout of a multi-field record. Field widths come from PICTUREs
+		 * (numeric DISPLAY = digit count, since V and S occupy no byte and S is
+		 * rejected here; alphanumeric = length); offsets are the running sum.
+		 * Every leaf shape the layout model cannot decode soundly is rejected
+		 * into `unsupported`. Returns {recordWidth, layout} (layout still built
+		 * for provenance even if a leaf was rejected; a non-empty `unsupported`
+		 * aborts the parse regardless).
+		 */
+		Map<String, Object> computeLayout(final Map<String, Object> rec) {
+			final List<Object> slots = new ArrayList<>();
+			final int[] offset = { 0 };
+			layoutWalk(rec, slots, offset, true);
+			final Map<String, Object> out = new LinkedHashMap<>();
+			out.put("recordWidth", offset[0]);
+			out.put("layout", slots);
+			return out;
+		}
+
+		void layoutWalk(final Map<String, Object> item, final List<Object> slots, final int[] offset,
+				final boolean isRoot) {
+			@SuppressWarnings("unchecked")
+			final List<Object> children = (List<Object>) item.get("children");
+			if (children != null && !children.isEmpty()) {
+				for (final Object c : children) {
+					@SuppressWarnings("unchecked")
+					final Map<String, Object> cm = (Map<String, Object>) c;
+					layoutWalk(cm, slots, offset, false);
+				}
+				return;
+			}
+			// Elementary leaf (or, at the root, a childless record with no
+			// picture - handled by the caller's typed-field check).
+			final String path = (String) item.get("path");
+			if (isRoot) {
+				return; // an empty group root: nothing to slice
+			}
+			final String pic = (String) item.get("picture");
+			@SuppressWarnings("unchecked")
+			final Map<String, Object> type = (Map<String, Object>) item.get("type");
+			final String usage = (String) item.get("usage");
+			final boolean filler = Boolean.TRUE.equals(item.get("filler"));
+			if (pic == null || type == null) {
+				unsupported.add("record field " + path
+						+ " has no PICTURE (file I/O stage 2b needs typed leaves)");
+				return;
+			}
+			if (!"DISPLAY".equals(usage)) {
+				unsupported.add("record field " + path + " USAGE " + usage
+						+ " (stage 2b decodes DISPLAY bytes only)");
+				return;
+			}
+			final String cat = (String) type.get("category");
+			final Integer width = byteWidth(type, path);
+			if (width == null) {
+				return; // byteWidth enumerated the reason
+			}
+			final Map<String, Object> slot = new LinkedHashMap<>();
+			slot.put("path", path);
+			if (filler) {
+				slot.put("offset", offset[0]);
+				slot.put("width", width);
+				slot.put("decode", "filler");
+			} else if ("numeric".equals(cat)) {
+				if (Boolean.TRUE.equals(type.get("signed"))) {
+					unsupported.add("record field " + path
+							+ " is signed (S overpunches a byte - stage 2b is unsigned DISPLAY)");
+					return;
+				}
+				slot.put("name", item.get("name"));
+				slot.put("offset", offset[0]);
+				slot.put("width", width);
+				slot.put("decode", "num");
+				slot.put("digits", type.get("digits"));
+				slot.put("scale", type.get("scale"));
+			} else if ("alphanumeric".equals(cat)) {
+				slot.put("name", item.get("name"));
+				slot.put("offset", offset[0]);
+				slot.put("width", width);
+				slot.put("decode", "alnum");
+			} else {
+				unsupported.add("record field " + path + " category " + cat
+						+ " (stage 2b: numeric DISPLAY, X, or FILLER only)");
+				return;
+			}
+			offset[0] += width;
+			slots.add(slot);
+		}
+
+		/** Byte width of a DISPLAY leaf: numeric = digit count (V/S no byte),
+		 *  alphanumeric = length. Numeric-edited is rejected (ambiguous byte
+		 *  width in an input record). */
+		Integer byteWidth(final Map<String, Object> type, final String path) {
+			final String cat = (String) type.get("category");
+			if ("numeric".equals(cat)) {
+				return (Integer) type.get("digits");
+			}
+			if ("alphanumeric".equals(cat)) {
+				return (Integer) type.get("length");
+			}
+			unsupported.add("record field " + path + " is numeric-edited"
+					+ " (stage 2b decodes plain numeric/alphanumeric bytes only)");
+			return null;
+		}
+
+		/** Collect every data-item name referenced in an operand position
+		 *  (not the READ's own record field), for the stage-2b group
+		 *  self-reference check. */
+		void collectDataRefs(final List<?> stmts, final Set<String> out) {
+			for (final Object so : stmts) {
+				final Map<?, ?> s = (Map<?, ?>) so;
+				final String kind = (String) s.get("kind");
+				switch (kind) {
+				case "move":
+					addRefs(s.get("from"), out);
+					for (final Object t : (List<?>) s.get("to")) {
+						out.add((String) t);
+					}
+					break;
+				case "compute":
+					out.add((String) s.get("target"));
+					addRefs(s.get("expression"), out);
+					break;
+				case "if":
+					addRefs(s.get("condition"), out);
+					collectDataRefs((List<?>) s.get("then"), out);
+					if (s.get("else") != null) {
+						collectDataRefs((List<?>) s.get("else"), out);
+					}
+					break;
+				case "display":
+					for (final Object oo : (List<?>) s.get("operands")) {
+						final Map<?, ?> op = (Map<?, ?>) oo;
+						if ("ref".equals(op.get("kind"))) {
+							out.add((String) op.get("name"));
+						}
+					}
+					break;
+				case "accept":
+					out.add((String) s.get("target"));
+					break;
+				case "perform-until":
+					addRefs(s.get("condition"), out);
+					break;
+				case "perform-times":
+					addRefs(s.get("times"), out);
+					break;
+				case "perform-varying": {
+					addRefs(s.get("condition"), out);
+					final Map<?, ?> v = (Map<?, ?>) s.get("varying");
+					out.add((String) v.get("var"));
+					addRefs(v.get("from"), out);
+					addRefs(v.get("by"), out);
+					break;
+				}
+				case "read":
+					collectDataRefs((List<?>) s.get("atEnd"), out);
+					collectDataRefs((List<?>) s.get("notAtEnd"), out);
+					break;
+				default:
+					break;
+				}
+			}
+		}
+
+		void addRefs(final Object operand, final Set<String> out) {
+			if (operand instanceof Map) {
+				final Object refs = ((Map<?, ?>) operand).get("refs");
+				if (refs instanceof List) {
+					for (final Object r : (List<?>) refs) {
+						out.add((String) r);
+					}
+				}
 			}
 		}
 

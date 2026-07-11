@@ -107,6 +107,9 @@ function collectAssigned(stmts: Statement[], out: Set<string>): void {
 
 export function extractLegacyFlows(ir: ModuleIR): { outputs: Map<string, FlowRec>; varFlows: Map<string, FlowRec> } {
   const items = ir.dataDivision.items;
+  // Stage 2b (docs/memory-layout.md): the input record's non-filler fields
+  // all read the record's single logical input position.
+  const inputLayout = (ir.files ?? []).find((f) => f.mode === "input")?.layout ?? [];
   const assigned = new Set<string>();
   for (const p of ir.procedureDivision.paragraphs) collectAssigned(p.statements, assigned);
 
@@ -164,8 +167,19 @@ export function extractLegacyFlows(ir: ModuleIR): { outputs: Map<string, FlowRec
       } else if (s.kind === "read") {
         // The record area is written from the input stream: one logical
         // input position, unioned over all iterations (flow-insensitive) —
-        // symmetric with the modern side's single in-loop read.
-        merged(s.record).inputs.add(stdinCounter++);
+        // symmetric with the modern side's single in-loop read. Stage 2b:
+        // every non-filler field reads that same single position.
+        const pos = stdinCounter++;
+        merged(s.record).inputs.add(pos);
+        for (const slot of inputLayout) {
+          if (slot.decode === "filler" || !slot.name) continue;
+          const f = merged(slot.name);
+          f.inputs.add(pos);
+          // A numeric field's implied decimal (V) shifts its raw integer bytes
+          // right by `scale` - symmetric with the modern side decoding the
+          // field slice and scaling it (movePointLeft), so the flows match.
+          if (slot.decode === "num" && slot.scale) f.shifts.push(slot.scale);
+        }
         walk(s.atEnd);
         walk(s.notAtEnd);
       } else if (s.kind === "compute") {

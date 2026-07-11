@@ -403,7 +403,11 @@ public final class JavaFlow {
                 flow.mergeFrom(flowOf(receiver, bindings, depth + 1));
                 for (ExpressionTree arg : call.getArguments()) flow.mergeFrom(flowOf(arg, bindings, depth + 1));
             }
-            case "toPlainString", "trim", "stripTrailingZeros" ->
+            case "toPlainString", "trim", "strip", "stripTrailingZeros", "substring" ->
+                // Value-preserving for flow purposes: the result derives from
+                // the receiver. substring extracts one fixed-width field out of
+                // a record line (file I/O stage 2b) - flow-insensitively, the
+                // field derives from the record's single input position.
                 flow.mergeFrom(flowOf(receiver, bindings, depth + 1));
             case "readLine" -> flow.inputs.add(stdinCounter++);
             default -> {

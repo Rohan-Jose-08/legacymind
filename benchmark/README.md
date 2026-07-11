@@ -229,6 +229,31 @@ non-empty file loses its first record from COUNT and TOTAL; the empty
 file agrees by accident, which is exactly why it is a mandatory but
 insufficient case.
 
+The REBATE module is the first multi-field fixed-width record (file I/O
+stage 2b, docs/memory-layout.md): each input line packs a numeric
+customer id, a purchase amount with an implied `V99` decimal, and
+trailing padding into a fixed 13-byte record, decoded by byte offset. A
+2% rebate (ROUNDED) is paid on purchases of 100.00 or more. The
+frontend computes the record's byte layout (each field's offset, width,
+and decode kind from its PICTURE) and layer C recomputes it from the
+data-division tree and asserts the two agree before executing — drift
+between the frontend and the verifier is a build error, never silent.
+Record k binds each non-filler field to its own input variable (k*F+j),
+so the 100.00 threshold branch and the 2% rounding half-boundary are
+both proven per record; deep multi-record branchy paths are disclosed
+and covered dynamically by layers A and B. The verified envelope is
+well-formed records only — GnuCOBOL itself has no coherent semantics
+for a numeric field that a short line cuts mid-way (its DISPLAY and its
+arithmetic decode the same bytes differently), so the certificate
+refuses to claim what the reference cannot define. Candidate B carries
+the canonical fixed-width defect: it miscounts the id field and decodes
+the amount one byte early, so every record parses cleanly to a wrong
+value (and below-threshold records wrongly qualify) — caught by layer B
+on every non-empty case. Building it extended the modern-side extractor
+to follow `substring` (a field derives from its record line) and taught
+both sides that a numeric field's implied `V` decimal is a real decimal
+shift of the raw input bytes, so the flows match without a hack.
+
 ## Running
 
 ```
@@ -283,6 +308,21 @@ in the order found. They are the sales pitch:
    the MOVE; re-verified 3/3 keys and certified. Layers A and B alone
    would have passed it (identical bytes on stdout): only the data-flow
    layer sees the difference between a value and its derivation.
+6. **The reference implementation has no defined answer (2026-07-11).**
+   Ground-truthing the first multi-field record (REBATE) against real
+   GnuCOBOL surfaced a case with no correct certificate to issue: when a
+   short input line cuts a numeric field mid-way, GnuCOBOL's DISPLAY of
+   that field and its arithmetic on it decode the same bytes to
+   *different* values, and no runtime error fires (exit 0). Rather than
+   pick one interpretation and certify a fiction, the stage-2b envelope
+   excludes malformed records explicitly — the strongest form of "prefer
+   refusing over mis-answering" in the product so far: the verifier
+   declines to certify behavior the reference itself does not define.
+   The same construction fixed a real false negative in layer D — a
+   numeric field's implied `V` decimal is a decimal shift of the raw
+   input bytes, so modeling it on the legacy side (symmetric with the
+   Java candidate's explicit scaling) turned a spurious DIVERGENT into a
+   verified match without weakening the check.
 
 ## Parser-coverage sweep
 
