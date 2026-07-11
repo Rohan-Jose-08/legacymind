@@ -1,0 +1,36 @@
+# LegacyMind legacy-execution image for FILE-READING batch modules
+# (file I/O stage 2 groundwork: one LINE SEQUENTIAL input file).
+#
+# Same sandbox as the base image (no network, no mounts, no credentials).
+# The entrypoint wrapper defines the INPUT contract for batch modules: the
+# case's ENTIRE stdin becomes the input file's records (one line per
+# record), then the program runs and its stdout is the observable stream.
+# This is the mirror image of Dockerfile.file's output contract, so
+# read-process-report batch programs keep the existing stdin-lines /
+# kv-lines protocol end to end: stdin lines in = file records; KV lines
+# out. The file is rewritten from scratch every run, so persistent
+# containers stay case-isolated.
+
+FROM debian:bookworm-slim
+
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends gnucobol3 libfaketime \
+ && rm -rf /var/lib/apt/lists/*
+
+# Path of the COBOL source within the build context (repo root), and the
+# file name the program ASSIGNs its input to (relative to CWD = /tmp).
+ARG SOURCE=examples/batchsum.cbl
+ARG INFILE=in.dat
+COPY ${SOURCE} /opt/legacy/program.cbl
+
+RUN cobc -x -o /opt/legacy/program /opt/legacy/program.cbl \
+ && cobc --version | head -n 1 > /opt/legacy/cobc-version.txt
+
+RUN { echo '#!/bin/sh'; \
+      echo 'cd /tmp'; \
+      echo "rm -f ${INFILE}"; \
+      echo "cat > ${INFILE}"; \
+      echo '/opt/legacy/program'; } > /opt/legacy/run.sh \
+ && chmod +x /opt/legacy/run.sh
+
+ENTRYPOINT ["/opt/legacy/run.sh"]
