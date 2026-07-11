@@ -1,0 +1,34 @@
+{
+  "$comment": "Layer C for BONUS vs the real GnuCOBOL harness image. The CALC section flattens onto the THRU machinery (PERFORM CALC = CALC THRU STEP-TOTAL) and inlines fully, so Layer C enumerates the uplift and no-uplift paths, verifies the 50000.00 sales boundary, the base's half-cent congruence, and the uplift's nested rounding (round of 1.5x the settled base) via the exact machinery.",
+  "legacy": {
+    "image": "legacymind/legacy-bonus",
+    "label": "COBOL 85 BONUS (GnuCOBOL via harness image legacymind/legacy-bonus)"
+  },
+  "modern": {
+    "argv": [
+      "java",
+      "-cp",
+      "../../out/bench/bonus/migrate/candidate-a",
+      "Bonus"
+    ],
+    "label": "Java 21 bonus (migrated candidate A)"
+  },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "symbolic": {
+    "ir": "../../out/ir/BONUS.ir.json",
+    "stdinFields": [
+      "WS-EMP-ID",
+      "WS-SALES"
+    ],
+    "baseCase": [
+      "EMP00001",
+      "1000.00"
+    ],
+    "maxBoundarySolutions": 5,
+    "annotations": [
+      "WS-BASE",
+      "WS-BONUS"
+    ]
+  }
+}

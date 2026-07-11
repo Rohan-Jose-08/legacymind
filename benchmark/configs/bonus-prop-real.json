@@ -1,0 +1,19 @@
+{
+  "$comment": "Layer A for BONUS vs the real GnuCOBOL harness image. Generated sales span the PIC 9(7)V99 range, exercising both sides of the 50000.00 uplift boundary and both roundings by seeded random inputs alone.",
+  "legacy": {
+    "image": "legacymind/legacy-bonus",
+    "label": "COBOL 85 BONUS (GnuCOBOL via harness image legacymind/legacy-bonus)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/bonus/migrate/candidate-a", "Bonus"],
+    "label": "Java 21 bonus (migrated candidate A)"
+  },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "generator": {
+    "ir": "../../out/ir/BONUS.ir.json",
+    "stdinFields": ["WS-EMP-ID", "WS-SALES"],
+    "count": 200,
+    "seed": 20260710
+  }
+}

@@ -248,6 +248,8 @@ public class ProLeapFrontend {
 		final List<Object[]> pendingFds = new ArrayList<>();
 		/** Final record name -> file name (built after finalizeNames). */
 		final Map<String, String> recordToFile = new LinkedHashMap<>();
+		/** Section name -> its LAST paragraph (or itself when it has none): the THRU endpoint a section PERFORM expands to. */
+		final Map<String, String> sectionEnd = new LinkedHashMap<>();
 
 		/** preprocessed line number (1-based) -> original line number; null when inexact. */
 		int[] lineMap;
@@ -352,6 +354,19 @@ public class ProLeapFrontend {
 
 		void reject(final ParserRuleContext ctx, final String what) {
 			unsupported.add(what + " (line " + mapLine(ctx.getStart().getLine()) + ")");
+		}
+
+		/** Register a procedure name (paragraph or section) — one flat namespace. */
+		void registerProcName(final String name, final ParserRuleContext ctx) {
+			if (!ID_ONLY.matcher(name).matches()) {
+				reject(ctx, "procedure name \"" + name + "\" is not representable in the IR");
+				return;
+			}
+			if (!paragraphNames.add(name)) {
+				reject(ctx, "duplicate procedure name " + name + " (section and paragraph names share one namespace)");
+				return;
+			}
+			paragraphOrder.add(name);
 		}
 
 		/**
@@ -509,12 +524,9 @@ public class ProLeapFrontend {
 			final List<Object> paragraphs = new ArrayList<>();
 			final List<Object> edges = new ArrayList<>();
 			final ProcedureDivision pd = pu.getProcedureDivision();
-			if (pd == null || pd.getParagraphs().isEmpty()) {
+			if (pd == null || (pd.getParagraphs().isEmpty() && pd.getSections().isEmpty())) {
 				unsupported.add("PROCEDURE DIVISION has no paragraphs");
 			} else {
-				if (!pd.getSections().isEmpty()) {
-					reject(pd.getSections().get(0).getCtx(), "sections in the PROCEDURE DIVISION");
-				}
 				if (pd.getUsingClause() != null || pd.getGivingClause() != null) {
 					reject(pd.getCtx(), "PROCEDURE DIVISION USING/GIVING");
 				}
@@ -528,13 +540,51 @@ public class ProLeapFrontend {
 				for (final Statement stray : pd.getStatements()) {
 					reject(stray.getCtx(), "statement before the first paragraph header");
 				}
-				for (final Paragraph p : pd.getParagraphs()) {
-					final String name = p.getParagraphName().getName().toUpperCase();
-					paragraphNames.add(name);
-					paragraphOrder.add(name);
-				}
-				for (final Paragraph p : pd.getParagraphs()) {
-					paragraphs.add(lowerParagraph(p));
+				if (pd.getSections().isEmpty()) {
+					for (final Paragraph p : pd.getParagraphs()) {
+						registerProcName(p.getParagraphName().getName().toUpperCase(), p.getCtx());
+					}
+					for (final Paragraph p : pd.getParagraphs()) {
+						paragraphs.add(lowerParagraph(p));
+					}
+				} else {
+					// Sections flatten onto the paragraph model: each section
+					// contributes a synthetic paragraph named after itself
+					// (holding the section's own statements, which precede its
+					// first paragraph header) followed by its paragraphs, and
+					// PERFORM <section> becomes PERFORM <section> THRU <its
+					// last paragraph> — the existing THRU machinery does the
+					// rest, so no verifier needs section awareness.
+					for (final Paragraph p : pd.getParagraphs()) {
+						if (p.getSection() == null) {
+							reject(p.getCtx(), "paragraph " + p.getParagraphName().getName().toUpperCase()
+									+ " outside any section in a sectioned PROCEDURE DIVISION");
+						}
+					}
+					// Pass 1: names + section THRU endpoints (needed before any
+					// statement lowering resolves a section PERFORM).
+					for (final io.proleap.cobol.asg.metamodel.procedure.Section sec : pd.getSections()) {
+						final String sname = sec.getName().toUpperCase();
+						registerProcName(sname, sec.getCtx());
+						String last = sname;
+						for (final Paragraph p : sec.getParagraphs()) {
+							final String pname = p.getParagraphName().getName().toUpperCase();
+							registerProcName(pname, p.getCtx());
+							last = pname;
+						}
+						sectionEnd.put(sname, last);
+					}
+					// Pass 2: bodies.
+					for (final io.proleap.cobol.asg.metamodel.procedure.Section sec : pd.getSections()) {
+						final Map<String, Object> head = new LinkedHashMap<>();
+						head.put("name", sec.getName().toUpperCase());
+						head.put("span", span(sec.getCtx()));
+						head.put("statements", lowerStatements(sec.getStatements()));
+						paragraphs.add(head);
+						for (final Paragraph p : sec.getParagraphs()) {
+							paragraphs.add(lowerParagraph(p));
+						}
+					}
 				}
 				// stub-parity CFG: perform edges per paragraph in statement
 				// order, then fallthrough edges skipping terminated paragraphs
@@ -1788,6 +1838,21 @@ public class ProLeapFrontend {
 				return null;
 			}
 			final String target = calls.get(0).getName().toUpperCase();
+			// PERFORM <section>: one SECTION_CALL — expand to the section's own
+			// THRU range (its synthetic header paragraph through its last
+			// paragraph), which the existing range machinery inlines.
+			if (calls.get(0).getCallType() == io.proleap.cobol.asg.metamodel.call.Call.CallType.SECTION_CALL) {
+				if (calls.size() > 1) {
+					reject(ctx, "PERFORM ... THRU involving a section");
+					return null;
+				}
+				final String end = sectionEnd.get(target);
+				if (end == null) {
+					reject(ctx, "PERFORM of unknown section " + target);
+					return null;
+				}
+				return finishPerform(s, pp, ctx, target, end.equals(target) ? null : end);
+			}
 			// PERFORM <a> THRU <b>: ProLeap resolves a valid forward range into
 			// the full ordered paragraph list. Accept only when the returned
 			// calls are exactly the contiguous source-order slice starting at
@@ -1814,6 +1879,12 @@ public class ProLeapFrontend {
 					thru = last;
 				}
 			}
+			return finishPerform(s, pp, ctx, target, thru);
+		}
+
+		/** Shared tail of PERFORM lowering: plain vs TIMES/UNTIL/VARYING forms. */
+		Map<String, Object> finishPerform(final PerformStatement s, final PerformProcedureStatement pp,
+				final ParserRuleContext ctx, final String target, final String thru) {
 			final io.proleap.cobol.asg.metamodel.procedure.perform.PerformType pt = pp.getPerformType();
 			final Map<String, Object> out = new LinkedHashMap<>();
 			if (pt == null) {

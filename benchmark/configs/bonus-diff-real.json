@@ -1,0 +1,22 @@
+{
+  "$comment": "Layer B selection cases for BONUS vs the real GnuCOBOL harness image. PERFORM CALC performs the whole three-block section; a candidate that treats it as the first block only computes the base and never assigns BONUS/TOTAL, caught on every non-zero case. Cases cover the below-limit path, both sides of the 50000.00 uplift boundary, the half-cent base (0.50 -> 0.015 -> 0.02), a deep uplift, and zero.",
+  "legacy": {
+    "image": "legacymind/legacy-bonus",
+    "label": "COBOL 85 BONUS (GnuCOBOL via harness image legacymind/legacy-bonus)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/bonus/migrate/candidate-a", "Bonus"],
+    "label": "Java 21 bonus (migrated candidate A)"
+  },
+  "protocol": { "input": "stdin-lines", "output": "kv-lines" },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "cases": [
+    { "id": "below-limit", "stdin": ["EMP00001", "1000.00"] },
+    { "id": "limit-boundary", "stdin": ["EMP00002", "50000.00"] },
+    { "id": "just-over", "stdin": ["EMP00003", "50000.01"] },
+    { "id": "half-cent-base", "stdin": ["EMP00004", "0.50"] },
+    { "id": "deep-uplift", "stdin": ["EMP00005", "90000.00"] },
+    { "id": "zero", "stdin": ["EMP00006", "0.00"] }
+  ]
+}

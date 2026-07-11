@@ -180,5 +180,17 @@
     "staticConfig": "benchmark/configs/payslip-static.json",
     "migrateOut": "out/bench/payslip/migrate",
     "certCopy": "out/certification-payslip.json"
+  },
+  {
+    "id": "bonus",
+    "programId": "BONUS",
+    "source": "benchmark/modules/bonus.cbl",
+    "imageTag": "legacymind/legacy-bonus",
+    "diffConfig": "benchmark/configs/bonus-diff-real.json",
+    "propConfig": "benchmark/configs/bonus-prop-real.json",
+    "symConfig": "benchmark/configs/bonus-sym-real.json",
+    "staticConfig": "benchmark/configs/bonus-static.json",
+    "migrateOut": "out/bench/bonus/migrate",
+    "certCopy": "out/certification-bonus.json"
   }
 ]

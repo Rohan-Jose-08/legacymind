@@ -1,0 +1,7 @@
+{
+  "$comment": "Layer D for BONUS: static data-flow equivalence between the IR and migrated candidate A. BONUS unions the base flow (input 1, constant 3, shift 2, half-up) with the uplifted flow (constant 150, shift 2, half-up); TOTAL adds the sales input.",
+  "static": {
+    "ir": "../../out/ir/BONUS.ir.json",
+    "modernJava": "../../out/bench/bonus/migrate/candidate-a/Bonus.java"
+  }
+}

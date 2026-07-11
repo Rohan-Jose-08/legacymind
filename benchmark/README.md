@@ -189,6 +189,22 @@ territory at this stage, disclosed in the config. Candidate B loses the
 slip's last record — the classic unflushed-buffer migration bug — and
 is caught on every case (NET missing, ROWS diverging).
 
+The BONUS module proves PROCEDURE DIVISION sections. Sections flatten
+onto the paragraph model: each section header becomes a synthetic
+paragraph holding the section's own statements (the ones before its
+first paragraph header), followed by its paragraphs, and
+`PERFORM <section>` lowers to `PERFORM <section> THRU <its last
+paragraph>` — the existing THRU machinery inlines the whole thing, so
+no verifier needs section awareness. BONUS's CALC SECTION carries three
+blocks (3% base ROUNDED, a 150% ROUNDED uplift over 50000.00 — a
+nested rounding over the settled base — and the total); layer C
+enumerates both paths, verifies the uplift boundary at ±1ulp and the
+base's half-cent congruence, and discloses the nested uplift's
+half-boundary as the already-tracked congruence-over-a-rounded-value
+solver depth. Candidate B is the classic section-vs-paragraph bug:
+`PERFORM CALC` translated as the section's first block only, skipping
+the uplift and total — caught by layer B on every non-zero case.
+
 ## Running
 
 ```
