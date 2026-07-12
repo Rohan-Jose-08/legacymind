@@ -1445,6 +1445,59 @@ function freeVarLowerBoundScaled(constraints: Constraint[], j: number, scale: nu
   return scaled.n >= 0n ? scaled.n / scaled.d : -((-scaled.n + scaled.d - 1n) / scaled.d);
 }
 
+/** Max of two nullable scaled bounds (null = no bound). */
+function maxBound(a: bigint | null, b: bigint | null): bigint | null {
+  if (a === null) return b;
+  if (b === null) return a;
+  return a > b ? a : b;
+}
+
+/**
+ * Lower bound on input `j` derived from a monotone-nondecreasing ROUNDED path
+ * constraint over `j` alone (docs/through-rounding-bound.md). A linear bound
+ * (freeVarLowerBoundScaled) cannot see a gate whose decision passes through a
+ * rounding — RETAIL's `IF WS-TOTAL > 500` over the rounded total — so the
+ * congruence/composed search starts below the gated region and its cap never
+ * reaches it. Found by exact binary search on `j`'s PICTURE grid: the gate is
+ * a NECESSARY path condition, so its threshold never overshoots a real
+ * witness (the only unsound direction), monotonicity makes the crossing
+ * unique, and every candidate is still re-filtered by the caller. Returns the
+ * tightest such bound scaled to `j`'s grid, or null.
+ */
+function freeVarLowerBoundThroughRounding(
+  constraints: Constraint[],
+  j: number,
+  inputs: InputVar[],
+): bigint | null {
+  const spec = inputs[j];
+  if (!spec?.numeric) return null;
+  const g = 10n ** BigInt(spec.scale);
+  const maxScaled = rMul(spec.max, { n: g, d: 1n }).n; // spec.max is on-grid
+  const holdsAt = (xScaled: bigint, c: Constraint): boolean => {
+    const x: Assignment = inputs.map(() => R0);
+    x[j] = rat(xScaled, g);
+    return constraintHolds(c, x) === true;
+  };
+  let best: bigint | null = null;
+  for (const c of constraints) {
+    if (!c.exact || c.exact.rounds.length === 0) continue;
+    const vars = exactVarSet(c.exact);
+    if (vars.size !== 1 || !vars.has(j) || !exactMonotonePositive(c.exact)) continue;
+    // Only a lower half-space inverts to a lower bound: false at 0, true at max.
+    if (holdsAt(0n, c) || !holdsAt(maxScaled, c)) continue;
+    // Binary search the smallest on-grid x where the gate flips to true.
+    let lo = 0n;
+    let hi = maxScaled;
+    while (lo < hi) {
+      const mid = (lo + hi) / 2n;
+      if (holdsAt(mid, c)) hi = mid;
+      else lo = mid + 1n;
+    }
+    best = maxBound(best, lo);
+  }
+  return best;
+}
+
 /**
  * On-grid candidates for repairing a constraint whose decision value goes
  * through rounding: solveEquality demands an assignment landing EXACTLY on
@@ -2216,7 +2269,10 @@ export function runSymExec(configPath: string, outPath: string): number {
           const restScaled = rMul(rest, { n: scaleMul, d: 1n });
           if (kScaled.d !== 1n || restScaled.d !== 1n) continue;
           const maxXInt = rMul(spec.max, { n: 10n ** BigInt(spec.scale), d: 1n });
-          const minXInt = freeVarLowerBoundScaled(path.state.constraints, j, spec.scale);
+          const minXInt = maxBound(
+            freeVarLowerBoundScaled(path.state.constraints, j, spec.scale),
+            freeVarLowerBoundThroughRounding(path.state.constraints, j, inputs),
+          );
           const sols = solveCongruence(
             kScaled.n,
             ((h - (restScaled.n % m)) % m + m) % m,
@@ -2591,7 +2647,10 @@ function solveComposedRounding(
   // (e.g. a rounded compute gated behind WS-SALES > 50000). Only affects
   // where the search starts; the filter still decides.
   let minDGrid = 0n;
-  const minAScaled = freeVarLowerBoundScaled(constraints, j, spec.scale);
+  const minAScaled = maxBound(
+    freeVarLowerBoundScaled(constraints, j, spec.scale),
+    freeVarLowerBoundThroughRounding(constraints, j, inputs),
+  );
   if (minAScaled !== null && minAScaled > 0n) {
     const dLow = roundGrid(rAdd(rMul(a, rat(minAScaled, 10n ** BigInt(spec.scale))), b), innerScale);
     if (dLow > 0n) minDGrid = dLow;

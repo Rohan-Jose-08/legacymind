@@ -1,6 +1,6 @@
 # LegacyMind benchmark results
 
-Generated 2026-07-12T18:03:20.542Z by `node benchmark/run-benchmark.mjs`.
+Generated 2026-07-12T22:15:01.294Z by `node benchmark/run-benchmark.mjs`.
 
 Every module below was parsed to IR, migrated to Java 21 by the
 transpiler (two prompt-variant candidates, replayed from the committed
@@ -14,27 +14,27 @@ tampered or wrongly-signed certificate would fail the benchmark.
 
 | Module | COBOL lines | Winner | Layer B | Layer A (seeded) | Layer C obligations | Paths | Layer D keys | Verdict | Signed | LLM cost | Wall time |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| PAYROLL | 59 | candidate a of 2 | 4 cases | 200/200 (seed 20260705) | 2✓ 0✗ 0 unrealized | 2/2 | 4/4 static | **CERTIFIED** | ✓ `9b70a354efb9feab` | $0.0000 | 63.2s |
-| INTEREST | 53 | candidate a of 2 | 4 cases | 200/200 (seed 20260706) | 2✓ 0✗ 0 unrealized | 2/2 | 3/3 static | **CERTIFIED** | ✓ `9b70a354efb9feab` | $0.0000 | 65.8s |
-| DISCOUNT | 54 | candidate a of 2 | 5 cases | 200/200 (seed 20260706) | 3✓ 0✗ 0 unrealized | 2/2 | 4/4 static | **CERTIFIED** | ✓ `9b70a354efb9feab` | $0.0000 | 66.7s |
-| LEDGER | 72 | candidate a of 2 | 6 cases | 200/200 (seed 20260707) | 5✓ 0✗ 0 unrealized | 4/4 (+2 dead) | 4/4 static | **CERTIFIED** | ✓ `9b70a354efb9feab` | $0.0000 | 78.5s |
-| COMPOUND | 52 | candidate a of 2 | 5 cases | 200/200 (seed 20260707) | 2✓ 0✗ 0 unrealized | 10/10 (+4 dead) | 3/3 static | **CERTIFIED** | ✓ `9b70a354efb9feab` | $0.0000 | 73.9s |
-| TAXCALC | 58 | candidate a of 2 | 5 cases | 200/200 (seed 20260708) | 3✓ 0✗ 0 unrealized | 1/1 | 3/3 static | **CERTIFIED** | ✓ `9b70a354efb9feab` | $0.0000 | 72.9s |
-| GRADE | 47 | candidate a of 2 | 5 cases | 200/200 (seed 20260709) | 2✓ 0✗ 1 unrealized | 2/2 (+2 dead) | 3/3 static (1 warn) | **CERTIFIED** | ✓ `9b70a354efb9feab` | $0.0000 | 65.5s |
-| COMMISSION | 49 | candidate a of 2 | 6 cases | 200/200 (seed 20260709) | 2✓ 0✗ 0 unrealized | 2/2 | 2/2 static | **CERTIFIED** | ✓ `9b70a354efb9feab` | $0.0000 | 63.4s |
-| SENIOR | 38 | candidate a of 2 | 6 cases | 200/200 (seed 20260709) | 2✓ 0✗ 1 unrealized | 2/2 (+2 dead) | 2/2 static (1 warn) | **CERTIFIED** | ✓ `9b70a354efb9feab` | $0.0000 | 61.7s |
-| TIER | 37 | candidate a of 2 | 6 cases | 200/200 (seed 20260709) | 6✓ 0✗ 0 unrealized | 4/4 | 2/2 static | **CERTIFIED** | ✓ `9b70a354efb9feab` | $0.0000 | 68.6s |
-| INVOICE | 41 | candidate a of 2 | 6 cases | 200/200 (seed 20260709) | 2✓ 0✗ 0 unrealized | 2/2 | 3/3 static | **CERTIFIED** | ✓ `9b70a354efb9feab` | $0.0000 | 68.7s |
-| SHIPPING | 55 | candidate a of 2 | 6 cases | 200/200 (seed 20260709) | 3✓ 0✗ 0 unrealized | 3/3 | 3/3 static | **CERTIFIED** | ✓ `9b70a354efb9feab` | $0.0000 | 64.7s |
-| TRANSFER | 52 | candidate a of 2 | 6 cases | 200/200 (seed 20260710) | 2✓ 0✗ 0 unrealized | 2/2 | 4/4 static | **CERTIFIED** | ✓ `9b70a354efb9feab` | $0.0000 | 65.5s |
-| RETAIL | 45 | candidate a of 2 | 6 cases | 200/200 (seed 20260710) | 3✓ 0✗ 0 unrealized | 2/2 | 5/5 static | **CERTIFIED** | ✓ `9b70a354efb9feab` | $0.0000 | 68.4s |
-| PAYSLIP | 55 | candidate a of 2 | 5 cases | 200/200 (seed 20260710) | 1✓ 0✗ 0 unrealized | 1/1 | 2/2 static (1 warn) | **CERTIFIED** | ✓ `9b70a354efb9feab` | $0.0000 | 83.2s |
-| BONUS | 46 | candidate a of 2 | 6 cases | 200/200 (seed 20260710) | 3✓ 0✗ 0 unrealized | 2/2 | 3/3 static | **CERTIFIED** | ✓ `9b70a354efb9feab` | $0.0000 | 71.7s |
-| BATCHSUM | 44 | candidate a of 2 | 5 cases | 200/200 (seed 20260710) | 0✓ 0✗ 2 unrealized | 6/8 | 2/2 static (1 warn) | **CERTIFIED** | ✓ `9b70a354efb9feab` | $0.0000 | 64.9s |
-| REBATE | 52 | candidate a of 2 | 7 cases | 200/200 (seed 20260711) | 2✓ 0✗ 2 unrealized | 15/39 | 3/3 static (2 warn) | **CERTIFIED** | ✓ `9b70a354efb9feab` | $0.0000 | 76.1s |
-| DUES | 35 | candidate a of 2 | 7 cases | 200/200 (seed 20260711) | 2✓ 0✗ 0 unrealized | 2/2 | 3/3 static (1 warn) | **CERTIFIED** | ✓ `9b70a354efb9feab` | $0.0000 | 71.3s |
-| TABSUM | 40 | candidate a of 2 | 5 cases | 200/200 (seed 20260711) | 1✓ 0✗ 1 unrealized | 1/1 | 2/2 static | **CERTIFIED** | ✓ `9b70a354efb9feab` | $0.0000 | 65.7s |
-| SETTLE | 41 | candidate a of 2 | 5 cases | 200/200 (seed 20260712) | 1✓ 0✗ 1 unrealized | 1/1 | 2/2 static | **CERTIFIED** | ✓ `9b70a354efb9feab` | $0.0000 | 61.2s |
+| PAYROLL | 59 | candidate a of 2 | 4 cases | 200/200 (seed 20260705) | 2✓ 0✗ 0 unrealized | 2/2 | 4/4 static | **CERTIFIED** | ✓ `9b70a354efb9feab` | $0.0000 | 73.4s |
+| INTEREST | 53 | candidate a of 2 | 4 cases | 200/200 (seed 20260706) | 2✓ 0✗ 0 unrealized | 2/2 | 3/3 static | **CERTIFIED** | ✓ `9b70a354efb9feab` | $0.0000 | 75.1s |
+| DISCOUNT | 54 | candidate a of 2 | 5 cases | 200/200 (seed 20260706) | 3✓ 0✗ 0 unrealized | 2/2 | 4/4 static | **CERTIFIED** | ✓ `9b70a354efb9feab` | $0.0000 | 75.3s |
+| LEDGER | 72 | candidate a of 2 | 6 cases | 200/200 (seed 20260707) | 5✓ 0✗ 0 unrealized | 4/4 (+2 dead) | 4/4 static | **CERTIFIED** | ✓ `9b70a354efb9feab` | $0.0000 | 81.4s |
+| COMPOUND | 52 | candidate a of 2 | 5 cases | 200/200 (seed 20260707) | 2✓ 0✗ 0 unrealized | 10/10 (+4 dead) | 3/3 static | **CERTIFIED** | ✓ `9b70a354efb9feab` | $0.0000 | 78.5s |
+| TAXCALC | 58 | candidate a of 2 | 5 cases | 200/200 (seed 20260708) | 3✓ 0✗ 0 unrealized | 1/1 | 3/3 static | **CERTIFIED** | ✓ `9b70a354efb9feab` | $0.0000 | 74.2s |
+| GRADE | 47 | candidate a of 2 | 5 cases | 200/200 (seed 20260709) | 2✓ 0✗ 1 unrealized | 2/2 (+2 dead) | 3/3 static (1 warn) | **CERTIFIED** | ✓ `9b70a354efb9feab` | $0.0000 | 72s |
+| COMMISSION | 49 | candidate a of 2 | 6 cases | 200/200 (seed 20260709) | 2✓ 0✗ 0 unrealized | 2/2 | 2/2 static | **CERTIFIED** | ✓ `9b70a354efb9feab` | $0.0000 | 71.1s |
+| SENIOR | 38 | candidate a of 2 | 6 cases | 200/200 (seed 20260709) | 2✓ 0✗ 1 unrealized | 2/2 (+2 dead) | 2/2 static (1 warn) | **CERTIFIED** | ✓ `9b70a354efb9feab` | $0.0000 | 70.5s |
+| TIER | 37 | candidate a of 2 | 6 cases | 200/200 (seed 20260709) | 6✓ 0✗ 0 unrealized | 4/4 | 2/2 static | **CERTIFIED** | ✓ `9b70a354efb9feab` | $0.0000 | 78.3s |
+| INVOICE | 41 | candidate a of 2 | 6 cases | 200/200 (seed 20260709) | 2✓ 0✗ 0 unrealized | 2/2 | 3/3 static | **CERTIFIED** | ✓ `9b70a354efb9feab` | $0.0000 | 71.9s |
+| SHIPPING | 55 | candidate a of 2 | 6 cases | 200/200 (seed 20260709) | 3✓ 0✗ 0 unrealized | 3/3 | 3/3 static | **CERTIFIED** | ✓ `9b70a354efb9feab` | $0.0000 | 75s |
+| TRANSFER | 52 | candidate a of 2 | 6 cases | 200/200 (seed 20260710) | 2✓ 0✗ 0 unrealized | 2/2 | 4/4 static | **CERTIFIED** | ✓ `9b70a354efb9feab` | $0.0000 | 73.6s |
+| RETAIL | 45 | candidate a of 2 | 6 cases | 200/200 (seed 20260710) | 3✓ 0✗ 0 unrealized | 2/2 | 5/5 static | **CERTIFIED** | ✓ `9b70a354efb9feab` | $0.0000 | 72.7s |
+| PAYSLIP | 55 | candidate a of 2 | 5 cases | 200/200 (seed 20260710) | 1✓ 0✗ 0 unrealized | 1/1 | 2/2 static (1 warn) | **CERTIFIED** | ✓ `9b70a354efb9feab` | $0.0000 | 92.9s |
+| BONUS | 46 | candidate a of 2 | 6 cases | 200/200 (seed 20260710) | 3✓ 0✗ 0 unrealized | 2/2 | 3/3 static | **CERTIFIED** | ✓ `9b70a354efb9feab` | $0.0000 | 69.6s |
+| BATCHSUM | 44 | candidate a of 2 | 5 cases | 200/200 (seed 20260710) | 0✓ 0✗ 2 unrealized | 6/8 | 2/2 static (1 warn) | **CERTIFIED** | ✓ `9b70a354efb9feab` | $0.0000 | 66.2s |
+| REBATE | 52 | candidate a of 2 | 7 cases | 200/200 (seed 20260711) | 2✓ 0✗ 2 unrealized | 15/39 | 3/3 static (2 warn) | **CERTIFIED** | ✓ `9b70a354efb9feab` | $0.0000 | 78.3s |
+| DUES | 35 | candidate a of 2 | 7 cases | 200/200 (seed 20260711) | 2✓ 0✗ 0 unrealized | 2/2 | 3/3 static (1 warn) | **CERTIFIED** | ✓ `9b70a354efb9feab` | $0.0000 | 68s |
+| TABSUM | 40 | candidate a of 2 | 5 cases | 200/200 (seed 20260711) | 1✓ 0✗ 1 unrealized | 1/1 | 2/2 static | **CERTIFIED** | ✓ `9b70a354efb9feab` | $0.0000 | 65.6s |
+| SETTLE | 41 | candidate a of 2 | 5 cases | 200/200 (seed 20260712) | 1✓ 0✗ 1 unrealized | 1/1 | 2/2 static | **CERTIFIED** | ✓ `9b70a354efb9feab` | $0.0000 | 64.7s |
 
 ## Disclosed gaps per certificate
 
@@ -72,7 +72,6 @@ tampered or wrongly-signed certificate would fail the benchmark.
 **TRANSFER**
 
 **RETAIL**
-- layer C: 2 obligation-path combination(s) unrealized (see report)
 
 **PAYSLIP**
 - layer D: 1 storage-capacity difference(s) flagged as warnings — statically inconclusive, covered dynamically by layers A/B/C
@@ -116,8 +115,9 @@ histogram below is the prioritized lowering backlog.
 
 | Construct outside the IR subset | Occurrences |
 |---|---|
-| REDEFINES view "…" is not an elementary unsigned numeric DISPLAY item (REDEFINES R1a) | 4277 |
+| REDEFINES view "…" is numeric-edited, not elementary unsigned numeric DISPLAY (REDEFINES R1a) | 3218 |
 | MOVE target "…" (qualified/subscripted) | 3160 |
+| REDEFINES view "…" is a group, not elementary unsigned numeric DISPLAY (REDEFINES R1a) | 961 |
 | CLOSE of "…" which is not a lowered file | 951 |
 | OPEN of "…" which is not a lowered file | 878 |
 | SET target(s) TO a value other than TRUE (only SET condition-name TO TRUE is supported) | 825 |
@@ -130,7 +130,6 @@ histogram below is the prioritized lowering backlog.
 | GO TO BAIL-OUT-WRITE inside PERFORM-reachable paragraph BAIL-OUT is neither a structured range early | 375 |
 | GO TO CLOSE-FILES is a backward or self jump; only strictly forward top-level jumps are supported | 368 |
 | PERFORM target "…" is not a paragraph in this program | 306 |
-| PROCEDURE DIVISION has no paragraphs | 253 |
 
 ## Reproduction
 
