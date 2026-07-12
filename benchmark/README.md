@@ -384,26 +384,34 @@ the corpus named in the founding spec (759 files, commit pinned in
   The ~22 rejections are the corpus's own deliberately-broken error
   fixtures (misspelled divisions, references to nonexistent copybooks) —
   files that are *supposed* to fail.
-- **proleap IR-complete** — 9/759 (1.2%). The strict tier the rest of
+- **proleap IR-complete** — 15/759 (2.0%). The strict tier the rest of
   the pipeline consumes: every construct lowered into IR. Files in
   between parse fine but use constructs outside the IR subset; each is
   enumerated per file (never skipped silently) and histogrammed in
   `parse-coverage.json` as the prioritized lowering backlog. Lowering
   waves have worked down that histogram — arithmetic verbs and
-  period-terminated IF (wave 1), the PERFORM loop family (wave 2),
-  PERFORM THRU ranges (wave 3), 88-level condition names both ways
-  (IF condition-name, SET ... TO TRUE), EVALUATE, forward GO TO
-  (the range early-exit and top-level guard-and-dispatch idioms), and
-  qualified OF/IN references with duplicated leaf names. What was once
-  a blanket 18.9k-occurrence "GO TO statement" head is now a set of
-  precise per-shape diagnostics (backward jumps, jumps inside
-  PERFORM-reachable paragraphs) an order of magnitude smaller. The
-  histogram head today is REDEFINES (4.3k, the aliasing epic), then
-  subscripted references (OCCURS) and the file-I/O statement family.
-  This corpus is ProLeap's own test suite and
-  deliberately exercises every exotic construct, so the IR-complete rate
-  is adversarially low by construction; the LEDGER module shows what the
-  lowered subset covers on realistic batch code.
+  period-terminated IF, the PERFORM loop family, PERFORM THRU ranges,
+  88-level condition names both ways (IF condition-name, SET ... TO
+  TRUE), EVALUATE, forward GO TO (range early-exit and guard-and-
+  dispatch), qualified OF/IN references, PROCEDURE-DIVISION sections,
+  a LINE SEQUENTIAL file (output stage 1, then the READ/record protocol
+  for input), and the byte-layout family — multi-field fixed-width
+  records, REDEFINES, and OCCURS all from one model. Two effects of that
+  last wave show in the histogram: what was once a blanket
+  4.3k-occurrence "REDEFINES" head is now a precise
+  4,277-occurrence "REDEFINES view is not an elementary unsigned numeric
+  DISPLAY item" (the R1a slice is lowered; the remainder is the
+  cross-category / write-through / group epic, R1b/R2), and OCCURS has
+  split into the fixed-numeric-table subset (lowered) versus 381
+  group/non-numeric-element tables (O3). The head today is that residual
+  REDEFINES (4,277), then qualified/subscripted MOVE (3,160), the
+  file-I/O statement family (OPEN/CLOSE/WRITE-with-clauses/READ outside
+  the supported files), SET to a non-condition target (825), and the
+  remaining GO TO shapes (backward and PERFORM-reachable jumps). This
+  corpus is ProLeap's own test suite and deliberately exercises every
+  exotic construct, so the IR-complete rate is adversarially low by
+  construction; the LEDGER module shows what the lowered subset covers
+  on realistic batch code.
 
 Both engines emit identical IR (modulo provenance) for sources inside
 the stub's subset — cross-validated on all benchmark modules — so the

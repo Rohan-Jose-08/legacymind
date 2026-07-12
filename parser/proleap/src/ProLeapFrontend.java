@@ -862,8 +862,8 @@ public class ProLeapFrontend {
 				// O1 (docs/occurs.md): an elementary unsigned numeric DISPLAY
 				// element only; group tables and non-numeric elements are O3.
 				if (!elementaryNumericDisplay(item)) {
-					reject(ctx, "OCCURS element " + name
-							+ " is not an elementary unsigned numeric DISPLAY item (OCCURS O1)");
+					reject(ctx, "OCCURS element \"" + name
+							+ "\" is not an elementary unsigned numeric DISPLAY item (OCCURS O1)");
 				} else {
 					item.put("occurs", occursCount);
 					pendingOccurs.add(item);
@@ -2521,8 +2521,8 @@ public class ProLeapFrontend {
 					collectDataRefs((List<?>) ((Map<?, ?>) po).get("statements"), refs);
 				}
 				if (refs.contains((String) rec.get("name"))) {
-					unsupported.add("input record " + rec.get("name")
-							+ " is referenced as a group in the PROCEDURE DIVISION"
+					unsupported.add("input record \"" + rec.get("name")
+							+ "\" is referenced as a group in the PROCEDURE DIVISION"
 							+ " (stage 2b models field references only)");
 				}
 			}
@@ -2777,29 +2777,29 @@ public class ProLeapFrontend {
 				}
 				final Map<String, Object> target = byName.get(targetName);
 				if (target == null) {
-					unsupported.add("REDEFINES " + rawTarget
-							+ " which is not a WORKING-STORAGE data item (file I/O REDEFINES R1a)");
+					unsupported.add("REDEFINES \"" + rawTarget
+							+ "\" which is not a WORKING-STORAGE data item (file I/O REDEFINES R1a)");
 					continue;
 				}
 				if (!elementaryNumericDisplay(item)) {
-					unsupported.add("REDEFINES view " + itemName
-							+ " is not an elementary unsigned numeric DISPLAY item (REDEFINES R1a)");
+					unsupported.add("REDEFINES view \"" + itemName
+							+ "\" is not an elementary unsigned numeric DISPLAY item (REDEFINES R1a)");
 					continue;
 				}
 				if (!elementaryNumericDisplay(target)) {
-					unsupported.add("REDEFINES target " + targetName
-							+ " is not an elementary unsigned numeric DISPLAY item (REDEFINES R1a)");
+					unsupported.add("REDEFINES target \"" + targetName
+							+ "\" is not an elementary unsigned numeric DISPLAY item (REDEFINES R1a)");
 					continue;
 				}
 				final int di = digitsOf(item);
 				final int dt = digitsOf(target);
 				if (di != dt) {
-					unsupported.add("REDEFINES view " + itemName + " (" + di + " digits) and target " + targetName
-							+ " (" + dt + " digits) differ in width (REDEFINES R1a requires equal digit count)");
+					unsupported.add("REDEFINES view \"" + itemName + "\" (" + di + " digits) and target \"" + targetName
+							+ "\" (" + dt + " digits) differ in width (REDEFINES R1a requires equal digit count)");
 					continue;
 				}
 				if (written.contains(itemName)) {
-					unsupported.add("REDEFINES view " + itemName + " is written in the PROCEDURE DIVISION"
+					unsupported.add("REDEFINES view \"" + itemName + "\" is written in the PROCEDURE DIVISION"
 							+ " (REDEFINES R1a requires the redefining view to be read-only)");
 					continue;
 				}

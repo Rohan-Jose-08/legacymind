@@ -41,6 +41,17 @@ try {
   /* corpus may not be a git checkout */
 }
 
+// Identify the corpus by its remote URL, not the session-local checkout
+// path — so the published snapshot names the source stably across machines
+// and re-clones (the path is scratch and changes every session).
+let corpusLabel = corpusDir.split("\\").join("/");
+try {
+  const url = execFileSync("git", ["-C", corpusDir, "remote", "get-url", "origin"], { encoding: "utf8" }).trim();
+  if (url) corpusLabel = url.replace(/\.git$/, "");
+} catch {
+  /* no remote — keep the path */
+}
+
 // Normalize a rejection message into a histogram bucket: drop line
 // numbers and collapse specific identifiers so equivalent reasons group.
 const bucket = (message) =>
@@ -114,7 +125,7 @@ for (const r of results) {
 const result = {
   tool: "legacymind parse-sweep",
   generatedAt: new Date().toISOString(),
-  corpus: corpusDir.split("\\").join("/"),
+  corpus: corpusLabel,
   commit,
   total: files.length,
   stub: {

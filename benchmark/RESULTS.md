@@ -97,13 +97,13 @@ tampered or wrongly-signed certificate would fail the benchmark.
 
 ## Parser coverage against an external corpus
 
-Corpus: C:/Users/Ender/AppData/Local/Temp/claude/C--Users-Ender-startup/7a40dc33-ad23-428b-805e-9e71bcc7aa45/scratchpad/proleap-cobol-parser (commit d1bfe75bdd6d), 759 files.
+Corpus: https://github.com/uwol/proleap-cobol-parser (commit d1bfe75bdd6d), 759 files.
 
 | Engine | Tier | Files | Rate |
 |---|---|---|---|
 | stub | parsed | 0 | 0.0% |
 | proleap | front-end accepted (grammar + preprocessor) | 737 | 97.1% |
-| proleap | IR-complete (every construct lowered) | 9 | 1.2% |
+| proleap | IR-complete (every construct lowered) | 15 | 2.0% |
 
 Front-end acceptance is what the production grammar and its
 reference-format preprocessor handle; IR-complete is the stricter

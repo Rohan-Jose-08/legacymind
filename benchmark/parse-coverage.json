@@ -1,7 +1,7 @@
 {
   "tool": "legacymind parse-sweep",
-  "generatedAt": "2026-07-10T13:59:34.349Z",
-  "corpus": "C:/Users/Ender/AppData/Local/Temp/claude/C--Users-Ender-startup/7a40dc33-ad23-428b-805e-9e71bcc7aa45/scratchpad/proleap-cobol-parser",
+  "generatedAt": "2026-07-12T16:14:09.751Z",
+  "corpus": "https://github.com/uwol/proleap-cobol-parser",
   "commit": "d1bfe75bdd6d480f70c74c6345bcc02610ac30d3",
   "total": 759,
   "stub": {
@@ -57,8 +57,8 @@
   "proleap": {
     "frontendAccepted": 737,
     "frontendRate": 0.9710144927536232,
-    "irComplete": 9,
-    "irRate": 0.011857707509881422,
+    "irComplete": 15,
+    "irRate": 0.019762845849802372,
     "formats": {
       "FIXED": 547,
       "TANDEM": 187,
@@ -136,52 +136,48 @@
     ],
     "topUnsupportedConstructs": [
       {
-        "reason": "REDEFINES",
-        "count": 4326
+        "reason": "REDEFINES view \"…\" is not an elementary unsigned numeric DISPLAY item (REDEFINES R1a)",
+        "count": 4277
       },
       {
         "reason": "MOVE target \"…\" (qualified/subscripted)",
-        "count": 3161
+        "count": 3160
       },
       {
-        "reason": "WRITE statement",
-        "count": 1123
+        "reason": "CLOSE of \"…\" which is not a lowered file",
+        "count": 951
       },
       {
-        "reason": "CLOSE statement",
-        "count": 969
-      },
-      {
-        "reason": "OPEN statement",
-        "count": 966
+        "reason": "OPEN of \"…\" which is not a lowered file",
+        "count": 878
       },
       {
         "reason": "SET target(s) TO a value other than TRUE (only SET condition-name TO TRUE is supported)",
         "count": 825
       },
       {
-        "reason": "READ statement",
-        "count": 767
+        "reason": "WRITE with FROM/ADVANCING/END-OF-PAGE/INVALID KEY (outside file I/O stage 1)",
+        "count": 802
       },
       {
         "reason": "GO TO FAIL-ROUTINE-WRITE inside PERFORM-reachable paragraph FAIL-ROUTINE is neither a structured ran",
         "count": 750
       },
       {
-        "reason": "OCCURS",
-        "count": 555
+        "reason": "READ of \"…\" which is not a lowered file",
+        "count": 551
       },
       {
-        "reason": "PERFORM target \"…\" is not a paragraph in this program",
-        "count": 500
+        "reason": "SELECT PRINT-FILE ASSIGN TO a non-literal (XXXXX055)",
+        "count": 397
       },
       {
-        "reason": "FILE SECTION",
-        "count": 432
+        "reason": "FD PRINT-FILE without a matching LINE SEQUENTIAL SELECT",
+        "count": 397
       },
       {
-        "reason": "sections in the PROCEDURE DIVISION",
-        "count": 413
+        "reason": "OCCURS element \"…\" is not an elementary unsigned numeric DISPLAY item (OCCURS O1)",
+        "count": 381
       },
       {
         "reason": "GO TO BAIL-OUT-WRITE inside PERFORM-reachable paragraph BAIL-OUT is neither a structured range early",
@@ -189,15 +185,23 @@
       },
       {
         "reason": "GO TO CLOSE-FILES is a backward or self jump; only strictly forward top-level jumps are supported",
-        "count": 367
+        "count": 368
+      },
+      {
+        "reason": "PERFORM target \"…\" is not a paragraph in this program",
+        "count": 306
       },
       {
         "reason": "PROCEDURE DIVISION has no paragraphs",
-        "count": 257
+        "count": 253
       },
       {
         "reason": "ADD receiving field \"…\" (qualified/subscripted)",
-        "count": 230
+        "count": 229
+      },
+      {
+        "reason": "procedure name \"…\" is not representable in the IR",
+        "count": 201
       },
       {
         "reason": "START statement",
@@ -209,6 +213,10 @@
       },
       {
         "reason": "RETURN statement",
+        "count": 153
+      },
+      {
+        "reason": "READ ... KEY/INVALID KEY (indexed reads are outside the subset)",
         "count": 153
       },
       {
@@ -225,19 +233,23 @@
       },
       {
         "reason": "INSPECT statement",
-        "count": 111
+        "count": 104
       },
       {
-        "reason": "GO TO CCVS-EXIT targets a name that is not a paragraph",
-        "count": 99
-      },
-      {
-        "reason": "SET ... UP/DOWN BY (index adjustment, outside the subset)",
+        "reason": "OCCURS INDEXED BY",
         "count": 98
       },
       {
         "reason": "ALTER statement",
         "count": 97
+      },
+      {
+        "reason": "SET ... UP/DOWN BY (index adjustment, outside the subset)",
+        "count": 97
+      },
+      {
+        "reason": "OPEN I-O/EXTEND (outside the file I/O subset)",
+        "count": 88
       },
       {
         "reason": "DECLARATIVES",
@@ -260,6 +272,10 @@
         "count": 64
       },
       {
+        "reason": "READ ... INTO (outside file I/O stage 2a)",
+        "count": 63
+      },
+      {
         "reason": "CALL statement",
         "count": 62
       },
@@ -268,16 +284,16 @@
         "count": 58
       },
       {
+        "reason": "FD SQ-FS1 without a matching LINE SEQUENTIAL SELECT",
+        "count": 55
+      },
+      {
         "reason": "ACCEPT ... FROM",
         "count": 54
       },
       {
         "reason": "EVALUATE subject \"…\" (qualified/subscripted or expression)",
         "count": 49
-      },
-      {
-        "reason": "GO TO DECL-FAIL-WRITE inside PERFORM-reachable paragraph DECL-FAIL-ROUTINE is neither a structured r",
-        "count": 48
       },
       {
         "reason": "PICTURE …: unsupported symbol",
@@ -324,6 +340,10 @@
         "count": 34
       },
       {
+        "reason": "WRITE SQ-FS1R1-F-G-120 which is not a file record",
+        "count": 34
+      },
+      {
         "reason": "DELETE statement",
         "count": 31
       },
@@ -340,11 +360,11 @@
         "count": 30
       },
       {
-        "reason": "ENABLE statement",
-        "count": 29
+        "reason": "SELECT SQ-FS1 ASSIGN TO a non-literal (XXXXX001)",
+        "count": 30
       },
       {
-        "reason": "GO TO ... DEPENDING ON (computed jump)",
+        "reason": "ENABLE statement",
         "count": 29
       },
       {
@@ -356,8 +376,8 @@
         "count": 27
       },
       {
-        "reason": "GO TO D-FAIL-ROUTINE-WRITE inside PERFORM-reachable paragraph D-FAIL-ROUTINE is neither a structured",
-        "count": 26
+        "reason": "ambiguous unqualified reference \"…\" (declared more than once)",
+        "count": 25
       },
       {
         "reason": "DISPLAY ... AT/UPON/WITH/ON EXCEPTION",
@@ -372,11 +392,59 @@
         "count": 24
       },
       {
-        "reason": "GO TO DECL-BAIL-WRITE inside PERFORM-reachable paragraph DECL-BAIL is neither a structured range ear",
+        "reason": "paragraph DECL-PASS outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 24
+      },
+      {
+        "reason": "paragraph DECL-FAIL outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 24
+      },
+      {
+        "reason": "paragraph DECL-PRINT-DETAIL outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 24
+      },
+      {
+        "reason": "paragraph DECL-WRITE-LINE outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 24
+      },
+      {
+        "reason": "paragraph DECL-WRT-LN outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 24
+      },
+      {
+        "reason": "paragraph DECL-FAIL-ROUTINE outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 24
+      },
+      {
+        "reason": "paragraph DECL-FAIL-WRITE outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 24
+      },
+      {
+        "reason": "paragraph DECL-FAIL-EX outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 24
+      },
+      {
+        "reason": "paragraph DECL-BAIL outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 24
+      },
+      {
+        "reason": "paragraph DECL-BAIL-WRITE outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 24
+      },
+      {
+        "reason": "paragraph DECL-BAIL-EX outside any section in a sectioned PROCEDURE DIVISION",
         "count": 24
       },
       {
         "reason": "LINKAGE SECTION",
+        "count": 23
+      },
+      {
+        "reason": "FD SQ-FS4 without a matching LINE SEQUENTIAL SELECT",
+        "count": 23
+      },
+      {
+        "reason": "paragraph END-DECLS outside any section in a sectioned PROCEDURE DIVISION",
         "count": 23
       },
       {
@@ -386,6 +454,14 @@
       {
         "reason": "GO TO READ-TEST-GF-01 is a backward or self jump; only strictly forward top-level jumps are supporte",
         "count": 22
+      },
+      {
+        "reason": "WRITE PRINT-REC which is not a file record",
+        "count": 21
+      },
+      {
+        "reason": "GO TO ... DEPENDING ON (computed jump)",
+        "count": 21
       },
       {
         "reason": "preprocessor changed the line structure (COPY/REPLACE expansion?): span provenance cannot be mapped ",
@@ -408,6 +484,14 @@
         "count": 19
       },
       {
+        "reason": "FD SQ-FS2 without a matching LINE SEQUENTIAL SELECT",
+        "count": 19
+      },
+      {
+        "reason": "REDEFINES target \"…\" is not an elementary unsigned numeric DISPLAY item (REDEFINES R1a)",
+        "count": 18
+      },
+      {
         "reason": "DIVIDE ... REMAINDER",
         "count": 18
       },
@@ -416,8 +500,28 @@
         "count": 18
       },
       {
+        "reason": "FD SQ-FS3 without a matching LINE SEQUENTIAL SELECT",
+        "count": 17
+      },
+      {
+        "reason": "FD TFIL without a matching LINE SEQUENTIAL SELECT",
+        "count": 17
+      },
+      {
         "reason": "GO TO REWRITE-TEST-GF-02 is a backward or self jump; only strictly forward top-level jumps are suppo",
         "count": 17
+      },
+      {
+        "reason": "SELECT SQ-FS1 ASSIGN TO a non-literal (XXXXX014)",
+        "count": 16
+      },
+      {
+        "reason": "FD IX-FS1 without a matching LINE SEQUENTIAL SELECT",
+        "count": 16
+      },
+      {
+        "reason": "paragraph INPUT-PROCESS outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 16
       },
       {
         "reason": "EVALUATE WHEN NOT",
@@ -428,8 +532,8 @@
         "count": 15
       },
       {
-        "reason": "ambiguous unqualified reference \"…\" (declared more than once)",
-        "count": 14
+        "reason": "SELECT SQ-FS4 ASSIGN TO a non-literal (XXXXX014)",
+        "count": 15
       },
       {
         "reason": "GO TO REL-TEST-010-R is a backward or self jump; only strictly forward top-level jumps are supported",
@@ -437,6 +541,10 @@
       },
       {
         "reason": "GENERATE statement",
+        "count": 14
+      },
+      {
+        "reason": "WRITE TST-TEST which is not a file record",
         "count": 14
       },
       {
@@ -452,16 +560,92 @@
         "count": 13
       },
       {
+        "reason": "PERFORM ... THRU involving a section",
+        "count": 13
+      },
+      {
         "reason": "GO TO READ-TEST-F1-01 is a backward or self jump; only strictly forward top-level jumps are supporte",
         "count": 13
       },
       {
-        "reason": "GO TO D-BAIL-OUT-WRITE inside PERFORM-reachable paragraph D-BAIL-OUT is neither a structured range e",
+        "reason": "paragraph D-CLOSE-FILES outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 13
+      },
+      {
+        "reason": "paragraph D-PASS outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 13
+      },
+      {
+        "reason": "paragraph D-FAIL outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 13
+      },
+      {
+        "reason": "paragraph D-PRINT-DETAIL outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 13
+      },
+      {
+        "reason": "paragraph D-END-ROUTINE outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 13
+      },
+      {
+        "reason": "paragraph D-END-RTN-EXIT outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 13
+      },
+      {
+        "reason": "paragraph D-END-ROUTINE-1 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 13
+      },
+      {
+        "reason": "paragraph D-END-ROUTINE-12 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 13
+      },
+      {
+        "reason": "paragraph D-END-ROUTINE-13 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 13
+      },
+      {
+        "reason": "paragraph D-WRITE-LINE outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 13
+      },
+      {
+        "reason": "paragraph D-WRT-LN outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 13
+      },
+      {
+        "reason": "paragraph D-FAIL-ROUTINE outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 13
+      },
+      {
+        "reason": "paragraph D-FAIL-ROUTINE-WRITE outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 13
+      },
+      {
+        "reason": "paragraph D-FAIL-ROUTINE-EX outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 13
+      },
+      {
+        "reason": "paragraph D-BAIL-OUT outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 13
+      },
+      {
+        "reason": "paragraph D-BAIL-OUT-WRITE outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 13
+      },
+      {
+        "reason": "paragraph D-BAIL-OUT-EX outside any section in a sectioned PROCEDURE DIVISION",
         "count": 13
       },
       {
         "reason": "GO TO READ-TEST-GF-02 is a backward or self jump; only strictly forward top-level jumps are supporte",
         "count": 13
+      },
+      {
+        "reason": "paragraph DECL-DE-LETE outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 13
+      },
+      {
+        "reason": "paragraph D-TERMINATE-CCVS outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 12
       },
       {
         "reason": "GO TO SEQ-TEST-001 is a backward or self jump; only strictly forward top-level jumps are supported",
@@ -504,6 +688,10 @@
         "count": 10
       },
       {
+        "reason": "WRITE SQ-FS3R1-F-G-120 which is not a file record",
+        "count": 10
+      },
+      {
         "reason": "CANCEL statement",
         "count": 10
       },
@@ -512,7 +700,27 @@
         "count": 10
       },
       {
+        "reason": "SELECT IX-FS3 ASSIGN TO a non-literal (XXXXX024)",
+        "count": 10
+      },
+      {
+        "reason": "FD IX-FS3 without a matching LINE SEQUENTIAL SELECT",
+        "count": 10
+      },
+      {
+        "reason": "paragraph DECL-EXIT outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 10
+      },
+      {
         "reason": "STOP STOP_RUN_AND_DISPLAY",
+        "count": 10
+      },
+      {
+        "reason": "WRITE SORTED which is not a file record",
+        "count": 10
+      },
+      {
+        "reason": "paragraph OUTPUT-ERROR-PROCESS outside any section in a sectioned PROCEDURE DIVISION",
         "count": 10
       },
       {
@@ -528,11 +736,19 @@
         "count": 10
       },
       {
+        "reason": "SELECT IX-FS1 ASSIGN TO a non-literal (XXXXX024)",
+        "count": 9
+      },
+      {
         "reason": "GO TO BREAKDOWN-EXIT inside PERFORM-reachable paragraph BREAKDOWN-PARA is neither a structured range",
         "count": 9
       },
       {
         "reason": "SUBTRACT CORRESPONDING",
+        "count": 9
+      },
+      {
+        "reason": "WRITE SQ-FS4R1-F-G-120 which is not a file record",
         "count": 9
       },
       {
@@ -560,7 +776,7 @@
         "count": 8
       },
       {
-        "reason": "GO TO FAIL-ROUTINE-WRITE-DECL inside PERFORM-reachable paragraph FAIL-ROUTINE-DECL is neither a stru",
+        "reason": "OCCURS DEPENDING ON (variable-length table)",
         "count": 8
       },
       {
@@ -580,15 +796,27 @@
         "count": 8
       },
       {
+        "reason": "FD RL-FS1 without a matching LINE SEQUENTIAL SELECT",
+        "count": 8
+      },
+      {
         "reason": "GO TO REL-TEST-009-R is a backward or self jump; only strictly forward top-level jumps are supported",
         "count": 8
       },
       {
-        "reason": "GO TO D1-FAIL-ROUTINE-WRITE inside PERFORM-reachable paragraph D1-FAIL-ROUTINE is neither a structur",
+        "reason": "SELECT RL-FD2 ASSIGN TO a non-literal (XXXXX022)",
         "count": 8
       },
       {
-        "reason": "GO TO CONTINUE-TESTING targets a name that is not a paragraph",
+        "reason": "FD RL-FD2 without a matching LINE SEQUENTIAL SELECT",
+        "count": 8
+      },
+      {
+        "reason": "FD TEST-FILE without a matching LINE SEQUENTIAL SELECT",
+        "count": 8
+      },
+      {
+        "reason": "SELECT SQ-FS2 ASSIGN TO a non-literal (XXXXX014)",
         "count": 8
       },
       {
@@ -596,7 +824,55 @@
         "count": 7
       },
       {
+        "reason": "paragraph ABNORMAL-TERM-DECL outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 7
+      },
+      {
+        "reason": "paragraph D-C-TEST-GF-01-1 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 7
+      },
+      {
+        "reason": "paragraph D-C-FAIL-GF-01-0 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 7
+      },
+      {
+        "reason": "paragraph D-C-PASS-GF-01-0 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 7
+      },
+      {
+        "reason": "paragraph D-C-WRITE-GF-01-0 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 7
+      },
+      {
+        "reason": "FD IX-FD1 without a matching LINE SEQUENTIAL SELECT",
+        "count": 7
+      },
+      {
         "reason": "GO TO BUILD-LEVEL-1 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 7
+      },
+      {
+        "reason": "SELECT ST-FS1 ASSIGN TO a non-literal (XXXXX027)",
+        "count": 7
+      },
+      {
+        "reason": "FD ST-FS1 without a matching LINE SEQUENTIAL SELECT",
+        "count": 7
+      },
+      {
+        "reason": "WRITE TEST-REC which is not a file record",
+        "count": 7
+      },
+      {
+        "reason": "WRITE PROOF-REC which is not a file record",
+        "count": 7
+      },
+      {
+        "reason": "SELECT SQ-VS7 ASSIGN TO a non-literal (XXXXX014)",
+        "count": 7
+      },
+      {
+        "reason": "FD SQ-VS7 without a matching LINE SEQUENTIAL SELECT",
         "count": 7
       },
       {
@@ -604,11 +880,39 @@
         "count": 7
       },
       {
+        "reason": "paragraph I-O-ERROR-PROCESS outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 7
+      },
+      {
+        "reason": "paragraph INPUT-ERROR-PROCESS outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 7
+      },
+      {
+        "reason": "paragraph DECL-TEST-01-END outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 7
+      },
+      {
+        "reason": "paragraph INPUT-ERROR-PROCEDURE outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 7
+      },
+      {
         "reason": "MERGE statement",
         "count": 6
       },
       {
+        "reason": "SELECT TFIL ASSIGN TO a non-literal (XXXXX014)",
+        "count": 6
+      },
+      {
         "reason": "EVALUATE ... ALSO (multiple subjects)",
+        "count": 6
+      },
+      {
+        "reason": "FD IX-FS2 without a matching LINE SEQUENTIAL SELECT",
+        "count": 6
+      },
+      {
+        "reason": "FD TFIL2 without a matching LINE SEQUENTIAL SELECT",
         "count": 6
       },
       {
@@ -632,6 +936,14 @@
         "count": 6
       },
       {
+        "reason": "paragraph RL-FD2-01-01 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 6
+      },
+      {
+        "reason": "paragraph RL-FD2-01-EXIT outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 6
+      },
+      {
         "reason": "INITIATE statement",
         "count": 6
       },
@@ -640,11 +952,11 @@
         "count": 6
       },
       {
-        "reason": "GO TO SPACE-IS-LESS-THAN-B targets a name that is not a paragraph",
+        "reason": "SELECT SORTFILE-1H ASSIGN TO a non-literal (XXXXX027)",
         "count": 6
       },
       {
-        "reason": "GO TO OUTPROC-EXIT targets a name that is not a paragraph",
+        "reason": "FD SORTFILE-1H without a matching LINE SEQUENTIAL SELECT",
         "count": 6
       },
       {
@@ -652,7 +964,31 @@
         "count": 6
       },
       {
+        "reason": "paragraph DECL-OPEN-TEST outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 6
+      },
+      {
+        "reason": "paragraph NOT-DECL-9 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 6
+      },
+      {
+        "reason": "paragraph DB-COMMON outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 5
+      },
+      {
+        "reason": "SELECT SQ-FS2 ASSIGN TO a non-literal (XXXXX015)",
+        "count": 5
+      },
+      {
+        "reason": "SELECT IX-FS1 ASSIGN TO a non-literal (XXXXP024)",
+        "count": 5
+      },
+      {
         "reason": "GO TO READ-TEST-F2-05 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 5
+      },
+      {
+        "reason": "SELECT IX-FS2 ASSIGN TO a non-literal (XXXXX025)",
         "count": 5
       },
       {
@@ -664,6 +1000,10 @@
         "count": 5
       },
       {
+        "reason": "SELECT IX-FD1 ASSIGN TO a non-literal (XXXXX024)",
+        "count": 5
+      },
+      {
         "reason": "GO TO MOVE-VALUE is a backward or self jump; only strictly forward top-level jumps are supported",
         "count": 5
       },
@@ -672,11 +1012,71 @@
         "count": 5
       },
       {
+        "reason": "FD SQ-FS5 without a matching LINE SEQUENTIAL SELECT",
+        "count": 5
+      },
+      {
+        "reason": "WRITE SQ-FS2R1-F-G-120 which is not a file record",
+        "count": 5
+      },
+      {
         "reason": "GO TO SEQ-TEST-005 is a backward or self jump; only strictly forward top-level jumps are supported",
         "count": 5
       },
       {
+        "reason": "FD RL-FS2 without a matching LINE SEQUENTIAL SELECT",
+        "count": 5
+      },
+      {
+        "reason": "FD RL-FD1 without a matching LINE SEQUENTIAL SELECT",
+        "count": 5
+      },
+      {
+        "reason": "WRITE SQ-FS4R1-F-G-125 which is not a file record",
+        "count": 5
+      },
+      {
+        "reason": "WRITE SQ-VS6R1-M-G-120 which is not a file record",
+        "count": 5
+      },
+      {
+        "reason": "WRITE SQ-VS7R1-M-G-120 which is not a file record",
+        "count": 5
+      },
+      {
+        "reason": "WRITE SQ-VS7R2-M-G-151 which is not a file record",
+        "count": 5
+      },
+      {
         "reason": "GO TO WRITE-TEST-GF-02 is a backward or self jump; only strictly forward top-level jumps are support",
+        "count": 5
+      },
+      {
+        "reason": "paragraph PRINT-FILE-ERROR-PROCESS outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 5
+      },
+      {
+        "reason": "paragraph DECL-DELETE-02 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 5
+      },
+      {
+        "reason": "paragraph DECL-ABNORMAL-TERM outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 5
+      },
+      {
+        "reason": "paragraph DECL-DELETE-01 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 5
+      },
+      {
+        "reason": "WRITE SORTOUT-REC which is not a file record",
+        "count": 5
+      },
+      {
+        "reason": "WRITE SQ-FS1R1-F-G-132 which is not a file record",
+        "count": 5
+      },
+      {
+        "reason": "WRITE SQ-FS2R1-F-G-132 which is not a file record",
         "count": 5
       },
       {
@@ -696,11 +1096,39 @@
         "count": 4
       },
       {
+        "reason": "GO TO D32-1-CHECK-FOR-ALL-SELECTED inside PERFORM-reachable paragraph D32-0-CHECK-A-OR-M is neither ",
+        "count": 4
+      },
+      {
+        "reason": "SELECT SQ-FS3 ASSIGN TO a non-literal (XXXXX014)",
+        "count": 4
+      },
+      {
         "reason": "GO TO SEQ-TEST-007 is a backward or self jump; only strictly forward top-level jumps are supported",
         "count": 4
       },
       {
         "reason": "GO TO READ-TEST-F2-01 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 4
+      },
+      {
+        "reason": "paragraph USE-PAR-001 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 4
+      },
+      {
+        "reason": "paragraph USE-PAR-EXIT outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 4
+      },
+      {
+        "reason": "FD RL-FR1 without a matching LINE SEQUENTIAL SELECT",
+        "count": 4
+      },
+      {
+        "reason": "SELECT IX-FD2 ASSIGN TO a non-literal (XXXXX025)",
+        "count": 4
+      },
+      {
+        "reason": "FD IX-FD2 without a matching LINE SEQUENTIAL SELECT",
         "count": 4
       },
       {
@@ -716,11 +1144,63 @@
         "count": 4
       },
       {
+        "reason": "WRITE IX-FS3R1-F-G-240 which is not a file record",
+        "count": 4
+      },
+      {
         "reason": "GO TO WRI-TEST-GF-01-0 is a backward or self jump; only strictly forward top-level jumps are support",
         "count": 4
       },
       {
-        "reason": "GO TO BAIL-OUT-WRITE-DECL inside PERFORM-reachable paragraph BAIL-OUT-DECL is neither a structured r",
+        "reason": "paragraph PASS-DECL outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 4
+      },
+      {
+        "reason": "paragraph FAIL-DECL outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 4
+      },
+      {
+        "reason": "paragraph PRINT-DETAIL-DECL outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 4
+      },
+      {
+        "reason": "paragraph WRITE-LINE-DECL outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 4
+      },
+      {
+        "reason": "paragraph WRT-LN-DECL outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 4
+      },
+      {
+        "reason": "paragraph BLANK-LINE-PRINT-DECL outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 4
+      },
+      {
+        "reason": "paragraph FAIL-ROUTINE-DECL outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 4
+      },
+      {
+        "reason": "paragraph FAIL-ROUTINE-WRITE-DECL outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 4
+      },
+      {
+        "reason": "paragraph FAIL-ROUTINE-EX-DECL outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 4
+      },
+      {
+        "reason": "paragraph BAIL-OUT-DECL outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 4
+      },
+      {
+        "reason": "paragraph BAIL-OUT-WRITE-DECL outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 4
+      },
+      {
+        "reason": "paragraph BAIL-OUT-EX-DECL outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 4
+      },
+      {
+        "reason": "paragraph EXIT-DECL outside any section in a sectioned PROCEDURE DIVISION",
         "count": 4
       },
       {
@@ -792,15 +1272,59 @@
         "count": 4
       },
       {
-        "reason": "GO TO D1-BAIL-OUT-WRITE inside PERFORM-reachable paragraph D1-BAIL-OUT is neither a structured range",
+        "reason": "SELECT RL-FS2 ASSIGN TO a non-literal (XXXXX022)",
         "count": 4
       },
       {
-        "reason": "GO TO D2-FAIL-ROUTINE-WRITE inside PERFORM-reachable paragraph D2-FAIL-ROUTINE is neither a structur",
+        "reason": "WRITE RL-FD2R1-F-G-240 which is not a file record",
+        "count": 4
+      },
+      {
+        "reason": "paragraph D1-FAIL-ROUTINE outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 4
+      },
+      {
+        "reason": "paragraph D1-FAIL-ROUTINE-WRITE outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 4
+      },
+      {
+        "reason": "paragraph D1-FAIL-ROUTINE-EX outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 4
+      },
+      {
+        "reason": "paragraph D1-BAIL-OUT outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 4
+      },
+      {
+        "reason": "paragraph D1-BAIL-OUT-WRITE outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 4
+      },
+      {
+        "reason": "paragraph D1-BAIL-OUT-EX outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 4
+      },
+      {
+        "reason": "paragraph D1-WRITE-LINE outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 4
+      },
+      {
+        "reason": "paragraph D1-WRITE-LINE-EXIT outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 4
+      },
+      {
+        "reason": "FD RL-FD3 without a matching LINE SEQUENTIAL SELECT",
+        "count": 4
+      },
+      {
+        "reason": "SELECT RL-FS1 ASSIGN TO a non-literal (XXXXP021)",
         "count": 4
       },
       {
         "reason": "GO TO SEQ-TEST-WR-01-LOOP is a backward or self jump; only strictly forward top-level jumps are supp",
+        "count": 4
+      },
+      {
+        "reason": "WRITE SQ-VS6R2-M-G-151 which is not a file record",
         "count": 4
       },
       {
@@ -812,12 +1336,40 @@
         "count": 4
       },
       {
+        "reason": "WRITE SQ-FS1R1-F-G-126 which is not a file record",
+        "count": 4
+      },
+      {
         "reason": "GO TO READ-REC-1-EXIT inside PERFORM-reachable paragraph READ-REC-1 is neither a structured range ea",
         "count": 4
       },
       {
         "reason": "GO TO INFO-INIT-03-1 is a backward or self jump; only strictly forward top-level jumps are supported",
         "count": 4
+      },
+      {
+        "reason": "paragraph BEGIN-START-UP outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 3
+      },
+      {
+        "reason": "paragraph BEGIN-FALL-THROUGH-AND-SERIES outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 3
+      },
+      {
+        "reason": "paragraph BEGIN-GO-TO outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 3
+      },
+      {
+        "reason": "paragraph BEGIN-ALTER-PARAGRAPH outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 3
+      },
+      {
+        "reason": "paragraph BEGIN-LOOP-ITERATION outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 3
+      },
+      {
+        "reason": "paragraph BEGIN-PERFORM-THRU outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 3
       },
       {
         "reason": "GO TO ALTERABLE-PARAGRAPH is a backward or self jump; only strictly forward top-level jumps are supp",
@@ -828,11 +1380,35 @@
         "count": 3
       },
       {
-        "reason": "GO TO END-OF-DB204A targets a name that is not a paragraph",
+        "reason": "SELECT SQ-FS3 ASSIGN TO a non-literal (XXXXX016)",
+        "count": 3
+      },
+      {
+        "reason": "GO TO D20-20-UPDATED-POP-CHECK inside PERFORM-reachable paragraph D20-10-SOURCE-CHECK is neither a s",
         "count": 3
       },
       {
         "reason": "GO TO REWRITE-TEST-F2-01 is a backward or self jump; only strictly forward top-level jumps are suppo",
+        "count": 3
+      },
+      {
+        "reason": "paragraph IX-FS2-01-01 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 3
+      },
+      {
+        "reason": "paragraph IX-FS2-01-03 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 3
+      },
+      {
+        "reason": "paragraph IX-FS2-01-05 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 3
+      },
+      {
+        "reason": "paragraph IX-FS2-01-EXIT outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 3
+      },
+      {
+        "reason": "WRITE SQ-FS1R1-F-G-241 which is not a file record",
         "count": 3
       },
       {
@@ -852,11 +1428,27 @@
         "count": 3
       },
       {
+        "reason": "SELECT SQ-FRR ASSIGN TO a non-literal (XXXXX013)",
+        "count": 3
+      },
+      {
+        "reason": "FD SQ-FRR without a matching LINE SEQUENTIAL SELECT",
+        "count": 3
+      },
+      {
+        "reason": "FD RR-FS1 without a matching LINE SEQUENTIAL SELECT",
+        "count": 3
+      },
+      {
         "reason": "GO TO PARAGRAPH-NAME-5 is a backward or self jump; only strictly forward top-level jumps are support",
         "count": 3
       },
       {
         "reason": "GO TO PARAGRAPH-NAME-11 is a backward or self jump; only strictly forward top-level jumps are suppor",
+        "count": 3
+      },
+      {
+        "reason": "GO TO SYNTAX-CHECK-WRITE inside PERFORM-reachable paragraph SYNTAX-CHECK is neither a structured ran",
         "count": 3
       },
       {
@@ -868,7 +1460,19 @@
         "count": 3
       },
       {
+        "reason": "SELECT TFIL ASSIGN TO a non-literal (XXXXX001)",
+        "count": 3
+      },
+      {
         "reason": "GO TO SORT-FAIL inside PERFORM-reachable paragraph COMPARE-VALUES is neither a structured range earl",
+        "count": 3
+      },
+      {
+        "reason": "FD SQ-FS6 without a matching LINE SEQUENTIAL SELECT",
+        "count": 3
+      },
+      {
+        "reason": "FD SQ-FS8 without a matching LINE SEQUENTIAL SELECT",
         "count": 3
       },
       {
@@ -888,11 +1492,31 @@
         "count": 3
       },
       {
+        "reason": "paragraph RL-FD2-01-03 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 3
+      },
+      {
+        "reason": "SELECT RL-FD3 ASSIGN TO a non-literal (XXXXX022)",
+        "count": 3
+      },
+      {
+        "reason": "SELECT TFIL ASSIGN TO a non-literal (XXXXX021)",
+        "count": 3
+      },
+      {
         "reason": "GO TO CLOSE-1 is a backward or self jump; only strictly forward top-level jumps are supported",
         "count": 3
       },
       {
         "reason": "GO TO CLOSE-2 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 3
+      },
+      {
+        "reason": "SELECT TEST-FILE ASSIGN TO a non-literal (XXXXP001)",
+        "count": 3
+      },
+      {
+        "reason": "SELECT TEST-FILE ASSIGN TO a non-literal (XXXXD001)",
         "count": 3
       },
       {
@@ -916,6 +1540,14 @@
         "count": 3
       },
       {
+        "reason": "SELECT SQ-VS6 ASSIGN TO a non-literal (XXXXX001)",
+        "count": 3
+      },
+      {
+        "reason": "FD SQ-VS6 without a matching LINE SEQUENTIAL SELECT",
+        "count": 3
+      },
+      {
         "reason": "GO TO READ-SQ-FS5-EXIT inside PERFORM-reachable paragraph READ-SQ-FS5 is neither a structured range ",
         "count": 3
       },
@@ -936,7 +1568,63 @@
         "count": 3
       },
       {
+        "reason": "paragraph DECL-DELETE-01-01 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 3
+      },
+      {
+        "reason": "paragraph DCL-REWRITE-01-01 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 3
+      },
+      {
+        "reason": "paragraph DECL-TEST-01-01-END outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 3
+      },
+      {
+        "reason": "paragraph DECL-DELETE-01-02 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 3
+      },
+      {
+        "reason": "paragraph DCL-REWRITE-01-02 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 3
+      },
+      {
+        "reason": "paragraph DECL-TEST-01-02-END outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 3
+      },
+      {
+        "reason": "paragraph DECL-DELETE-01-03 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 3
+      },
+      {
+        "reason": "paragraph DCL-REWRITE-01-03 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 3
+      },
+      {
+        "reason": "paragraph DECL-TEST-01-03-END outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 3
+      },
+      {
+        "reason": "WRITE SQ-FS4R2-F-G-138 which is not a file record",
+        "count": 3
+      },
+      {
+        "reason": "paragraph DECL-EOF-READ-01 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 3
+      },
+      {
+        "reason": "paragraph DECL-EOF-READ-02 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 3
+      },
+      {
+        "reason": "paragraph DECL-TEST-02-END outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 3
+      },
+      {
         "reason": "GO TO READ-TEST-001 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 3
+      },
+      {
+        "reason": "WRITE SQ-FS2R1-F-G-126 which is not a file record",
         "count": 3
       },
       {
@@ -972,6 +1660,18 @@
         "count": 3
       },
       {
+        "reason": "WRITE SORTIN-REC which is not a file record",
+        "count": 3
+      },
+      {
+        "reason": "paragraph SRT-WRITE-DEC outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 3
+      },
+      {
+        "reason": "SELECT SOMEFILE1 with organization other than LINE SEQUENTIAL (file I/O stage 1)",
+        "count": 3
+      },
+      {
         "reason": "GO TO LOG-INIT is a backward or self jump; only strictly forward top-level jumps are supported",
         "count": 2
       },
@@ -980,11 +1680,59 @@
         "count": 2
       },
       {
+        "reason": "WRITE GEN-REC which is not a file record",
+        "count": 2
+      },
+      {
         "reason": "GO TO PROC-000-PFM-D-15 is a backward or self jump; only strictly forward top-level jumps are suppor",
         "count": 2
       },
       {
+        "reason": "GO TO STACK-GT-CORRECT inside PERFORM-reachable paragraph NAME-LISTER-1 is neither a structured rang",
+        "count": 2
+      },
+      {
+        "reason": "GO TO CORRECT-GT-STACK inside PERFORM-reachable paragraph NAME-LISTER-1 is neither a structured rang",
+        "count": 2
+      },
+      {
         "reason": "GO TO PROC-064-PFM-WRITE-5 is a backward or self jump; only strictly forward top-level jumps are sup",
+        "count": 2
+      },
+      {
+        "reason": "REDEFINES view \"…\" is written in the PROCEDURE DIVISION (REDEFINES R1a requires the redefining view ",
+        "count": 2
+      },
+      {
+        "reason": "paragraph FILENAME-1 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 2
+      },
+      {
+        "reason": "GO TO C30-50 inside PERFORM-reachable paragraph C30-40-CHECK-FOR-NEW-FILE is neither a structured ra",
+        "count": 2
+      },
+      {
+        "reason": "GO TO C30-55 inside PERFORM-reachable paragraph C30-50 is neither a structured range early-exit nor ",
+        "count": 2
+      },
+      {
+        "reason": "GO TO C40-90-READ-FILE inside PERFORM-reachable paragraph C40-1-PROCESS-CARD is neither a structured",
+        "count": 2
+      },
+      {
+        "reason": "GO TO D20-EXIT inside PERFORM-reachable paragraph D20-30-READ-FILE is neither a structured range ear",
+        "count": 2
+      },
+      {
+        "reason": "GO TO D40-05-CHECK-LIBRARY inside PERFORM-reachable paragraph D40-1-CHECK-UPDATE-AND-POP is neither ",
+        "count": 2
+      },
+      {
+        "reason": "GO TO D60-30-CHECK-END inside PERFORM-reachable paragraph D60-10-CHECK-FOR-SERIES-UPDATE is neither ",
+        "count": 2
+      },
+      {
+        "reason": "GO TO D62-20-NOW-WITHIN-RANGE inside PERFORM-reachable paragraph D62-1-CHECK-FOR-WITHIN-RANGE is nei",
         "count": 2
       },
       {
@@ -1032,7 +1780,51 @@
         "count": 2
       },
       {
+        "reason": "WRITE IX-FS2R1-F-G-240 which is not a file record",
+        "count": 2
+      },
+      {
         "reason": "GO TO READ-TEST-F2-08 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 2
+      },
+      {
+        "reason": "SELECT RL-FR1 ASSIGN TO a non-literal (XXXXX021)",
+        "count": 2
+      },
+      {
+        "reason": "SELECT IX-VS2 ASSIGN TO a non-literal (XXXXX024)",
+        "count": 2
+      },
+      {
+        "reason": "FD IX-VS2 without a matching LINE SEQUENTIAL SELECT",
+        "count": 2
+      },
+      {
+        "reason": "paragraph D-RWR-TEST-GF-01-1 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 2
+      },
+      {
+        "reason": "paragraph D-RWR-FAIL-GF-01-0 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 2
+      },
+      {
+        "reason": "paragraph D-RWR-PASS-GF-01-0 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 2
+      },
+      {
+        "reason": "paragraph D-RWR-WRITE-GF-01-0 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 2
+      },
+      {
+        "reason": "paragraph D-BLANK-LINE-PRINT outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 2
+      },
+      {
+        "reason": "paragraph END-DECL outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 2
+      },
+      {
+        "reason": "WRITE IX-VS2R1-F-G-240 which is not a file record",
         "count": 2
       },
       {
@@ -1060,6 +1852,14 @@
         "count": 2
       },
       {
+        "reason": "SELECT TFIL ASSIGN TO a non-literal (XXXXX024)",
+        "count": 2
+      },
+      {
+        "reason": "PERFORM PFM-B-F2-4 THRU PFM-D-F2-4 is a backward or non-contiguous range",
+        "count": 2
+      },
+      {
         "reason": "GO TO PFM-D-F1-10 is a backward or self jump; only strictly forward top-level jumps are supported",
         "count": 2
       },
@@ -1077,10 +1877,6 @@
       },
       {
         "reason": "GO TO IND-FAIL-GF-30 is a backward or self jump; only strictly forward top-level jumps are supported",
-        "count": 2
-      },
-      {
-        "reason": "GO TO SYNTAX-CHECK-WRITE inside PERFORM-reachable paragraph SYNTAX-CHECK is neither a structured ran",
         "count": 2
       },
       {
@@ -1116,11 +1912,107 @@
         "count": 2
       },
       {
+        "reason": "FD TFIL-2 without a matching LINE SEQUENTIAL SELECT",
+        "count": 2
+      },
+      {
+        "reason": "SELECT SQ-FS1 ASSIGN TO a non-literal (XXXXP004)",
+        "count": 2
+      },
+      {
+        "reason": "SELECT SQ-FS2 ASSIGN TO a non-literal (XXXXP008)",
+        "count": 2
+      },
+      {
+        "reason": "SELECT SQ-FS3 ASSIGN TO a non-literal (XXXXP009)",
+        "count": 2
+      },
+      {
+        "reason": "SELECT SQ-FS4 ASSIGN TO a non-literal (XXXXP010)",
+        "count": 2
+      },
+      {
+        "reason": "FD SQ-FS7 without a matching LINE SEQUENTIAL SELECT",
+        "count": 2
+      },
+      {
+        "reason": "paragraph RL-FS2-01-01 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 2
+      },
+      {
+        "reason": "paragraph RL-FS2-01-03 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 2
+      },
+      {
+        "reason": "paragraph RL-FS2-01-05 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 2
+      },
+      {
+        "reason": "paragraph RL-FS2-01-EXIT outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 2
+      },
+      {
+        "reason": "WRITE RL-FS2R1-F-G-240 which is not a file record",
+        "count": 2
+      },
+      {
+        "reason": "PERFORM REL-WRITE-FOR-TEST-3 THRU 3-EXIT is a backward or non-contiguous range",
+        "count": 2
+      },
+      {
+        "reason": "PERFORM REL-WRITE-FOR-TEST-6 THRU 6-EXIT is a backward or non-contiguous range",
+        "count": 2
+      },
+      {
         "reason": "GO TO TEST-25 is a backward or self jump; only strictly forward top-level jumps are supported",
         "count": 2
       },
       {
-        "reason": "GO TO D2-BAIL-OUT-WRITE inside PERFORM-reachable paragraph D2-BAIL-OUT is neither a structured range",
+        "reason": "SELECT RL-FS1 ASSIGN TO a non-literal (XXXXX061)",
+        "count": 2
+      },
+      {
+        "reason": "paragraph RL-FD2-01-05 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 2
+      },
+      {
+        "reason": "paragraph D2-FAIL-ROUTINE outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 2
+      },
+      {
+        "reason": "paragraph D2-FAIL-ROUTINE-WRITE outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 2
+      },
+      {
+        "reason": "paragraph D2-FAIL-ROUTINE-EX outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 2
+      },
+      {
+        "reason": "paragraph D2-BAIL-OUT outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 2
+      },
+      {
+        "reason": "paragraph D2-BAIL-OUT-WRITE outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 2
+      },
+      {
+        "reason": "paragraph D2-BAIL-OUT-EX outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 2
+      },
+      {
+        "reason": "paragraph D2-WRITE-LINE outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 2
+      },
+      {
+        "reason": "paragraph D2-WRITE-LINE-EXIT outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 2
+      },
+      {
+        "reason": "SELECT RL-FD1 ASSIGN TO a non-literal (XXXXP021)",
+        "count": 2
+      },
+      {
+        "reason": "SELECT RL-FD1 ASSIGN TO a non-literal (XXXXD021)",
         "count": 2
       },
       {
@@ -1128,19 +2020,23 @@
         "count": 2
       },
       {
-        "reason": "PERFORM TEST-7-1 THRU TEST-7-4 is a backward or non-contiguous range",
+        "reason": "SELECT RL-VS1 ASSIGN TO a non-literal (XXXXP021)",
         "count": 2
       },
       {
-        "reason": "GO TO TEST-6-2 targets a name that is not a paragraph",
+        "reason": "FD RL-VS1 without a matching LINE SEQUENTIAL SELECT",
         "count": 2
       },
       {
-        "reason": "GO TO TEST-1-WRITE inside PERFORM-reachable paragraph SEG-TEST-1 is neither a structured range early",
+        "reason": "SELECT TFIL2 ASSIGN TO a non-literal (XXXXX002)",
         "count": 2
       },
       {
-        "reason": "GO TO TEST-8-BRANCH targets a name that is not a paragraph",
+        "reason": "GO TO TEST-6-2 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 2
+      },
+      {
+        "reason": "GO TO TEST-8-BRANCH is a backward or self jump; only strictly forward top-level jumps are supported",
         "count": 2
       },
       {
@@ -1160,7 +2056,55 @@
         "count": 2
       },
       {
-        "reason": "GO TO SRT-3 targets a name that is not a paragraph",
+        "reason": "SELECT SORT1 ASSIGN TO a non-literal (XXXXX027)",
+        "count": 2
+      },
+      {
+        "reason": "SELECT SORT2 ASSIGN TO a non-literal (XXXXX028)",
+        "count": 2
+      },
+      {
+        "reason": "SELECT SORT3 ASSIGN TO a non-literal (XXXXX029)",
+        "count": 2
+      },
+      {
+        "reason": "SELECT FILE1 ASSIGN TO a non-literal (XXXXX001)",
+        "count": 2
+      },
+      {
+        "reason": "SELECT FILE2 ASSIGN TO a non-literal (XXXXX014)",
+        "count": 2
+      },
+      {
+        "reason": "SELECT FILE3 ASSIGN TO a non-literal (XXXXX015)",
+        "count": 2
+      },
+      {
+        "reason": "FD FILE1 without a matching LINE SEQUENTIAL SELECT",
+        "count": 2
+      },
+      {
+        "reason": "FD FILE2 without a matching LINE SEQUENTIAL SELECT",
+        "count": 2
+      },
+      {
+        "reason": "FD FILE3 without a matching LINE SEQUENTIAL SELECT",
+        "count": 2
+      },
+      {
+        "reason": "FD SORT1 without a matching LINE SEQUENTIAL SELECT",
+        "count": 2
+      },
+      {
+        "reason": "FD SORT2 without a matching LINE SEQUENTIAL SELECT",
+        "count": 2
+      },
+      {
+        "reason": "FD SORT3 without a matching LINE SEQUENTIAL SELECT",
+        "count": 2
+      },
+      {
+        "reason": "WRITE R1 which is not a file record",
         "count": 2
       },
       {
@@ -1168,7 +2112,39 @@
         "count": 2
       },
       {
+        "reason": "SELECT SORTFILE-1E ASSIGN TO a non-literal (XXXXX027)",
+        "count": 2
+      },
+      {
+        "reason": "FD SORTFILE-1E without a matching LINE SEQUENTIAL SELECT",
+        "count": 2
+      },
+      {
+        "reason": "FD SORTOUT-1E without a matching LINE SEQUENTIAL SELECT",
+        "count": 2
+      },
+      {
+        "reason": "SELECT SORTFILE-2E ASSIGN TO a non-literal (XXXXX027)",
+        "count": 2
+      },
+      {
+        "reason": "FD SORTFILE-2E without a matching LINE SEQUENTIAL SELECT",
+        "count": 2
+      },
+      {
+        "reason": "FD SORTOUT-2E without a matching LINE SEQUENTIAL SELECT",
+        "count": 2
+      },
+      {
         "reason": "GO TO SEQ-TEST-020 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 2
+      },
+      {
+        "reason": "SELECT SQ-FS5 ASSIGN TO a non-literal (XXXXX014)",
+        "count": 2
+      },
+      {
+        "reason": "WRITE SQ-FS5R1-F-G-126 which is not a file record",
         "count": 2
       },
       {
@@ -1208,7 +2184,27 @@
         "count": 2
       },
       {
-        "reason": "GO TO FAIL-ROUTINE-WRITE1 inside PERFORM-reachable paragraph FAIL-ROUTINE1 is neither a structured r",
+        "reason": "SELECT SQ-FS3 ASSIGN TO a non-literal (XXXXX015)",
+        "count": 2
+      },
+      {
+        "reason": "paragraph SQ-FS1-ERROR-PROCEDURE outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 2
+      },
+      {
+        "reason": "paragraph DCL-REWRITE-01 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 2
+      },
+      {
+        "reason": "SELECT SQ-FS1 ASSIGN TO a non-literal (XXXXP001)",
+        "count": 2
+      },
+      {
+        "reason": "SELECT SQ-FS1 ASSIGN TO a non-literal (XXXXD001)",
+        "count": 2
+      },
+      {
+        "reason": "WRITE SQ-VSR7R1-M-G-2048 which is not a file record",
         "count": 2
       },
       {
@@ -1224,7 +2220,63 @@
         "count": 2
       },
       {
+        "reason": "paragraph EXTEND-ERROR-PROCESS outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 2
+      },
+      {
         "reason": "GO TO INFO-INIT-003-1 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 2
+      },
+      {
+        "reason": "SELECT TFIL2 ASSIGN TO a non-literal (XXXXX008)",
+        "count": 2
+      },
+      {
+        "reason": "SELECT SORTFILE-1A ASSIGN TO a non-literal (XXXXX027)",
+        "count": 2
+      },
+      {
+        "reason": "SELECT SORTOUT-1A ASSIGN TO a non-literal (XXXXP001)",
+        "count": 2
+      },
+      {
+        "reason": "FD SORTFILE-1A without a matching LINE SEQUENTIAL SELECT",
+        "count": 2
+      },
+      {
+        "reason": "FD SORTOUT-1A without a matching LINE SEQUENTIAL SELECT",
+        "count": 2
+      },
+      {
+        "reason": "SELECT SORTFILE-1B ASSIGN TO a non-literal (XXXXX027)",
+        "count": 2
+      },
+      {
+        "reason": "SELECT SORTIN-1B ASSIGN TO a non-literal (XXXXD001)",
+        "count": 2
+      },
+      {
+        "reason": "SELECT SORTOUT-1B ASSIGN TO a non-literal (XXXXP002)",
+        "count": 2
+      },
+      {
+        "reason": "FD SORTFILE-1B without a matching LINE SEQUENTIAL SELECT",
+        "count": 2
+      },
+      {
+        "reason": "FD SORTIN-1B without a matching LINE SEQUENTIAL SELECT",
+        "count": 2
+      },
+      {
+        "reason": "FD SORTOUT-1B without a matching LINE SEQUENTIAL SELECT",
+        "count": 2
+      },
+      {
+        "reason": "SELECT SORTIN-1C ASSIGN TO a non-literal (XXXXD002)",
+        "count": 2
+      },
+      {
+        "reason": "FD SORTIN-1C without a matching LINE SEQUENTIAL SELECT",
         "count": 2
       },
       {
@@ -1232,7 +2284,87 @@
         "count": 2
       },
       {
-        "reason": "GO TO ZERO-IS-LESS-THAN-SPACE targets a name that is not a paragraph",
+        "reason": "SELECT SORTFILE-1F ASSIGN TO a non-literal (XXXXX027)",
+        "count": 2
+      },
+      {
+        "reason": "SELECT SORTOUT-1F ASSIGN TO a non-literal (XXXXP001)",
+        "count": 2
+      },
+      {
+        "reason": "FD SORTOUT-1F without a matching LINE SEQUENTIAL SELECT",
+        "count": 2
+      },
+      {
+        "reason": "FD SORTFILE-1F without a matching LINE SEQUENTIAL SELECT",
+        "count": 2
+      },
+      {
+        "reason": "SELECT SORTIN-1G ASSIGN TO a non-literal (XXXXD001)",
+        "count": 2
+      },
+      {
+        "reason": "FD SORTIN-1G without a matching LINE SEQUENTIAL SELECT",
+        "count": 2
+      },
+      {
+        "reason": "SELECT SORTOUT-1I ASSIGN TO a non-literal (XXXXP001)",
+        "count": 2
+      },
+      {
+        "reason": "FD SORTOUT-1I without a matching LINE SEQUENTIAL SELECT",
+        "count": 2
+      },
+      {
+        "reason": "WRITE MEDIUM-RECORD which is not a file record",
+        "count": 2
+      },
+      {
+        "reason": "WRITE LONG-RECORD which is not a file record",
+        "count": 2
+      },
+      {
+        "reason": "WRITE SHORT-RECORD which is not a file record",
+        "count": 2
+      },
+      {
+        "reason": "SELECT SORTIN-1J ASSIGN TO a non-literal (XXXXD001)",
+        "count": 2
+      },
+      {
+        "reason": "SELECT SORTOUT-1J ASSIGN TO a non-literal (XXXXP002)",
+        "count": 2
+      },
+      {
+        "reason": "SELECT SORTFILE-1J ASSIGN TO a non-literal (XXXXX027)",
+        "count": 2
+      },
+      {
+        "reason": "FD SORTIN-1J without a matching LINE SEQUENTIAL SELECT",
+        "count": 2
+      },
+      {
+        "reason": "FD SORTOUT-1J without a matching LINE SEQUENTIAL SELECT",
+        "count": 2
+      },
+      {
+        "reason": "FD SORTFILE-1J without a matching LINE SEQUENTIAL SELECT",
+        "count": 2
+      },
+      {
+        "reason": "SELECT SORTIN-1K ASSIGN TO a non-literal (XXXXP002)",
+        "count": 2
+      },
+      {
+        "reason": "FD SORTIN-1K without a matching LINE SEQUENTIAL SELECT",
+        "count": 2
+      },
+      {
+        "reason": "FD SORTOUT-2F without a matching LINE SEQUENTIAL SELECT",
+        "count": 2
+      },
+      {
+        "reason": "WRITE R4 which is not a file record",
         "count": 2
       },
       {
@@ -1240,7 +2372,47 @@
         "count": 2
       },
       {
+        "reason": "GO TO SORT-FAIL-1 inside PERFORM-reachable paragraph SORT-TEST-1 is neither a structured range early",
+        "count": 2
+      },
+      {
+        "reason": "GO TO SORT-FAIL-2 inside PERFORM-reachable paragraph SORT-TEST-2 is neither a structured range early",
+        "count": 2
+      },
+      {
+        "reason": "GO TO SORT-FAIL-3 inside PERFORM-reachable paragraph SORT-TEST-3 is neither a structured range early",
+        "count": 2
+      },
+      {
         "reason": "GO TO CLOSE-SORT-FILES is a backward or self jump; only strictly forward top-level jumps are support",
+        "count": 2
+      },
+      {
+        "reason": "SELECT SQ-FS4 ASSIGN TO a non-literal (XXXXX060)",
+        "count": 2
+      },
+      {
+        "reason": "paragraph MRG-WRITE-DEC outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 2
+      },
+      {
+        "reason": "SELECT SQ-FS1 ASSIGN TO a non-literal (XXXXX008)",
+        "count": 2
+      },
+      {
+        "reason": "SELECT SQ-FS3 ASSIGN TO a non-literal (XXXXX009)",
+        "count": 2
+      },
+      {
+        "reason": "SELECT SQ-FS4 ASSIGN TO a non-literal (XXXXX015)",
+        "count": 2
+      },
+      {
+        "reason": "WRITE SQ-FS3R1-F-G-132 which is not a file record",
+        "count": 2
+      },
+      {
+        "reason": "WRITE SQ-FS4R1-F-G-132 which is not a file record",
         "count": 2
       },
       {
@@ -1257,6 +2429,50 @@
       },
       {
         "reason": "LOCAL-STORAGE SECTION",
+        "count": 2
+      },
+      {
+        "reason": "SELECT TEACHER without an ASSIGN TO clause",
+        "count": 2
+      },
+      {
+        "reason": "SELECT TEACHER ASSIGN TO a non-literal (SOME-DAT)",
+        "count": 2
+      },
+      {
+        "reason": "SELECT SOMEFILE2 with organization other than LINE SEQUENTIAL (file I/O stage 1)",
+        "count": 2
+      },
+      {
+        "reason": "SELECT SOMEFILE3 with organization other than LINE SEQUENTIAL (file I/O stage 1)",
+        "count": 2
+      },
+      {
+        "reason": "SELECT SOMEFILE4 with organization other than LINE SEQUENTIAL (file I/O stage 1)",
+        "count": 2
+      },
+      {
+        "reason": "SELECT SOMEFILE5 with organization other than LINE SEQUENTIAL (file I/O stage 1)",
+        "count": 2
+      },
+      {
+        "reason": "FD SOMEFILE2 without a matching LINE SEQUENTIAL SELECT",
+        "count": 2
+      },
+      {
+        "reason": "FD SOMEFILE3 without a matching LINE SEQUENTIAL SELECT",
+        "count": 2
+      },
+      {
+        "reason": "FD SOMEFILE4 without a matching LINE SEQUENTIAL SELECT",
+        "count": 2
+      },
+      {
+        "reason": "FD SOMEFILE5 without a matching LINE SEQUENTIAL SELECT",
+        "count": 2
+      },
+      {
+        "reason": "FD SOMEFILE1 without a matching LINE SEQUENTIAL SELECT",
         "count": 2
       },
       {
@@ -1304,11 +2520,43 @@
         "count": 1
       },
       {
-        "reason": "GO TO TEST-ELAPSED-TIME is a backward or self jump; only strictly forward top-level jumps are suppor",
+        "reason": "GO TO TEST-ELAPSED-TIME inside PERFORM-reachable paragraph TEST-ELAPSED-TIME is neither a structured",
         "count": 1
       },
       {
         "reason": "PURGE statement",
+        "count": 1
+      },
+      {
+        "reason": "SELECT GEN-FILE ASSIGN TO a non-literal (XXXXX014)",
+        "count": 1
+      },
+      {
+        "reason": "SELECT SORT-FILE ASSIGN TO a non-literal (XXXXX027)",
+        "count": 1
+      },
+      {
+        "reason": "FD GEN-FILE without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "FD SORT-FILE without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "paragraph BEGIN-SORT-IN-PROC outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph BEGIN-SORT-OUT-PROC outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph BEGIN-USE-PROC outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph BEGIN-AT-END-PROC outside any section in a sectioned PROCEDURE DIVISION",
         "count": 1
       },
       {
@@ -1324,11 +2572,15 @@
         "count": 1
       },
       {
-        "reason": "PERFORM PROC-117-PFM-A-10 THRU PROC-119-PFM-C-10 is a backward or non-contiguous range",
+        "reason": "paragraph DEBUG-ALL-0 outside any section in a sectioned PROCEDURE DIVISION",
         "count": 1
       },
       {
-        "reason": "PERFORM PROC-117-PFM-A-10 THRU PROC-120-PFM-D-10 is a backward or non-contiguous range",
+        "reason": "paragraph DEBUG-ALL-EXIT outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "PERFORM PROC-118-PFM-B-10 THRU PROC-120-PFM-D-10 is a backward or non-contiguous range",
         "count": 1
       },
       {
@@ -1336,23 +2588,11 @@
         "count": 1
       },
       {
-        "reason": "PERFORM PROC-139-PFM-A-11 THRU PROC-139-PFM-C-11 is a backward or non-contiguous range",
-        "count": 1
-      },
-      {
-        "reason": "PERFORM PROC-139-PFM-A-11 THRU PROC-140-PFM-D-11 is a backward or non-contiguous range",
+        "reason": "PERFORM PROC-140-PFM-B-11 THRU PROC-140-PFM-D-11 is a backward or non-contiguous range",
         "count": 1
       },
       {
         "reason": "PERFORM PROC-140-PFM-B-11 THRU PROC-139-PFM-C-11 is a backward or non-contiguous range",
-        "count": 1
-      },
-      {
-        "reason": "PERFORM PROC-213-PFM-G-15 THRU PROC-217-PFM-B-15 is a backward or non-contiguous range",
-        "count": 1
-      },
-      {
-        "reason": "GO TO PROC-018-GO--PASS-3 targets a name that is not a paragraph",
         "count": 1
       },
       {
@@ -1376,7 +2616,11 @@
         "count": 1
       },
       {
-        "reason": "GO TO NAME-LISTER-1 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "reason": "GO TO NAME-LISTER-EXIT inside PERFORM-reachable paragraph CORRECT-EQ-STACK is neither a structured r",
+        "count": 1
+      },
+      {
+        "reason": "GO TO NAME-LISTER-1 inside PERFORM-reachable paragraph CORRECT-GT-STACK-1 is neither a structured ra",
         "count": 1
       },
       {
@@ -1392,6 +2636,54 @@
         "count": 1
       },
       {
+        "reason": "paragraph GO-TO-DEPEND-1 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph DB-COMMON-1 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph DB-CLEAR-QUALIFIER-1 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph GO-TO-DEPEND-2 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph DB-COMMON-2 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph DB-CLEAR-QUALIFIER-2 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph GO-TO-DEPEND-3 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph PERFORM-1 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph TABLE-1 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph DB-MOVE-SUBSC-1 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph QUAL-1 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph QUAL-SUBC-1 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
         "reason": "GO TO G-T-D-2-DELETE is a backward or self jump; only strictly forward top-level jumps are supported",
         "count": 1
       },
@@ -1400,11 +2692,51 @@
         "count": 1
       },
       {
+        "reason": "SELECT SEQ-FILE ASSIGN TO a non-literal (XXXXX014)",
+        "count": 1
+      },
+      {
+        "reason": "FD SEQ-FILE without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "paragraph WRITE-1 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
         "reason": "GO TO READ-TEST-2-INIT is a backward or self jump; only strictly forward top-level jumps are support",
         "count": 1
       },
       {
-        "reason": "GO TO BEGIN-DB204A-TESTS targets a name that is not a paragraph",
+        "reason": "SELECT IND-FILE ASSIGN TO a non-literal (XXXXX024)",
+        "count": 1
+      },
+      {
+        "reason": "FD IND-FILE without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "SELECT ST-FS4 ASSIGN TO a non-literal (XXXXX027)",
+        "count": 1
+      },
+      {
+        "reason": "FD ST-FS4 without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "paragraph MERGE-1 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "WRITE REC-1 which is not a file record",
+        "count": 1
+      },
+      {
+        "reason": "WRITE REC-2 which is not a file record",
+        "count": 1
+      },
+      {
+        "reason": "WRITE REC-3 which is not a file record",
         "count": 1
       },
       {
@@ -1412,35 +2744,187 @@
         "count": 1
       },
       {
+        "reason": "paragraph COMMUNICATION-PROC outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
         "reason": "GO TO RECEIVE-TEST-1-INIT is a backward or self jump; only strictly forward top-level jumps are supp",
         "count": 1
       },
       {
-        "reason": "GO TO D11-1-READ-POPFILE is a backward or self jump; only strictly forward top-level jumps are suppo",
+        "reason": "SELECT POPULATION-FILE ASSIGN TO a non-literal (XXXXX001)",
         "count": 1
       },
       {
-        "reason": "GO TO D30-1-CHECK-HEADER-TYPE is a backward or self jump; only strictly forward top-level jumps are ",
+        "reason": "SELECT SOURCE-COBOL-PROGRAMS ASSIGN TO a non-literal (XXXXX002)",
         "count": 1
       },
       {
-        "reason": "GO TO D32-40-PROGRAM-CHECK is a backward or self jump; only strictly forward top-level jumps are sup",
+        "reason": "SELECT UPDATED-POPULATION-FILE ASSIGN TO a non-literal (XXXXX003)",
         "count": 1
       },
       {
-        "reason": "GO TO D33-1-MODULE-CHECK is a backward or self jump; only strictly forward top-level jumps are suppo",
+        "reason": "SELECT CONTROL-CARD-FILE ASSIGN TO a non-literal (XXXXX058)",
         "count": 1
       },
       {
-        "reason": "GO TO D40-1-CHECK-UPDATE-AND-POP is a backward or self jump; only strictly forward top-level jumps a",
+        "reason": "FD POPULATION-FILE without a matching LINE SEQUENTIAL SELECT",
         "count": 1
       },
       {
-        "reason": "GO TO D62-1-CHECK-FOR-WITHIN-RANGE is a backward or self jump; only strictly forward top-level jumps",
+        "reason": "FD CONTROL-CARD-FILE without a matching LINE SEQUENTIAL SELECT",
         "count": 1
       },
       {
-        "reason": "GO TO SECT-IC103-0002 targets a name that is not a paragraph",
+        "reason": "FD SOURCE-COBOL-PROGRAMS without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "FD UPDATED-POPULATION-FILE without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "WRITE UPDATED-SOURCE-OUT-2400 which is not a file record",
+        "count": 1
+      },
+      {
+        "reason": "GO TO C30-10 inside PERFORM-reachable paragraph C30-1-SELECTION-CHECK is neither a structured range ",
+        "count": 1
+      },
+      {
+        "reason": "GO TO C30-20 inside PERFORM-reachable paragraph C30-10 is neither a structured range early-exit nor ",
+        "count": 1
+      },
+      {
+        "reason": "GO TO C30-30 inside PERFORM-reachable paragraph C30-20 is neither a structured range early-exit nor ",
+        "count": 1
+      },
+      {
+        "reason": "GO TO C30-40-CHECK-FOR-NEW-FILE inside PERFORM-reachable paragraph C30-30 is neither a structured ra",
+        "count": 1
+      },
+      {
+        "reason": "GO TO C30-60 inside PERFORM-reachable paragraph C30-50 is neither a structured range early-exit nor ",
+        "count": 1
+      },
+      {
+        "reason": "GO TO C30-70 inside PERFORM-reachable paragraph C30-60 is neither a structured range early-exit nor ",
+        "count": 1
+      },
+      {
+        "reason": "GO TO C40-30-MOVE-DATA inside PERFORM-reachable paragraph C40-20-MOVE-DATA is neither a structured r",
+        "count": 1
+      },
+      {
+        "reason": "GO TO C50-5 inside PERFORM-reachable paragraph C50-1-PRINT-OPTION-SWITCHES is neither a structured r",
+        "count": 1
+      },
+      {
+        "reason": "GO TO D11-1-READ-POPFILE inside PERFORM-reachable paragraph D11-TEST-END is neither a structured ran",
+        "count": 1
+      },
+      {
+        "reason": "GO TO D30-20-HEADER-SELECTED inside PERFORM-reachable paragraph D30-1-CHECK-HEADER-TYPE is neither a",
+        "count": 1
+      },
+      {
+        "reason": "GO TO D30-EXIT inside PERFORM-reachable paragraph D30-1-CHECK-HEADER-TYPE is neither a structured ra",
+        "count": 1
+      },
+      {
+        "reason": "GO TO D30-1-CHECK-HEADER-TYPE inside PERFORM-reachable paragraph D30-1-CHECK-HEADER-TYPE is neither ",
+        "count": 1
+      },
+      {
+        "reason": "GO TO D31-30-MANUAL-CHECK inside PERFORM-reachable paragraph D31-1-CHECK-FOR-DATA-SELECTED is neithe",
+        "count": 1
+      },
+      {
+        "reason": "GO TO D32-50-CHECK-IF-SELECTED inside PERFORM-reachable paragraph D32-1-CHECK-FOR-ALL-SELECTED is ne",
+        "count": 1
+      },
+      {
+        "reason": "GO TO D32-50-CHECK-IF-SELECTED inside PERFORM-reachable paragraph D32-10-MANUAL-CHECK is neither a s",
+        "count": 1
+      },
+      {
+        "reason": "GO TO D32-50-CHECK-IF-SELECTED inside PERFORM-reachable paragraph D32-20-AUTO-CHECK is neither a str",
+        "count": 1
+      },
+      {
+        "reason": "GO TO D32-50-CHECK-IF-SELECTED inside PERFORM-reachable paragraph D32-30-MODULE-CHECK is neither a s",
+        "count": 1
+      },
+      {
+        "reason": "GO TO D32-50-CHECK-IF-SELECTED inside PERFORM-reachable paragraph D32-40-PROGRAM-CHECK is neither a ",
+        "count": 1
+      },
+      {
+        "reason": "GO TO D32-40-PROGRAM-CHECK inside PERFORM-reachable paragraph D32-40-PROGRAM-CHECK is neither a stru",
+        "count": 1
+      },
+      {
+        "reason": "GO TO D33-10-CHECK-MODULE-LEVEL inside PERFORM-reachable paragraph D33-1-MODULE-CHECK is neither a s",
+        "count": 1
+      },
+      {
+        "reason": "GO TO D33-1-MODULE-CHECK inside PERFORM-reachable paragraph D33-1-MODULE-CHECK is neither a structur",
+        "count": 1
+      },
+      {
+        "reason": "GO TO D40-20-PROGRAMS-EQUAL inside PERFORM-reachable paragraph D40-1-CHECK-UPDATE-AND-POP is neither",
+        "count": 1
+      },
+      {
+        "reason": "GO TO D40-10-GET-NEXT-STAR-START inside PERFORM-reachable paragraph D40-1-CHECK-UPDATE-AND-POP is ne",
+        "count": 1
+      },
+      {
+        "reason": "GO TO D40-1-CHECK-UPDATE-AND-POP inside PERFORM-reachable paragraph D40-10-GET-NEXT-STAR-START is ne",
+        "count": 1
+      },
+      {
+        "reason": "GO TO D60-30-CHECK-END inside PERFORM-reachable paragraph D60-1-CHECK-BLOCK-INSERT is neither a stru",
+        "count": 1
+      },
+      {
+        "reason": "GO TO D62-1-CHECK-FOR-WITHIN-RANGE inside PERFORM-reachable paragraph D62-10-READ-NEXT-UPDATE-CARD i",
+        "count": 1
+      },
+      {
+        "reason": "GO TO D67-20-READ-CONTROL inside PERFORM-reachable paragraph D67-10-LINES-EQUAL-OR-LESS is neither a",
+        "count": 1
+      },
+      {
+        "reason": "GO TO D80-30-PRINT-LINE inside PERFORM-reachable paragraph D80-1-ASTERISK-CHECK is neither a structu",
+        "count": 1
+      },
+      {
+        "reason": "GO TO D80-20-ALPHABETIC-CHECK inside PERFORM-reachable paragraph D80-1-ASTERISK-CHECK is neither a s",
+        "count": 1
+      },
+      {
+        "reason": "GO TO D80-30-PRINT-LINE inside PERFORM-reachable paragraph D80-20-ALPHABETIC-CHECK is neither a stru",
+        "count": 1
+      },
+      {
+        "reason": "GO TO D86-EXIT inside PERFORM-reachable paragraph D86-1 is neither a structured range early-exit nor",
+        "count": 1
+      },
+      {
+        "reason": "GO TO D87-EXIT inside PERFORM-reachable paragraph D87-1 is neither a structured range early-exit nor",
+        "count": 1
+      },
+      {
+        "reason": "GO TO X10-30-WRITE-FILE inside PERFORM-reachable paragraph X10-1-CHECK-FOR-NC114 is neither a struct",
+        "count": 1
+      },
+      {
+        "reason": "GO TO X10-30-WRITE-FILE inside PERFORM-reachable paragraph X10-20-RENUMBER-CHECK is neither a struct",
+        "count": 1
+      },
+      {
+        "reason": "GO TO X30-EXIT inside PERFORM-reachable paragraph X30-1 is neither a structured range early-exit nor",
         "count": 1
       },
       {
@@ -1484,11 +2968,39 @@
         "count": 1
       },
       {
+        "reason": "SELECT IX-FS1 ASSIGN TO a non-literal (XXXXD024)",
+        "count": 1
+      },
+      {
         "reason": "GO TO INX-TEST-006-R is a backward or self jump; only strictly forward top-level jumps are supported",
         "count": 1
       },
       {
         "reason": "GO TO DELETE-TEST-GF-04 is a backward or self jump; only strictly forward top-level jumps are suppor",
+        "count": 1
+      },
+      {
+        "reason": "SELECT IX-FR1 ASSIGN TO a non-literal (XXXXX024)",
+        "count": 1
+      },
+      {
+        "reason": "SELECT IX-FR2 ASSIGN TO a non-literal (XXXXX025)",
+        "count": 1
+      },
+      {
+        "reason": "SELECT IX-FR3 ASSIGN TO a non-literal (XXXXX026)",
+        "count": 1
+      },
+      {
+        "reason": "FD IX-FR1 without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "FD IX-FR2 without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "FD IX-FR3 without a matching LINE SEQUENTIAL SELECT",
         "count": 1
       },
       {
@@ -1504,11 +3016,63 @@
         "count": 1
       },
       {
+        "reason": "paragraph D-R-TEST-F1-06-1 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph D-R-FAIL-F1-06-0 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph D-R-PASS-F1-06-0 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph D-R-WRITE-F1-06-0 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
         "reason": "GO TO REA-TEST-F1-01-0 is a backward or self jump; only strictly forward top-level jumps are support",
         "count": 1
       },
       {
         "reason": "GO TO REA-TEST-F1-04-0 is a backward or self jump; only strictly forward top-level jumps are support",
+        "count": 1
+      },
+      {
+        "reason": "paragraph FINAL-CHECK outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "SELECT IX-NOP ASSIGN TO a non-literal (XXXXX025)",
+        "count": 1
+      },
+      {
+        "reason": "FD IX-NOP without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "paragraph D-C-TEST-GF-02-1 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph D-C-FAIL-GF-02-0 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph D-C-PASS-GF-02-0 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph D-C-WRITE-GF-02-0 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "SELECT IX-FD1 ASSIGN TO a non-literal (XXXXP024)",
+        "count": 1
+      },
+      {
+        "reason": "SELECT IX-FD1 ASSIGN TO a non-literal (XXXXD024)",
         "count": 1
       },
       {
@@ -1520,7 +3084,39 @@
         "count": 1
       },
       {
+        "reason": "paragraph IX-FD2-01-01 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph IX-FD2-01-03 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph IX-FD2-01-05 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph IX-FD2-01-EXIT outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "WRITE IX-FD2R1-F-G-240 which is not a file record",
+        "count": 1
+      },
+      {
+        "reason": "SELECT IX-FS1 ASSIGN TO a non-literal (XXXXX025)",
+        "count": 1
+      },
+      {
         "reason": "GO TO READ-TEST-F1-01-3 is a backward or self jump; only strictly forward top-level jumps are suppor",
+        "count": 1
+      },
+      {
+        "reason": "paragraph USE-PAR-002 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "duplicate procedure name READ-INIT-F1-04 (section and paragraph names share one namespace)",
         "count": 1
       },
       {
@@ -1656,6 +3252,14 @@
         "count": 1
       },
       {
+        "reason": "SELECT IX-FD3 ASSIGN TO a non-literal (XXXXX026)",
+        "count": 1
+      },
+      {
+        "reason": "FD IX-FD3 without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
         "reason": "GO TO READ-TEST-F1-02-R1 is a backward or self jump; only strictly forward top-level jumps are suppo",
         "count": 1
       },
@@ -1676,6 +3280,14 @@
         "count": 1
       },
       {
+        "reason": "SELECT IX-VS1 ASSIGN TO a non-literal (XXXXP025)",
+        "count": 1
+      },
+      {
+        "reason": "FD IX-VS1 without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
         "reason": "GO TO WRI-TEST-GF-01 is a backward or self jump; only strictly forward top-level jumps are supported",
         "count": 1
       },
@@ -1684,27 +3296,31 @@
         "count": 1
       },
       {
-        "reason": "PERFORM PFM-A-F1-7 THRU PFM-C-F1-7 is a backward or non-contiguous range",
+        "reason": "SELECT IX-FS2 ASSIGN TO a non-literal (XXXXP025)",
         "count": 1
       },
       {
-        "reason": "PERFORM PFM-A-F1-7 THRU PFM-D-F1-7 is a backward or non-contiguous range",
+        "reason": "SELECT RR-FS1 ASSIGN TO a non-literal (XXXXX024)",
+        "count": 1
+      },
+      {
+        "reason": "SELECT TFIL ASSIGN TO a non-literal (XXXXX025)",
+        "count": 1
+      },
+      {
+        "reason": "SELECT TFIL2 ASSIGN TO a non-literal (XXXXX026)",
+        "count": 1
+      },
+      {
+        "reason": "duplicate procedure name PFM-INIT-F2-5 (section and paragraph names share one namespace)",
+        "count": 1
+      },
+      {
+        "reason": "PERFORM PFM-B-F1-7 THRU PFM-D-F1-7 is a backward or non-contiguous range",
         "count": 1
       },
       {
         "reason": "PERFORM PFM-B-F1-7 THRU PFM-C-F1-7 is a backward or non-contiguous range",
-        "count": 1
-      },
-      {
-        "reason": "PERFORM PFM-A-F2-4 THRU PFM-C-F2-4 is a backward or non-contiguous range",
-        "count": 1
-      },
-      {
-        "reason": "PERFORM PFM-A-F2-4 THRU PFM-D-F2-4 is a backward or non-contiguous range",
-        "count": 1
-      },
-      {
-        "reason": "PERFORM PFM-G-F1-10 THRU PFM-B-F1-10 is a backward or non-contiguous range",
         "count": 1
       },
       {
@@ -1713,10 +3329,6 @@
       },
       {
         "reason": "GO TO GO--PASS-F1-2 is not in tail position (statements follow it in the same block)",
-        "count": 1
-      },
-      {
-        "reason": "GO TO GO--PASS-F1-2 targets a name that is not a paragraph",
         "count": 1
       },
       {
@@ -1745,6 +3357,10 @@
       },
       {
         "reason": "GO TO SUB-B-F1-20 inside PERFORM-reachable paragraph SUB-A-F1-20 is neither a structured range early",
+        "count": 1
+      },
+      {
+        "reason": "PERFORM 000000000000000000000000001 THRU 00000000000000000000000000001 is a backward or non-contiguo",
         "count": 1
       },
       {
@@ -1856,15 +3472,7 @@
         "count": 1
       },
       {
-        "reason": "GO TO SECT-TH109-0002 targets a name that is not a paragraph",
-        "count": 1
-      },
-      {
         "reason": "GO TO SEP-INIT-007 is a backward or self jump; only strictly forward top-level jumps are supported",
-        "count": 1
-      },
-      {
-        "reason": "GO TO SECT-TH111-0002 targets a name that is not a paragraph",
         "count": 1
       },
       {
@@ -1908,11 +3516,31 @@
         "count": 1
       },
       {
-        "reason": "GO TO PFM-PART-A targets a name that is not a paragraph",
+        "reason": "GO TO PFM-SEC-A3 inside PERFORM-reachable paragraph PARA-PART-A is neither a structured range early-",
         "count": 1
       },
       {
         "reason": "GO TO PFM-F4-9-B inside PERFORM-reachable paragraph PFM-F4-9-A is neither a structured range early-e",
+        "count": 1
+      },
+      {
+        "reason": "duplicate procedure name PAR-1A (section and paragraph names share one namespace)",
+        "count": 1
+      },
+      {
+        "reason": "duplicate procedure name PAR-2A (section and paragraph names share one namespace)",
+        "count": 1
+      },
+      {
+        "reason": "duplicate procedure name PAR-3B (section and paragraph names share one namespace)",
+        "count": 1
+      },
+      {
+        "reason": "duplicate procedure name PAR-3C (section and paragraph names share one namespace)",
+        "count": 1
+      },
+      {
+        "reason": "duplicate procedure name PAR-4B (section and paragraph names share one namespace)",
         "count": 1
       },
       {
@@ -1952,10 +3580,6 @@
         "count": 1
       },
       {
-        "reason": "GO TO SECT-TH219-0002 targets a name that is not a paragraph",
-        "count": 1
-      },
-      {
         "reason": "GO TO IF--WRITE-11 is a backward or self jump; only strictly forward top-level jumps are supported",
         "count": 1
       },
@@ -1972,7 +3596,31 @@
         "count": 1
       },
       {
+        "reason": "SELECT TFIL-2 ASSIGN TO a non-literal (XXXXX002)",
+        "count": 1
+      },
+      {
+        "reason": "OCCURS with ASCENDING/DESCENDING KEY",
+        "count": 1
+      },
+      {
         "reason": "GO TO ALTER-G is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "duplicate procedure name PARA-5C (section and paragraph names share one namespace)",
+        "count": 1
+      },
+      {
+        "reason": "duplicate procedure name PARA-6B (section and paragraph names share one namespace)",
+        "count": 1
+      },
+      {
+        "reason": "duplicate procedure name PARA-6C (section and paragraph names share one namespace)",
+        "count": 1
+      },
+      {
+        "reason": "duplicate procedure name PARA-6D (section and paragraph names share one namespace)",
         "count": 1
       },
       {
@@ -2028,7 +3676,91 @@
         "count": 1
       },
       {
+        "reason": "SELECT SQ-FS5 ASSIGN TO a non-literal (XXXXP005)",
+        "count": 1
+      },
+      {
+        "reason": "SELECT SQ-FS6 ASSIGN TO a non-literal (XXXXP011)",
+        "count": 1
+      },
+      {
+        "reason": "SELECT SQ-FS7 ASSIGN TO a non-literal (XXXXP012)",
+        "count": 1
+      },
+      {
+        "reason": "SELECT SQ-FS8 ASSIGN TO a non-literal (XXXXP013)",
+        "count": 1
+      },
+      {
+        "reason": "WRITE SQ-FS5R1-F-G-120 which is not a file record",
+        "count": 1
+      },
+      {
+        "reason": "WRITE SQ-FS6R1-F-G-120 which is not a file record",
+        "count": 1
+      },
+      {
+        "reason": "WRITE SQ-FS7R1-F-G-120 which is not a file record",
+        "count": 1
+      },
+      {
+        "reason": "WRITE SQ-FS8R1-F-G-120 which is not a file record",
+        "count": 1
+      },
+      {
         "reason": "GO TO SEQ-TEST-006 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "SELECT SQ-FS3 ASSIGN TO a non-literal (XXXXD009)",
+        "count": 1
+      },
+      {
+        "reason": "SELECT SQ-FS5 ASSIGN TO a non-literal (XXXXD005)",
+        "count": 1
+      },
+      {
+        "reason": "SELECT SQ-FS6 ASSIGN TO a non-literal (XXXXD011)",
+        "count": 1
+      },
+      {
+        "reason": "SELECT SQ-FS7 ASSIGN TO a non-literal (XXXXD012)",
+        "count": 1
+      },
+      {
+        "reason": "SELECT SQ-FS8 ASSIGN TO a non-literal (XXXXD013)",
+        "count": 1
+      },
+      {
+        "reason": "SELECT RL-FS2 ASSIGN TO a non-literal (XXXXP021)",
+        "count": 1
+      },
+      {
+        "reason": "SELECT RL-FR1 ASSIGN TO a non-literal (XXXXP021)",
+        "count": 1
+      },
+      {
+        "reason": "SELECT RL-FS1 ASSIGN TO a non-literal (XXXXD021)",
+        "count": 1
+      },
+      {
+        "reason": "SELECT RL-FR2 ASSIGN TO a non-literal (XXXXX022)",
+        "count": 1
+      },
+      {
+        "reason": "SELECT RL-FR3 ASSIGN TO a non-literal (XXXXX023)",
+        "count": 1
+      },
+      {
+        "reason": "FD RL-FR2 without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "FD RL-FR3 without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "PERFORM REL-WRITE-FOR-TEST-1 THRU 1-EXIT is a backward or non-contiguous range",
         "count": 1
       },
       {
@@ -2037,6 +3769,34 @@
       },
       {
         "reason": "GO TO REL-TEST-5 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "SELECT RL-FR4 ASSIGN TO a non-literal (XXXXX021)",
+        "count": 1
+      },
+      {
+        "reason": "SELECT RL-FR5 ASSIGN TO a non-literal (XXXXX022)",
+        "count": 1
+      },
+      {
+        "reason": "SELECT RL-FR6 ASSIGN TO a non-literal (XXXXX023)",
+        "count": 1
+      },
+      {
+        "reason": "FD RL-FR4 without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "FD RL-FR5 without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "FD RL-FR6 without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "PERFORM WRITE-FOR-TEST-8 THRU 8-EXIT is a backward or non-contiguous range",
         "count": 1
       },
       {
@@ -2053,6 +3813,22 @@
       },
       {
         "reason": "GO TO READ-FOR-TEST-17 is a backward or self jump; only strictly forward top-level jumps are support",
+        "count": 1
+      },
+      {
+        "reason": "SELECT RL-FR7 ASSIGN TO a non-literal (XXXXX021)",
+        "count": 1
+      },
+      {
+        "reason": "SELECT RL-FR8 ASSIGN TO a non-literal (XXXXX022)",
+        "count": 1
+      },
+      {
+        "reason": "FD RL-FR7 without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "FD RL-FR8 without a matching LINE SEQUENTIAL SELECT",
         "count": 1
       },
       {
@@ -2096,7 +3872,67 @@
         "count": 1
       },
       {
+        "reason": "SELECT RL-FR1 ASSIGN TO a non-literal (XXXXX061)",
+        "count": 1
+      },
+      {
+        "reason": "SELECT RL-FS3 ASSIGN TO a non-literal (XXXXX022)",
+        "count": 1
+      },
+      {
+        "reason": "FD RL-FS3 without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "paragraph RL-FS2-02-01 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph RL-FS2-02-STAT outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph RL-FS2-02-03 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph RL-FS2-02-05 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph RL-FS2-02-EXIT outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "WRITE RL-FS3R1-F-G-240 which is not a file record",
+        "count": 1
+      },
+      {
+        "reason": "paragraph RL-FD2-02-EXIT outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph RL-FD2-01-03-01 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph RL-FD2-01-03-EXIT outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
         "reason": "GO TO REL-TEST-2-0 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "SELECT RL-FD3 ASSIGN TO a non-literal (XXXXX092)",
+        "count": 1
+      },
+      {
+        "reason": "paragraph RL-FD3-01-01 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "SELECT RL-FD1 ASSIGN TO a non-literal (XXXXX021)",
         "count": 1
       },
       {
@@ -2232,27 +4068,71 @@
         "count": 1
       },
       {
-        "reason": "GO TO SECOND-HALF targets a name that is not a paragraph",
+        "reason": "SELECT RL-FS1 ASSIGN TO a non-literal (XXXXX021)",
         "count": 1
       },
       {
-        "reason": "GO TO TEST-6E inside PERFORM-reachable paragraph TEST-6B is neither a structured range early-exit no",
+        "reason": "SELECT RR-FS1 ASSIGN TO a non-literal (XXXXX021)",
         "count": 1
       },
       {
-        "reason": "GO TO SEG-TEST-2 inside PERFORM-reachable paragraph TEST-1-WRITE is neither a structured range early",
+        "reason": "SELECT TFIL2 ASSIGN TO a non-literal (XXXXX022)",
         "count": 1
       },
       {
-        "reason": "GO TO SEG-TEST8 targets a name that is not a paragraph",
+        "reason": "SELECT RW-FS1 ASSIGN TO a non-literal (XXXXX049)",
         "count": 1
       },
       {
-        "reason": "GO TO TEST-4A is a backward or self jump; only strictly forward top-level jumps are supported",
+        "reason": "FD RW-FS1 without a matching LINE SEQUENTIAL SELECT",
         "count": 1
       },
       {
-        "reason": "GO TO TEST-4B is a backward or self jump; only strictly forward top-level jumps are supported",
+        "reason": "SELECT RW-FS2 ASSIGN TO a non-literal (XXXXX049)",
+        "count": 1
+      },
+      {
+        "reason": "FD RW-FS2 without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "SELECT RW-FS3 ASSIGN TO a non-literal (XXXXX049)",
+        "count": 1
+      },
+      {
+        "reason": "FD RW-FS3 without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "SELECT RW-FS4 ASSIGN TO a non-literal (XXXXX049)",
+        "count": 1
+      },
+      {
+        "reason": "FD RW-FS4 without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "PERFORM TEST-6A THRU TEST-6I is a backward or non-contiguous range",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SEG-TEST-2 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO TEST-4C inside PERFORM-reachable paragraph TEST-4A is neither a structured range early-exit no",
+        "count": 1
+      },
+      {
+        "reason": "GO TO TEST-4A inside PERFORM-reachable paragraph TEST-4B is neither a structured range early-exit no",
+        "count": 1
+      },
+      {
+        "reason": "GO TO TEST-4B inside PERFORM-reachable paragraph TEST-4C is neither a structured range early-exit no",
+        "count": 1
+      },
+      {
+        "reason": "GO TO TEST-3D inside PERFORM-reachable paragraph TEST-3X is neither a structured range early-exit no",
         "count": 1
       },
       {
@@ -2272,6 +4152,10 @@
         "count": 1
       },
       {
+        "reason": "GO TO TEST-5B inside PERFORM-reachable paragraph TEST-5A is neither a structured range early-exit no",
+        "count": 1
+      },
+      {
         "reason": "GO TO TEST-5A inside PERFORM-reachable paragraph TEST-5B is neither a structured range early-exit no",
         "count": 1
       },
@@ -2281,6 +4165,10 @@
       },
       {
         "reason": "GO TO GO-TO-RETURN is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO P8002 inside PERFORM-reachable paragraph P8001 is neither a structured range early-exit nor a ",
         "count": 1
       },
       {
@@ -2296,31 +4184,7 @@
         "count": 1
       },
       {
-        "reason": "GO TO P4801 inside PERFORM-reachable paragraph P0004 is neither a structured range early-exit nor a ",
-        "count": 1
-      },
-      {
-        "reason": "GO TO TEST-1-WRITE inside PERFORM-reachable paragraph TEST-1 is neither a structured range early-exi",
-        "count": 1
-      },
-      {
-        "reason": "GO TO TEST-2-WRITE inside PERFORM-reachable paragraph TEST-2 is neither a structured range early-exi",
-        "count": 1
-      },
-      {
-        "reason": "GO TO TEST-3-WRITE inside PERFORM-reachable paragraph TEST-3 is neither a structured range early-exi",
-        "count": 1
-      },
-      {
-        "reason": "GO TO TEST-4-WRITE inside PERFORM-reachable paragraph TEST-4 is neither a structured range early-exi",
-        "count": 1
-      },
-      {
-        "reason": "GO TO TEST-5-WRITE inside PERFORM-reachable paragraph P2801 is neither a structured range early-exit",
-        "count": 1
-      },
-      {
-        "reason": "GO TO CLOSE-FILES inside PERFORM-reachable paragraph CLOSE-ROUTINE is neither a structured range ear",
+        "reason": "PERFORM P0004 THRU P4802 is a backward or non-contiguous range",
         "count": 1
       },
       {
@@ -2332,15 +4196,7 @@
         "count": 1
       },
       {
-        "reason": "GO TO P4004 inside PERFORM-reachable paragraph P4002 is neither a structured range early-exit nor a ",
-        "count": 1
-      },
-      {
-        "reason": "GO TO P0003 inside PERFORM-reachable paragraph P4502 is neither a structured range early-exit nor a ",
-        "count": 1
-      },
-      {
-        "reason": "PERFORM 45A THRU 45B is a backward or non-contiguous range",
+        "reason": "GO TO P0003 is a backward or self jump; only strictly forward top-level jumps are supported",
         "count": 1
       },
       {
@@ -2388,7 +4244,59 @@
         "count": 1
       },
       {
-        "reason": "GO TO TEST-16 targets a name that is not a paragraph",
+        "reason": "GO TO TEST-16 inside PERFORM-reachable paragraph PARA-41D is neither a structured range early-exit n",
+        "count": 1
+      },
+      {
+        "reason": "duplicate procedure name SECT-COPY-1 (section and paragraph names share one namespace)",
+        "count": 1
+      },
+      {
+        "reason": "duplicate procedure name SECT-COPY-2 (section and paragraph names share one namespace)",
+        "count": 1
+      },
+      {
+        "reason": "duplicate procedure name SECT-COPY-3 (section and paragraph names share one namespace)",
+        "count": 1
+      },
+      {
+        "reason": "duplicate procedure name SECT-COPY-4 (section and paragraph names share one namespace)",
+        "count": 1
+      },
+      {
+        "reason": "SELECT TEST-FILE2 ASSIGN TO a non-literal (XXXXP002)",
+        "count": 1
+      },
+      {
+        "reason": "FD TEST-FILE2 without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "WRITE TEST-REC2 which is not a file record",
+        "count": 1
+      },
+      {
+        "reason": "SELECT SORTOUT-1E ASSIGN TO a non-literal (XXXXX001)",
+        "count": 1
+      },
+      {
+        "reason": "SELECT TEST-FILE ASSIGN TO a non-literal (XXXXP002)",
+        "count": 1
+      },
+      {
+        "reason": "SELECT TEST-FILE ASSIGN TO a non-literal (XXXXD002)",
+        "count": 1
+      },
+      {
+        "reason": "SELECT SORTOUT-2E ASSIGN TO a non-literal (XXXXX001)",
+        "count": 1
+      },
+      {
+        "reason": "SELECT SQ-FS2 ASSIGN TO a non-literal (XXXXX001)",
+        "count": 1
+      },
+      {
+        "reason": "paragraph TEST-STATUS outside any section in a sectioned PROCEDURE DIVISION",
         "count": 1
       },
       {
@@ -2420,7 +4328,31 @@
         "count": 1
       },
       {
+        "reason": "SELECT SQ-FS8 ASSIGN TO a non-literal (XXXXX014)",
+        "count": 1
+      },
+      {
+        "reason": "WRITE SQ-FS8R1-F-G-141 which is not a file record",
+        "count": 1
+      },
+      {
         "reason": "GO TO SEQ-TEST-019 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "SELECT SQ-FS1 ASSIGN TO a non-literal (XXXXX006)",
+        "count": 1
+      },
+      {
+        "reason": "SELECT SQ-FS3 ASSIGN TO a non-literal (XXXXX019)",
+        "count": 1
+      },
+      {
+        "reason": "WRITE SQ-FS1R1-F-G-155 which is not a file record",
+        "count": 1
+      },
+      {
+        "reason": "duplicate procedure name OPEN-PASS-GF-01 (section and paragraph names share one namespace)",
         "count": 1
       },
       {
@@ -2441,6 +4373,14 @@
       },
       {
         "reason": "GO TO OPEN-FAIL-GF-02 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 1
+      },
+      {
+        "reason": "SELECT SQ-FS6 ASSIGN TO a non-literal (XXXXX014)",
+        "count": 1
+      },
+      {
+        "reason": "WRITE SQ-FS6R1-F-G-130 which is not a file record",
         "count": 1
       },
       {
@@ -2468,6 +4408,14 @@
         "count": 1
       },
       {
+        "reason": "SELECT SQ-FS9 ASSIGN TO a non-literal (XXXXX014)",
+        "count": 1
+      },
+      {
+        "reason": "FD SQ-FS9 without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
         "reason": "GO TO WRITE-INIT-GF-02-A is a backward or self jump; only strictly forward top-level jumps are suppo",
         "count": 1
       },
@@ -2488,6 +4436,14 @@
         "count": 1
       },
       {
+        "reason": "paragraph DECL-CLOSE-02 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "SELECT SQ-FS3 ASSIGN TO a non-literal (XXXXX060)",
+        "count": 1
+      },
+      {
         "reason": "GO TO OPN-TEST-GF-01-1 is a backward or self jump; only strictly forward top-level jumps are support",
         "count": 1
       },
@@ -2496,7 +4452,39 @@
         "count": 1
       },
       {
+        "reason": "paragraph DECL-CLOSE-01 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph READ-ERROR-PROCESS outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph O-ERROR-PROCESS outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "WRITE DUMMY-RECORD which is not a file record",
+        "count": 1
+      },
+      {
         "reason": "GO TO WRI-TEST-001 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "SELECT SQ-FS2 ASSIGN TO a non-literal (XXXXX018)",
+        "count": 1
+      },
+      {
+        "reason": "SELECT SQ-FS3 ASSIGN TO a non-literal (XXXXX003)",
+        "count": 1
+      },
+      {
+        "reason": "SELECT SQ-FS4 ASSIGN TO a non-literal (XXXXX017)",
+        "count": 1
+      },
+      {
+        "reason": "paragraph USE-1-PROCEDURE outside any section in a sectioned PROCEDURE DIVISION",
         "count": 1
       },
       {
@@ -2528,7 +4516,23 @@
         "count": 1
       },
       {
+        "reason": "paragraph SEQ-USE-001 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph SEQ-USE-002 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph SEQ-USE-EXIT outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
         "reason": "GO TO WRITE-TEST-GF-01-01 is a backward or self jump; only strictly forward top-level jumps are supp",
+        "count": 1
+      },
+      {
+        "reason": "SELECT SQ-FS4 ASSIGN TO a non-literal (XXXXX002)",
         "count": 1
       },
       {
@@ -2536,7 +4540,119 @@
         "count": 1
       },
       {
-        "reason": "GO TO BAIL-OUT-WRITE1 inside PERFORM-reachable paragraph BAIL-OUT1 is neither a structured range ear",
+        "reason": "paragraph TEST-STATUS-44-00 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph TEST-STATUS-44-0 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph TEST-STATUS-44-FAIL outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph TEST-STATUS-44-PASS outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph TEST-STATUS-44-WRITE outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph TEST-STATUS-44-1-0 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph TEST-STATUS-44-1-FAIL outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph TEST-STATUS-44-1-PASS outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph TEST-STATUS-44-1-WRITE outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph PASS1 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph FAIL1 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph PRINT-DETAIL1 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph END-ROUTINE1 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph END-RTN1-EXIT outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph END-ROUTINE1-1 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph END-ROUTINE1-12 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph END-ROUTINE1-13 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph WRITE-LINE1 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph WRT-LN1 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph FAIL-ROUTINE1 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph FAIL-ROUTINE-WRITE1 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph FAIL-ROUTINE-EX1 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph BAIL-OUT1 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph BAIL-OUT-WRITE1 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph BAIL-OUT-EX1 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph EXIT-PARA outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph CLOSE-FILES1 outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph TERMINATE1-CCVS outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "paragraph FN-SERIES-ERROR-PROCESS outside any section in a sectioned PROCEDURE DIVISION",
         "count": 1
       },
       {
@@ -2556,15 +4672,55 @@
         "count": 1
       },
       {
-        "reason": "GO TO DECL-OPEN-02 inside PERFORM-reachable paragraph OUTPUT-ERROR-PROCESS is neither a structured r",
+        "reason": "paragraph DECL-OPEN-02 outside any section in a sectioned PROCEDURE DIVISION",
         "count": 1
       },
       {
-        "reason": "GO TO DECL-TEST-01-END inside PERFORM-reachable paragraph DECL-DELETE-02 is neither a structured ran",
+        "reason": "SELECT RR-FS1 ASSIGN TO a non-literal (XXXXX014)",
         "count": 1
       },
       {
-        "reason": "GO TO INPROC-EXIT targets a name that is not a paragraph",
+        "reason": "SELECT TFIL ASSIGN TO a non-literal (XXXXX002)",
+        "count": 1
+      },
+      {
+        "reason": "SELECT TFIL3 ASSIGN TO a non-literal (XXXXX003)",
+        "count": 1
+      },
+      {
+        "reason": "FD TFIL3 without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "SELECT SORTOUT-1D ASSIGN TO a non-literal (XXXXP001)",
+        "count": 1
+      },
+      {
+        "reason": "FD SORTOUT-1D without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "SELECT SORTIN-1E ASSIGN TO a non-literal (XXXXD001)",
+        "count": 1
+      },
+      {
+        "reason": "SELECT SORTOUT-1E ASSIGN TO a non-literal (XXXXX002)",
+        "count": 1
+      },
+      {
+        "reason": "FD SORTIN-1E without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "SELECT SORTOUT-1L ASSIGN TO a non-literal (XXXXD006)",
+        "count": 1
+      },
+      {
+        "reason": "FD SORTOUT-1L without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "WRITE SORT-KEY which is not a file record",
         "count": 1
       },
       {
@@ -2572,7 +4728,51 @@
         "count": 1
       },
       {
+        "reason": "SELECT SORTIN-1M ASSIGN TO a non-literal (XXXXP006)",
+        "count": 1
+      },
+      {
+        "reason": "SELECT SORTOUT-1M ASSIGN TO a non-literal (XXXXP001)",
+        "count": 1
+      },
+      {
+        "reason": "SELECT SORTFILE-1M ASSIGN TO a non-literal (XXXXX027)",
+        "count": 1
+      },
+      {
+        "reason": "FD SORTIN-1M without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "FD SORTOUT-1M without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "FD SORTFILE-1M without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "SELECT SORTIN-1N ASSIGN TO a non-literal (XXXXD001)",
+        "count": 1
+      },
+      {
+        "reason": "FD SORTIN-1N without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "WRITE SQ-FS1R1-F-G-507 which is not a file record",
+        "count": 1
+      },
+      {
         "reason": "GO TO SRT-TEST-001-01 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 1
+      },
+      {
+        "reason": "SELECT SQ-FS2 ASSIGN TO a non-literal (XXXXP002)",
+        "count": 1
+      },
+      {
+        "reason": "SELECT SQ-FS2 ASSIGN TO a non-literal (XXXXD002)",
         "count": 1
       },
       {
@@ -2600,27 +4800,183 @@
         "count": 1
       },
       {
-        "reason": "GO TO ZERO-IS-LESS-THAN-SPACE-2 targets a name that is not a paragraph",
+        "reason": "SELECT SORTOUT-2F ASSIGN TO a non-literal (XXXXP002)",
         "count": 1
       },
       {
-        "reason": "GO TO CONTINUE-TESTING-2 targets a name that is not a paragraph",
+        "reason": "SELECT SORTOUT-3F ASSIGN TO a non-literal (XXXXP003)",
         "count": 1
       },
       {
-        "reason": "GO TO ZERO-IS-LESS-THAN-SPACE-3 targets a name that is not a paragraph",
+        "reason": "FD SORTOUT-3F without a matching LINE SEQUENTIAL SELECT",
         "count": 1
       },
       {
-        "reason": "GO TO CONTINUE-TESTING-3 targets a name that is not a paragraph",
+        "reason": "SELECT SORTIN-2G ASSIGN TO a non-literal (XXXXD002)",
         "count": 1
       },
       {
-        "reason": "GO TO SRT-5 targets a name that is not a paragraph",
+        "reason": "SELECT SORTIN-3G ASSIGN TO a non-literal (XXXXD003)",
         "count": 1
       },
       {
-        "reason": "GO TO SRT-6 targets a name that is not a paragraph",
+        "reason": "FD SORTIN-2G without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "FD SORTIN-3G without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SORT-TEST-18-2 inside PERFORM-reachable paragraph SORT-TEST-18-1 is neither a structured range",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SORT-TEST-19-1 inside PERFORM-reachable paragraph SORT-TEST-18-2 is neither a structured range",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SORT-TEST-19-2 inside PERFORM-reachable paragraph SORT-TEST-19-1 is neither a structured range",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SORT-TEST-20-1 inside PERFORM-reachable paragraph SORT-TEST-19-2 is neither a structured range",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SORT-TEST-20-2 inside PERFORM-reachable paragraph SORT-TEST-20-1 is neither a structured range",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SORT-TEST-21-1 inside PERFORM-reachable paragraph SORT-TEST-20-2 is neither a structured range",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SORT-TEST-21-2 inside PERFORM-reachable paragraph SORT-TEST-21-1 is neither a structured range",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SORT-TEST-22-1 inside PERFORM-reachable paragraph SORT-TEST-21-2 is neither a structured range",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SORT-TEST-22-2 inside PERFORM-reachable paragraph SORT-TEST-22-1 is neither a structured range",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SORT-TEST-23-1 inside PERFORM-reachable paragraph SORT-TEST-22-2 is neither a structured range",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SORT-TEST-23-2 inside PERFORM-reachable paragraph SORT-TEST-23-1 is neither a structured range",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SORT-TEST-24-1 inside PERFORM-reachable paragraph SORT-TEST-23-2 is neither a structured range",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SORT-TEST-24-2 inside PERFORM-reachable paragraph SORT-TEST-24-1 is neither a structured range",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SORT-TEST-25-1 inside PERFORM-reachable paragraph SORT-TEST-24-2 is neither a structured range",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SORT-TEST-25-2 inside PERFORM-reachable paragraph SORT-TEST-25-1 is neither a structured range",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SORT-TEST-26-1 inside PERFORM-reachable paragraph SORT-TEST-25-2 is neither a structured range",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SORT-TEST-26-2 inside PERFORM-reachable paragraph SORT-TEST-26-1 is neither a structured range",
+        "count": 1
+      },
+      {
+        "reason": "GO TO CHK-TEST-2 inside PERFORM-reachable paragraph CHK-TEST-1 is neither a structured range early-e",
+        "count": 1
+      },
+      {
+        "reason": "GO TO CHK-TEST-3 inside PERFORM-reachable paragraph CHK-TEST-2 is neither a structured range early-e",
+        "count": 1
+      },
+      {
+        "reason": "GO TO CHK-TEST-4 inside PERFORM-reachable paragraph CHK-TEST-3 is neither a structured range early-e",
+        "count": 1
+      },
+      {
+        "reason": "GO TO CHK-TEST-5 inside PERFORM-reachable paragraph CHK-TEST-4 is neither a structured range early-e",
+        "count": 1
+      },
+      {
+        "reason": "GO TO CHK-TEST-6 inside PERFORM-reachable paragraph CHK-TEST-5 is neither a structured range early-e",
+        "count": 1
+      },
+      {
+        "reason": "GO TO CHK-TEST-7 inside PERFORM-reachable paragraph CHK-TEST-6 is neither a structured range early-e",
+        "count": 1
+      },
+      {
+        "reason": "GO TO CHK-TEST-8 inside PERFORM-reachable paragraph CHK-TEST-7 is neither a structured range early-e",
+        "count": 1
+      },
+      {
+        "reason": "SELECT SORT4 ASSIGN TO a non-literal (XXXXX027)",
+        "count": 1
+      },
+      {
+        "reason": "SELECT SORT5 ASSIGN TO a non-literal (XXXXX028)",
+        "count": 1
+      },
+      {
+        "reason": "SELECT FILE4 ASSIGN TO a non-literal (XXXXX006)",
+        "count": 1
+      },
+      {
+        "reason": "FD FILE4 without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "FD SORT4 without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "FD SORT5 without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "SELECT FIRST-SORTFILE ASSIGN TO a non-literal (XXXXX027)",
+        "count": 1
+      },
+      {
+        "reason": "SELECT SECOND-SORTFILE ASSIGN TO a non-literal (XXXXX028)",
+        "count": 1
+      },
+      {
+        "reason": "SELECT SORTIN-2C ASSIGN TO a non-literal (XXXXX001)",
+        "count": 1
+      },
+      {
+        "reason": "SELECT SORTOUT-2C ASSIGN TO a non-literal (XXXXX002)",
+        "count": 1
+      },
+      {
+        "reason": "FD SORTIN-2C without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "FD SORTOUT-2C without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "FD FIRST-SORTFILE without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "FD SECOND-SORTFILE without a matching LINE SEQUENTIAL SELECT",
         "count": 1
       },
       {
@@ -2640,11 +4996,31 @@
         "count": 1
       },
       {
-        "reason": "GO TO CLOSE-AND-STOP targets a name that is not a paragraph",
+        "reason": "SELECT SORTFILE-2D ASSIGN TO a non-literal (XXXXX027)",
         "count": 1
       },
       {
-        "reason": "GO TO CREATE-LOOP is a backward or self jump; only strictly forward top-level jumps are supported",
+        "reason": "SELECT SORTIN-2D ASSIGN TO a non-literal (XXXXX001)",
+        "count": 1
+      },
+      {
+        "reason": "SELECT SORTOUT-2D ASSIGN TO a non-literal (XXXXX002)",
+        "count": 1
+      },
+      {
+        "reason": "FD SORTFILE-2D without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "FD SORTIN-2D without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "FD SORTOUT-2D without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "GO TO CREATE-LOOP inside PERFORM-reachable paragraph CREATE-LOOP is neither a structured range early",
         "count": 1
       },
       {
@@ -2652,7 +5028,55 @@
         "count": 1
       },
       {
+        "reason": "GO TO SORT-WRITE-1 inside PERFORM-reachable paragraph SORT-TEST-1 is neither a structured range earl",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SORT-WRITE-2 inside PERFORM-reachable paragraph SORT-TEST-2 is neither a structured range earl",
+        "count": 1
+      },
+      {
+        "reason": "GO TO SORT-WRITE-3 inside PERFORM-reachable paragraph SORT-TEST-3 is neither a structured range earl",
+        "count": 1
+      },
+      {
         "reason": "GO TO CLOSE-AND-STOP-PARA is a backward or self jump; only strictly forward top-level jumps are supp",
+        "count": 1
+      },
+      {
+        "reason": "SELECT SORTIN-2E ASSIGN TO a non-literal (XXXXX001)",
+        "count": 1
+      },
+      {
+        "reason": "SELECT SORTOUT-2E ASSIGN TO a non-literal (XXXXX002)",
+        "count": 1
+      },
+      {
+        "reason": "SELECT USELESS-FILE ASSIGN TO a non-literal (XXXXX003)",
+        "count": 1
+      },
+      {
+        "reason": "SELECT DEADWEIGHT-FILE ASSIGN TO a non-literal (XXXXX004)",
+        "count": 1
+      },
+      {
+        "reason": "FD SORTIN-2E without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "FD USELESS-FILE without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "FD DEADWEIGHT-FILE without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "WRITE USELESS-REC which is not a file record",
+        "count": 1
+      },
+      {
+        "reason": "WRITE DEADWEIGHT-REC which is not a file record",
         "count": 1
       },
       {
@@ -2660,7 +5084,23 @@
         "count": 1
       },
       {
-        "reason": "GO TO SORT-TESTS targets a name that is not a paragraph",
+        "reason": "SELECT SORTOUT-2F ASSIGN TO a non-literal (XXXXX001)",
+        "count": 1
+      },
+      {
+        "reason": "SELECT SORTFILE-2F ASSIGN TO a non-literal (XXXXX027)",
+        "count": 1
+      },
+      {
+        "reason": "FD SORTFILE-2F without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "SELECT ST-FR1 ASSIGN TO a non-literal (XXXXX027)",
+        "count": 1
+      },
+      {
+        "reason": "FD ST-FR1 without a matching LINE SEQUENTIAL SELECT",
         "count": 1
       },
       {
@@ -2672,21 +5112,147 @@
         "count": 1
       },
       {
+        "reason": "SELECT SQ-FS5 ASSIGN TO a non-literal (XXXXX018)",
+        "count": 1
+      },
+      {
+        "reason": "SELECT TFIL ASSIGN TO a non-literal (XXXXX027)",
+        "count": 1
+      },
+      {
+        "reason": "SELECT TFIL-2 ASSIGN TO a non-literal (XXXXX001)",
+        "count": 1
+      },
+      {
+        "reason": "SELECT TFIL-3 ASSIGN TO a non-literal (XXXXX002)",
+        "count": 1
+      },
+      {
+        "reason": "SELECT TFIL-4 ASSIGN TO a non-literal (XXXXX003)",
+        "count": 1
+      },
+      {
+        "reason": "SELECT TFIL-5 ASSIGN TO a non-literal (XXXXX004)",
+        "count": 1
+      },
+      {
+        "reason": "FD TFIL-3 without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "FD TFIL-4 without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "FD TFIL-5 without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "SELECT D111E ASSIGN TO a non-literal (UT-S-D111E)",
+        "count": 1
+      },
+      {
+        "reason": "FD D111E without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "SELECT VIDEOFILE with organization other than LINE SEQUENTIAL (file I/O stage 1)",
+        "count": 1
+      },
+      {
+        "reason": "FD VIDEOFILE without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "paragraph SOME-PARAGRAPH outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "SELECT FILEIN with organization other than LINE SEQUENTIAL (file I/O stage 1)",
+        "count": 1
+      },
+      {
+        "reason": "SELECT FILEOUT with organization other than LINE SEQUENTIAL (file I/O stage 1)",
+        "count": 1
+      },
+      {
+        "reason": "FD FILEIN without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "FD FILEOUT without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "file PERSON is never opened",
+        "count": 1
+      },
+      {
+        "reason": "FD PERSON without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
         "reason": "VALUE with multiple literals or THRU",
         "count": 1
       },
       {
         "reason": "USAGE DATE",
         "count": 1
+      },
+      {
+        "reason": "SELECT TEACHER with organization other than LINE SEQUENTIAL (file I/O stage 1)",
+        "count": 1
+      },
+      {
+        "reason": "SELECT STANDARD-INPUT without an ASSIGN TO clause",
+        "count": 1
+      },
+      {
+        "reason": "SELECT STANDARD-OUTPUT without an ASSIGN TO clause",
+        "count": 1
+      },
+      {
+        "reason": "SELECT SOMEFILE1A with organization other than LINE SEQUENTIAL (file I/O stage 1)",
+        "count": 1
+      },
+      {
+        "reason": "SELECT SOMEFILE1B with organization other than LINE SEQUENTIAL (file I/O stage 1)",
+        "count": 1
+      },
+      {
+        "reason": "FD SOMEFILE1A without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "FD SOMEFILE1B without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "duplicate procedure name INIT (section and paragraph names share one namespace)",
+        "count": 1
+      },
+      {
+        "reason": "duplicate procedure name SOME-SECTION (section and paragraph names share one namespace)",
+        "count": 1
+      },
+      {
+        "reason": "paragraph INIT outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
       }
     ],
     "irCompleteFiles": [
       "src/test/resources/gov/nist/NC110M.CBL",
+      "src/test/resources/gov/nist/SG302M.CBL",
+      "src/test/resources/gov/nist/SG303M.CBL",
+      "src/test/resources/gov/nist/SG401M.CBL",
       "src/test/resources/io/proleap/cobol/asg/call/ParagraphCall.cbl",
+      "src/test/resources/io/proleap/cobol/asg/call/SectionCall.cbl",
       "src/test/resources/io/proleap/cobol/asg/procedure/Paragraph.cbl",
-      "src/test/resources/io/proleap/cobol/asg/procedure/ParagraphRedefined.cbl",
       "src/test/resources/io/proleap/cobol/asg/procedure/perform/PerformProcedure.cbl",
       "src/test/resources/io/proleap/cobol/asg/procedure/perform/PerformProcedureThrough.cbl",
+      "src/test/resources/io/proleap/cobol/asg/procedure/perform/PerformSection.cbl",
+      "src/test/resources/io/proleap/cobol/asg/procedure/Section.cbl",
+      "src/test/resources/io/proleap/cobol/asg/procedure/SectionWithParagraphs.cbl",
       "src/test/resources/io/proleap/cobol/ast/tandem/Minimal.cbl",
       "src/test/resources/io/proleap/cobol/ast/tandem/ParagraphWithoutDot.cbl",
       "src/test/resources/io/proleap/cobol/preprocessor/tandem/Minimal.cbl"
