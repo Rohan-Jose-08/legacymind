@@ -413,15 +413,24 @@ the corpus named in the founding spec (759 files, commit pinned in
   dispatch), qualified OF/IN references, PROCEDURE-DIVISION sections,
   a LINE SEQUENTIAL file (output stage 1, then the READ/record protocol
   for input), and the byte-layout family — multi-field fixed-width
-  records, REDEFINES, and OCCURS all from one model. Two effects of that
-  last wave show in the histogram: what was once a blanket
-  4.3k-occurrence "REDEFINES" head is now a precise
-  4,277-occurrence "REDEFINES view is not an elementary unsigned numeric
-  DISPLAY item" (the R1a slice is lowered; the remainder is the
-  cross-category / write-through / group epic, R1b/R2), and OCCURS has
-  split into the fixed-numeric-table subset (lowered) versus 381
-  group/non-numeric-element tables (O3). The head today is that residual
-  REDEFINES (4,277), then qualified/subscripted MOVE (3,160), the
+  records, REDEFINES, and OCCURS all from one model. The REDEFINES head
+  is now sub-classified by the shape of the redefining view: 3,218
+  numeric-edited views, 961 group views, 52 signed-numeric, 42
+  alphanumeric (the R1a elementary-numeric slice is lowered; these are
+  the remainder). But measuring that head honestly surfaced a caveat that
+  matters more than the split: **~93% of it is one test artifact.**
+  Counting REDEFINES *lines*, 3,856 of 4,450 redefine the NIST **CCVS**
+  (COBOL Compiler Validation System) self-checking scaffold —
+  `COMPUTED-A` / `CORRECT-A`, a 20-byte answer field redefined by ~10
+  edited/group views — a single boilerplate block repeated across 459
+  NIST files. The corpus's top backlog line is inflated ~14x by
+  compiler-conformance test code, not 4,000+ business idioms; the genuine
+  tail is a few hundred lines. That measurement (and its consequence — do
+  not build an edit-picture engine to chase a test count) is written up in
+  `docs/redefines-edited.md`. OCCURS similarly split into the
+  fixed-numeric-table subset (lowered) versus 381 group/non-numeric-element
+  tables (O3). Past the scaffold-inflated REDEFINES head, the real
+  histogram is qualified/subscripted MOVE (3,160), the
   file-I/O statement family (OPEN/CLOSE/WRITE-with-clauses/READ outside
   the supported files), SET to a non-condition target (825), and the
   remaining GO TO shapes (backward and PERFORM-reachable jumps). This

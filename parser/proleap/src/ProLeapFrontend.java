@@ -2786,13 +2786,13 @@ public class ProLeapFrontend {
 					continue;
 				}
 				if (!elementaryNumericDisplay(item)) {
-					unsupported.add("REDEFINES view \"" + itemName
-							+ "\" is not an elementary unsigned numeric DISPLAY item (REDEFINES R1a)");
+					unsupported.add("REDEFINES view \"" + itemName + "\" is " + redefineShape(item)
+							+ ", not elementary unsigned numeric DISPLAY (REDEFINES R1a)");
 					continue;
 				}
 				if (!elementaryNumericDisplay(target)) {
-					unsupported.add("REDEFINES target \"" + targetName
-							+ "\" is not an elementary unsigned numeric DISPLAY item (REDEFINES R1a)");
+					unsupported.add("REDEFINES target \"" + targetName + "\" is " + redefineShape(target)
+							+ ", not elementary unsigned numeric DISPLAY (REDEFINES R1a)");
 					continue;
 				}
 				final int di = digitsOf(item);
@@ -2819,6 +2819,31 @@ public class ProLeapFrontend {
 				return false;
 			}
 			return occursTables.containsKey(text.substring(0, lp));
+		}
+
+		/**
+		 * Sub-classify a data item that failed {@link #elementaryNumericDisplay}
+		 * so the corpus histogram splits the REDEFINES head into actionable
+		 * shapes (group / numeric-edited / alphanumeric / signed / non-DISPLAY)
+		 * rather than one opaque lump. Used only in rejection text.
+		 */
+		String redefineShape(final Map<String, Object> item) {
+			final List<?> ch = (List<?>) item.get("children");
+			if (ch != null && !ch.isEmpty()) {
+				return "a group";
+			}
+			if (!"DISPLAY".equals(item.get("usage"))) {
+				return "non-DISPLAY (" + item.get("usage") + ")";
+			}
+			final Map<?, ?> t = (Map<?, ?>) item.get("type");
+			if (t == null) {
+				return "untyped";
+			}
+			final Object cat = t.get("category");
+			if ("numeric".equals(cat) && Boolean.TRUE.equals(t.get("signed"))) {
+				return "signed numeric";
+			}
+			return String.valueOf(cat);
 		}
 
 		boolean elementaryNumericDisplay(final Map<String, Object> item) {
