@@ -1,0 +1,8 @@
+{
+  "$comment": "Layer A for SETTLE vs the real GnuCOBOL harness image (OCCURS affine subscripts). The four cells are generated from W-ITEM's PICTURE (9(4)V99); each case sums the even-position settlements via the strided subscript W-ITEM(2*I).",
+  "legacy": { "image": "legacymind/legacy-settle", "label": "COBOL 85 SETTLE (GnuCOBOL via harness image legacymind/legacy-settle)" },
+  "modern": { "argv": ["java", "-cp", "../../out/bench/settle/migrate/candidate-a", "Settle"], "label": "Java 21 settle (migrated candidate A)" },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "generator": { "ir": "../../out/ir/SETTLE.ir.json", "stdinFields": ["W-ITEM", "W-ITEM", "W-ITEM", "W-ITEM"], "count": 200, "seed": 20260712 }
+}

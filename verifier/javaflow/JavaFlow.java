@@ -1,3 +1,4 @@
+import com.sun.source.tree.ArrayAccessTree;
 import com.sun.source.tree.AssignmentTree;
 import com.sun.source.tree.BinaryTree;
 import com.sun.source.tree.BlockTree;
@@ -15,6 +16,7 @@ import com.sun.source.tree.LiteralTree;
 import com.sun.source.tree.MemberSelectTree;
 import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.MethodTree;
+import com.sun.source.tree.NewArrayTree;
 import com.sun.source.tree.NewClassTree;
 import com.sun.source.tree.ParenthesizedTree;
 import com.sun.source.tree.ReturnTree;
@@ -174,6 +176,13 @@ public final class JavaFlow {
                 ExpressionTree expr = exprSt.getExpression();
                 if (expr instanceof AssignmentTree assign && assign.getVariable() instanceof IdentifierTree id) {
                     merged(id.getName().toString()).mergeFrom(flowOf(assign.getExpression(), Map.of(), 0));
+                } else if (expr instanceof AssignmentTree arrAssign
+                        && arrAssign.getVariable() instanceof ArrayAccessTree arr
+                        && arr.getExpression() instanceof IdentifierTree arrId) {
+                    // OCCURS: an element write accumulates into the array's one
+                    // logical region (all cells union), mirroring the legacy
+                    // table region.
+                    merged(arrId.getName().toString()).mergeFrom(flowOf(arrAssign.getExpression(), Map.of(), 0));
                 } else if (expr instanceof MethodInvocationTree call) {
                     handleTopLevelCall(call);
                 } else {
@@ -350,6 +359,20 @@ public final class JavaFlow {
                 BigDecimal v = evalNumeric(n, bindings, depth + 1);
                 if (v != null) flow.constants.add(canon(v));
                 else for (ExpressionTree arg : n.getArguments()) flow.mergeFrom(flowOf(arg, bindings, depth + 1));
+            }
+            case ArrayAccessTree arr ->
+                // OCCURS (docs/occurs.md): a table is one logical region. A
+                // read of any element derives from the array as a whole
+                // (flow-insensitive), symmetric with the legacy side unioning
+                // every table cell — so which element the subscript picks is
+                // not tracked here (a value/index bug is layer B/C's to catch).
+                flow.mergeFrom(flowOf(arr.getExpression(), bindings, depth + 1));
+            case NewArrayTree n -> {
+                // `new BigDecimal[N]`: an empty region; array-initializer
+                // elements (if any) contribute their flow.
+                if (n.getInitializers() != null) {
+                    for (ExpressionTree e : n.getInitializers()) flow.mergeFrom(flowOf(e, bindings, depth + 1));
+                }
             }
             case MethodInvocationTree call -> flowOfCall(call, bindings, flow, depth);
             case MemberSelectTree sel -> {

@@ -299,6 +299,23 @@ into a numeric field truncates to the field's digit width, so the table
 is filled through FUNCTION NUMVAL, which parses the full value — a
 reminder that the reference tool, not the intuition, defines behavior.)
 
+The SETTLE module rounds out OCCURS access: the ledger table is filled by
+a subscripted MOVE from NUMVAL, and the settlements are summed through a
+strided affine subscript W-ITEM(2*I) (the frontend now admits affine
+subscripts in arithmetic and MOVE targets). It also closes a real layer-D
+gap. A strided subscript touches only some cells, so the natural scalar
+translation would derive its result from a subset of the inputs while the
+legacy side unions the whole table — a spurious DIVERGENT. The fix is
+symmetry: the modern extractor now treats a Java array as one flow region
+(every element writes union in, every read pulls the whole region), so a
+faithful array-and-loop translation flows exactly like the COBOL table.
+Both sides over-approximate identically; a wrong stride is a value/index
+bug that layers B and C catch (candidate B here sums the accruals instead
+of the settlements — the classic table-stride error — caught by layer B
+on any ledger whose two columns differ). Layer C still verifies the fee
+rounding half-cent directly. The byte-layout vocabulary now spans records
+(2b), REDEFINES, and OCCURS — and OCCURS reads, writes, and strides.
+
 ## Running
 
 ```

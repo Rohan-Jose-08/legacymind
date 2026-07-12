@@ -19,11 +19,18 @@ frontend run.
 
 **Status:** stages **O1 and O2 are implemented and certified** (the TABSUM
 module). The frontend lowers a fixed `OCCURS n TIMES` and admits
-subscripted references (ACCEPT / arithmetic / COMPUTE targets) to a table,
-rejecting DEPENDING ON / INDEXED / SORT / group elements; layer C resolves
-a subscript to a definite cell via the unroller and layer D unions the
-table into one logical region. O3 (group elements, 2-D, affine subscripts)
-remains designed-not-built below.
+subscripted references (ACCEPT / arithmetic / COMPUTE / MOVE targets, and
+affine subscripts like `W-VAL(2*I)`) to a table, rejecting DEPENDING ON /
+INDEXED / SORT / group elements; layer C resolves a subscript to a
+definite cell via the unroller and layer D unions the table into one
+logical region — matched on the modern side by array-region support in
+JavaFlow (an array is one flow region, all elements union), so a faithful
+array+loop translation flows symmetrically (the SETTLE module). Selective
+access (a strided subscript that touches only some cells) is covered
+dynamically by layers A/B and by layer C's per-cell obligations, not by
+layer D's coarse union — a value/index bug there is B/C's to catch. O3's
+remaining parts (group elements, 2-D tables) stay designed-not-built
+below.
 
 ## What OCCURS is
 

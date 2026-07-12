@@ -1,0 +1,4 @@
+{
+  "$comment": "Layer D for SETTLE: static data-flow equivalence between the IR and migrated candidate A (OCCURS affine subscripts + subscripted MOVE). The table W-ITEM is one logical region: its four cells (filled by four subscripted MOVEs from NUMVAL) union into input positions 0..3, and the strided reference W-ITEM(2*I) derives from that region. W-PAID sums it; W-FEE adds the 2% rate, the /100 shift, and half-up rounding.",
+  "static": { "ir": "../../out/ir/SETTLE.ir.json", "modernJava": "../../out/bench/settle/migrate/candidate-a/Settle.java" }
+}

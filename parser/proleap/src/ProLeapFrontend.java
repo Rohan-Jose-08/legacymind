@@ -1427,7 +1427,11 @@ public class ProLeapFrontend {
 			if (t == null) {
 				return null;
 			}
-			if (t.contains(" ") || (t.indexOf('(') >= 0 && !isTableSubscript(t))) {
+			// A table subscript is allowed even when its expression contains
+			// spaces (OCCURS O1 affine subscripts, e.g. W-VAL(2 * I)); any other
+			// spaced or parenthesized operand is a qualified/subscripted ref
+			// outside the subset.
+			if (!isTableSubscript(t) && (t.contains(" ") || t.indexOf('(') >= 0)) {
 				reject(stmtCtx, verb + " operand \"" + t + "\" (qualified/subscripted)");
 				return null;
 			}
@@ -1752,7 +1756,7 @@ public class ProLeapFrontend {
 				if (target == null) {
 					return null;
 				}
-				if (!ID_ONLY.matcher(target).matches()) {
+				if (!ID_ONLY.matcher(target).matches() && !isTableSubscript(target)) {
 					reject(ctx, "MOVE target \"" + target + "\" (qualified/subscripted)");
 					return null;
 				}

@@ -244,5 +244,17 @@
     "staticConfig": "benchmark/configs/tabsum-static.json",
     "migrateOut": "out/bench/tabsum/migrate",
     "certCopy": "out/certification-tabsum.json"
+  },
+  {
+    "id": "settle",
+    "programId": "SETTLE",
+    "source": "examples/settle.cbl",
+    "imageTag": "legacymind/legacy-settle",
+    "diffConfig": "benchmark/configs/settle-diff-real.json",
+    "propConfig": "benchmark/configs/settle-prop-real.json",
+    "symConfig": "benchmark/configs/settle-sym-real.json",
+    "staticConfig": "benchmark/configs/settle-static.json",
+    "migrateOut": "out/bench/settle/migrate",
+    "certCopy": "out/certification-settle.json"
   }
 ]

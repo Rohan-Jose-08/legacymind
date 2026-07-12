@@ -1,0 +1,15 @@
+{
+  "$comment": "Layer B selection cases for SETTLE vs the real GnuCOBOL harness image (OCCURS affine subscripts + subscripted MOVE, docs/occurs.md). Four amounts are filled into a table by subscripted MOVE from NUMVAL, and the settlements (even positions, W-ITEM(2*I)) are summed with a 2% fee ROUNDED. Candidate B is off by one on the stride and sums the accruals (odd positions) instead; any ledger whose accruals differ from its settlements catches it. Cases cover a typical ledger, a rounding half-cent, accruals-only (must ignore them), and a zeroed ledger.",
+  "legacy": { "image": "legacymind/legacy-settle", "label": "COBOL 85 SETTLE (GnuCOBOL via harness image legacymind/legacy-settle)" },
+  "modern": { "argv": ["java", "-cp", "../../out/bench/settle/migrate/candidate-a", "Settle"], "label": "Java 21 settle (migrated candidate A)" },
+  "protocol": { "input": "stdin-lines", "output": "kv-lines" },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "cases": [
+    { "id": "typical", "stdin": ["10.00", "25.50", "30.00", "44.50"] },
+    { "id": "rounding-half-up", "stdin": ["0.00", "12.75", "0.00", "125.00"] },
+    { "id": "accruals-only", "stdin": ["99.99", "0.00", "88.88", "0.00"] },
+    { "id": "equal-pairs", "stdin": ["5.00", "10.00", "5.00", "10.00"] },
+    { "id": "zeros", "stdin": ["0.00", "0.00", "0.00", "0.00"] }
+  ]
+}
