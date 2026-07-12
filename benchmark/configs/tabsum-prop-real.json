@@ -1,0 +1,19 @@
+{
+  "$comment": "Layer A for TABSUM vs the real GnuCOBOL harness image (OCCURS O1/O2). The four table cells are generated from W-VAL's PICTURE (9(4)V99); each case is four amounts read into the table and summed. The small-value bias exercises the sub-dollar region and the fee rounding.",
+  "legacy": {
+    "image": "legacymind/legacy-tabsum",
+    "label": "COBOL 85 TABSUM (GnuCOBOL via harness image legacymind/legacy-tabsum)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/tabsum/migrate/candidate-a", "Tabsum"],
+    "label": "Java 21 tabsum (migrated candidate A)"
+  },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "generator": {
+    "ir": "../../out/ir/TABSUM.ir.json",
+    "stdinFields": ["W-VAL", "W-VAL", "W-VAL", "W-VAL"],
+    "count": 200,
+    "seed": 20260711
+  }
+}

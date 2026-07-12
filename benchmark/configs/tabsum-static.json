@@ -1,0 +1,7 @@
+{
+  "$comment": "Layer D for TABSUM: static data-flow equivalence between the IR and migrated candidate A (OCCURS O1/O2). The table W-VAL is one logical region: its four cells (filled by the four ACCEPTs) union into input positions 0..3, and a subscripted reference W-VAL(I) derives from that region. W-TOTAL sums the region; W-FEE adds the 2% rate, the /100 shift, and half-up rounding.",
+  "static": {
+    "ir": "../../out/ir/TABSUM.ir.json",
+    "modernJava": "../../out/bench/tabsum/migrate/candidate-a/Tabsum.java"
+  }
+}

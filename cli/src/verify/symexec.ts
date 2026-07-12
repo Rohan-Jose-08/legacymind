@@ -290,6 +290,31 @@ function constantRat(item: DataItem, assigned: Set<string>): Rat | null {
   return ratOf(item.value);
 }
 
+/** The integer value of a constant affine SymVal, or null if it is not a
+ *  plain integer constant. */
+function constIntOf(v: SymVal): number | null {
+  if (v.kind !== "affine" || v.a.terms.size !== 0 || v.a.c.d !== 1n) return null;
+  return Number(v.a.c.n);
+}
+
+/**
+ * Resolve a possibly-subscripted reference to an OCCURS table cell
+ * (docs/occurs.md). Returns "notable" for a plain name; a { key, item } when
+ * the subscript reduces to an in-bounds constant (the unroller pins a loop
+ * index, a literal is constant already); or null when the subscript cannot be
+ * pinned to a constant or is out of bounds — the out-of-subset case the
+ * caller surfaces loudly. Cell k of table T is keyed `T#k` (1-based).
+ */
+function tableCell(name: string, ctx: ExprCtx): "notable" | { key: string; item: DataItem } | null {
+  const m = /^([A-Z][A-Z0-9-]*)\((.+)\)$/.exec(name);
+  if (!m) return "notable";
+  const item = findItem(ctx.items, m[1]!);
+  if (!item?.occurs) return null;
+  const k = constIntOf(parseExpression(m[2]!, ctx));
+  if (k === null || k < 1 || k > item.occurs) return null;
+  return { key: `${m[1]}#${k}`, item };
+}
+
 function parseExpression(text: string, ctx: ExprCtx): SymVal {
   const raw = text.match(/[A-Z][A-Z0-9-]*\([^)]*\)|[A-Z][A-Z0-9-]*|\d+\.\d+|\.\d+|\d+|[()+\-*/]/g) ?? [];
   let pos = 0;
@@ -320,6 +345,14 @@ function parseExpression(text: string, ctx: ExprCtx): SymVal {
       const src = ctx.env.get(m[1]!);
       if (src?.kind === "text") return { kind: "affine", a: affineVar(ctx.inputSpec(src.input)) };
       return opaque(`NUMVAL of ${m[1]} which is not a tracked input`);
+    }
+    // OCCURS O1 (docs/occurs.md): a subscripted table reference resolves to a
+    // definite cell once the subscript is a constant (a literal, or a loop
+    // index the unroller has pinned).
+    const tc = tableCell(t, ctx);
+    if (tc !== "notable") {
+      if (tc === null) return opaque(`table reference ${t} does not resolve to a constant in-bounds cell`);
+      return ctx.env.get(tc.key) ?? opaque(`table cell ${t} has no value at this point`);
     }
     const v = ctx.env.get(t);
     if (v) return v;
@@ -813,11 +846,19 @@ function cloneState(s: PathState): PathState {
 
 /** Store `val` into `target`, modeling scale truncation/rounding as fuzz. */
 function store(state: PathState, ctx: ExecCtx, target: string, val: SymVal, rounded: boolean): void {
-  if (val.kind !== "affine") {
-    state.env.set(target, val);
+  // OCCURS O1 (docs/occurs.md): a subscripted store lands in a definite table
+  // cell once the subscript is constant; the element type drives scale.
+  const tc = tableCell(target, exprCtxFor(state, ctx));
+  if (tc === null) {
+    state.env.set(target, { kind: "opaque", reason: `store to a table cell ${target} with a non-constant subscript` });
     return;
   }
-  const item = findItem(ctx.items, target);
+  const key = tc === "notable" ? target : tc.key;
+  const item = tc === "notable" ? findItem(ctx.items, target) : tc.item;
+  if (val.kind !== "affine") {
+    state.env.set(key, val);
+    return;
+  }
   const scale = item?.type?.scale ?? 0;
   const digits = item?.type?.digits;
   const grid = 10n ** BigInt(scale);
@@ -856,7 +897,7 @@ function store(state: PathState, ctx: ExecCtx, target: string, val: SymVal, roun
     }
   }
   const storedVal: Affine = { terms: val.a.terms, c: val.a.c, fuzz };
-  state.env.set(target, { kind: "affine", a: storedVal, ...(exactForm ? { exact: exactForm } : {}) });
+  state.env.set(key, { kind: "affine", a: storedVal, ...(exactForm ? { exact: exactForm } : {}) });
   // Capacity: constrain the path to the wrap-free region — solutions the
   // solver produces stay in the linear regime; wrap semantics belong to
   // layers A/B, which sample it.
@@ -908,11 +949,18 @@ function execute(stmts: Statement[], state: PathState, ctx: ExecCtx, out: PathSt
     switch (s.kind) {
       case "accept": {
         const pos = ctx.acceptOrder.indexOf(s.target);
-        const item = findItem(ctx.items, s.target);
+        // A subscripted ACCEPT target (OCCURS O1) binds a table cell; the
+        // element type decides numeric vs text, the cell key is where it lands.
+        const tc = tableCell(s.target, exprCtx());
+        if (tc === null) {
+          throw new DiffExecError(`layer C: ACCEPT into ${s.target} which is not a resolvable table cell`);
+        }
+        const key = tc === "notable" ? s.target : tc.key;
+        const item = tc === "notable" ? findItem(ctx.items, s.target) : tc.item;
         if (item?.type?.category === "numeric") {
-          state.env.set(s.target, { kind: "affine", a: affineVar(pos) });
+          state.env.set(key, { kind: "affine", a: affineVar(pos) });
         } else {
-          state.env.set(s.target, { kind: "text", input: pos });
+          state.env.set(key, { kind: "text", input: pos });
         }
         break;
       }

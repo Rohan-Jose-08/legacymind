@@ -232,5 +232,17 @@
     "staticConfig": "benchmark/configs/dues-static.json",
     "migrateOut": "out/bench/dues/migrate",
     "certCopy": "out/certification-dues.json"
+  },
+  {
+    "id": "tabsum",
+    "programId": "TABSUM",
+    "source": "examples/tabsum.cbl",
+    "imageTag": "legacymind/legacy-tabsum",
+    "diffConfig": "benchmark/configs/tabsum-diff-real.json",
+    "propConfig": "benchmark/configs/tabsum-prop-real.json",
+    "symConfig": "benchmark/configs/tabsum-sym-real.json",
+    "staticConfig": "benchmark/configs/tabsum-static.json",
+    "migrateOut": "out/bench/tabsum/migrate",
+    "certCopy": "out/certification-tabsum.json"
   }
 ]

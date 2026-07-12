@@ -1,0 +1,19 @@
+{
+  "$comment": "Layer C for TABSUM vs the real GnuCOBOL harness image (OCCURS O1/O2, docs/occurs.md). The four ACCEPTs fill table cells W-VAL(1..4) at input positions 0..3 (domain W-VAL, PIC 9(4)V99). The PERFORM VARYING loop unrolls I=1..4; each W-VAL(I) resolves to a definite cell, so W-TOTAL is the affine sum of the four inputs and the 2% fee rounding half-boundary is an affine obligation the engine solves directly.",
+  "legacy": {
+    "image": "legacymind/legacy-tabsum",
+    "label": "COBOL 85 TABSUM (GnuCOBOL via harness image legacymind/legacy-tabsum)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/tabsum/migrate/candidate-a", "Tabsum"],
+    "label": "Java 21 tabsum (migrated candidate A)"
+  },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "symbolic": {
+    "ir": "../../out/ir/TABSUM.ir.json",
+    "stdinFields": ["W-VAL", "W-VAL", "W-VAL", "W-VAL"],
+    "baseCase": ["10.00", "20.50", "5.25", "100.00"],
+    "annotations": ["W-FEE"]
+  }
+}

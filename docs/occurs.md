@@ -17,6 +17,14 @@ validated against real artifacts — GnuCOBOL 3.1.2 was probed through
 `examples/probes/occurs.cbl`, and the ProLeap API was confirmed by a live
 frontend run.
 
+**Status:** stages **O1 and O2 are implemented and certified** (the TABSUM
+module). The frontend lowers a fixed `OCCURS n TIMES` and admits
+subscripted references (ACCEPT / arithmetic / COMPUTE targets) to a table,
+rejecting DEPENDING ON / INDEXED / SORT / group elements; layer C resolves
+a subscript to a definite cell via the unroller and layer D unions the
+table into one logical region. O3 (group elements, 2-D, affine subscripts)
+remains designed-not-built below.
+
 ## What OCCURS is
 
 `05 W-VAL OCCURS 5 TIMES PIC 9(4)V99` declares five contiguous copies of a

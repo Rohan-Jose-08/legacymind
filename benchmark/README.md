@@ -274,6 +274,31 @@ layer B on every non-zero case and by layer D as a missing decimal
 shift. The same layout vocabulary now underwrites records (2b),
 REDEFINES, and, next, OCCURS.
 
+The TABSUM module is the first OCCURS program (stages O1/O2,
+docs/occurs.md): a fixed table (W-VAL OCCURS 4 TIMES) is filled from
+input and summed through a PERFORM VARYING loop over W-VAL(I), with a 2%
+fee ROUNDED on the total. OCCURS gives one name to N cells and the
+subscript chooses the cell at reference time, but the engine already has
+the tool that tames it — the loop unroller drives the canonical idiom to
+iterations each with a constant subscript, at which W-VAL(I) names one
+definite cell. So the fixed-table, constant-subscript subset adds no new
+solver surface: layer C resolves each cell, W-TOTAL is the affine sum of
+the four inputs, and the fee rounding half-cent is verified directly. The
+frontend admits subscripted references to a declared table (and strips
+the subscript variable out of value data-flow, since an index is not an
+operand) and rejects OCCURS DEPENDING ON, INDEXED BY, sort keys, and
+group elements with a specific reason. Layer D unions the table's cells
+into one logical region — symmetric with a Java sum over an array.
+Candidate B carries the archetypal table defect, the off-by-one bound
+that drops the last cell (as if the loop ran while I < 4 rather than
+until I > 4); any table with a non-zero final element catches it. The
+byte-layout vocabulary now underwrites all three data-shape corpus heads
+— records, REDEFINES, and OCCURS — from one model. (Building it also
+surfaced a real ground-truth trap: ACCEPT of a decimal value directly
+into a numeric field truncates to the field's digit width, so the table
+is filled through FUNCTION NUMVAL, which parses the full value — a
+reminder that the reference tool, not the intuition, defines behavior.)
+
 ## Running
 
 ```

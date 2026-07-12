@@ -44,6 +44,8 @@ export interface DataItem {
   filler?: true;
   /** REDEFINES R1a (proleap engine, docs/redefines.md): final name of the item this view aliases. */
   redefines?: string;
+  /** OCCURS O1 (proleap engine, docs/occurs.md): fixed element count of this table. */
+  occurs?: number;
   picture?: string;
   type?: PictureType;
   usage: string;

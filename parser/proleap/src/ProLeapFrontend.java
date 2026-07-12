@@ -256,6 +256,10 @@ public class ProLeapFrontend {
 		final Map<String, Map<String, Object>> fileRecordItems = new LinkedHashMap<>();
 		/** REDEFINES R1a (docs/redefines.md): {redefiningItemMap, rawTargetText, ctx}. */
 		final List<Object[]> pendingRedefines = new ArrayList<>();
+		/** OCCURS O1 (docs/occurs.md): fixed-count table item maps pending final naming. */
+		final List<Map<String, Object>> pendingOccurs = new ArrayList<>();
+		/** Final table name -> element count. Basis for subscripted-reference acceptance. */
+		final Map<String, Integer> occursTables = new LinkedHashMap<>();
 
 		/** preprocessed line number (1-based) -> original line number; null when inexact. */
 		int[] lineMap;
@@ -339,8 +343,16 @@ public class ProLeapFrontend {
 
 		/** Stub-parity refs extraction: declared names in order of first appearance. */
 		List<String> refsIn(final String text) {
+			// OCCURS O1: a subscript variable indexes a table, it is not a value
+			// operand, so strip TABLE(...) to TABLE before extracting value refs
+			// (the table itself stays a ref; NUMVAL(...) and the like are left
+			// intact). Keeps the loop index out of data-flow.
+			String scan = text;
+			for (final String tbl : occursTables.keySet()) {
+				scan = scan.replaceAll("\\b" + Pattern.quote(tbl) + "\\s*\\([^)]*\\)", Matcher.quoteReplacement(tbl));
+			}
 			final List<String> out = new ArrayList<>();
-			final Matcher m = IDENT.matcher(text);
+			final Matcher m = IDENT.matcher(scan);
 			while (m.find()) {
 				final String w = m.group();
 				if (declared.contains(w) && !out.contains(w)) {
@@ -503,6 +515,11 @@ public class ProLeapFrontend {
 			// Unique final names (duplicated leaves renamed), declared set,
 			// leaf index for OF/IN resolution, and 88-level captures.
 			finalizeNames();
+			// OCCURS O1: index tables by their now-final name so subscripted
+			// references TABLE(sub) can be admitted where TABLE is a table.
+			for (final Map<String, Object> t : pendingOccurs) {
+				occursTables.put((String) t.get("name"), (Integer) t.get("occurs"));
+			}
 
 			// File I/O stage 1: link each FD's (now final) record name to its
 			// file and build the files block; every SELECT needs an FD.
@@ -721,8 +738,38 @@ public class ProLeapFrontend {
 				reject(ctx, "data name \"" + name + "\" is not representable in the IR");
 				return null;
 			}
+			// OCCURS O1 (docs/occurs.md): a fixed-count table. Capture the
+			// count; gateOccurs enforces the sound subset (elementary numeric
+			// DISPLAY element) once the item's type is known. Every variable-
+			// length / indexed / sorted variant is rejected here.
+			Integer occursCount = null;
 			if (!g.getOccursClauses().isEmpty()) {
-				reject(ctx, "OCCURS");
+				if (g.getOccursClauses().size() > 1) {
+					reject(ctx, "multiple OCCURS clauses");
+				} else {
+					final io.proleap.cobol.asg.metamodel.data.datadescription.OccursClause oc =
+							g.getOccursClauses().get(0);
+					if (oc.getOccursDepending() != null) {
+						reject(ctx, "OCCURS DEPENDING ON (variable-length table)");
+					} else if (oc.getOccursIndexed() != null) {
+						reject(ctx, "OCCURS INDEXED BY");
+					} else if (!oc.getOccursSorts().isEmpty()) {
+						reject(ctx, "OCCURS with ASCENDING/DESCENDING KEY");
+					} else if (oc.getTo() != null) {
+						// getTo() is the upper bound of an `OCCURS m TO n` range;
+						// the fixed count `OCCURS n TIMES` sits in getFrom().
+						reject(ctx, "OCCURS m TO n (variable-length range)");
+					} else if (oc.getFrom() == null) {
+						reject(ctx, "OCCURS without a fixed integer count");
+					} else {
+						final String cnt = textOf(oc.getFrom().getCtx());
+						if (cnt.matches("\\d+")) {
+							occursCount = Integer.parseInt(cnt);
+						} else {
+							reject(ctx, "OCCURS count \"" + cnt + "\" is not a fixed integer");
+						}
+					}
+				}
 			}
 			// REDEFINES R1a (docs/redefines.md): capture the target; gateRedefines
 			// enforces the sound subset (numeric-over-numeric, equal digits,
@@ -811,6 +858,17 @@ public class ProLeapFrontend {
 				}
 			}
 			item.put("children", children);
+			if (occursCount != null) {
+				// O1 (docs/occurs.md): an elementary unsigned numeric DISPLAY
+				// element only; group tables and non-numeric elements are O3.
+				if (!elementaryNumericDisplay(item)) {
+					reject(ctx, "OCCURS element " + name
+							+ " is not an elementary unsigned numeric DISPLAY item (OCCURS O1)");
+				} else {
+					item.put("occurs", occursCount);
+					pendingOccurs.add(item);
+				}
+			}
 			if (!filler) {
 				// Final (unique) naming happens in finalizeNames() once every
 				// item is known: duplicated leaf names are renamed there.
@@ -1369,7 +1427,7 @@ public class ProLeapFrontend {
 			if (t == null) {
 				return null;
 			}
-			if (t.contains(" ")) {
+			if (t.contains(" ") || (t.indexOf('(') >= 0 && !isTableSubscript(t))) {
 				reject(stmtCtx, verb + " operand \"" + t + "\" (qualified/subscripted)");
 				return null;
 			}
@@ -1382,7 +1440,7 @@ public class ProLeapFrontend {
 			if (t == null) {
 				return null;
 			}
-			if (!ID_ONLY.matcher(t).matches()) {
+			if (!ID_ONLY.matcher(t).matches() && !isTableSubscript(t)) {
 				reject(stmtCtx, verb + " receiving field \"" + t + "\" (qualified/subscripted)");
 				return null;
 			}
@@ -1727,7 +1785,7 @@ public class ProLeapFrontend {
 			if (target == null) {
 				return null;
 			}
-			if (!ID_ONLY.matcher(target).matches()) {
+			if (!ID_ONLY.matcher(target).matches() && !isTableSubscript(target)) {
 				reject(ctx, "COMPUTE target \"" + target + "\" (qualified/subscripted)");
 				return null;
 			}
@@ -2117,7 +2175,7 @@ public class ProLeapFrontend {
 			if (target == null) {
 				return null;
 			}
-			if (!ID_ONLY.matcher(target).matches()) {
+			if (!ID_ONLY.matcher(target).matches() && !isTableSubscript(target)) {
 				reject(ctx, "ACCEPT target \"" + target + "\" (qualified/subscripted)");
 				return null;
 			}
@@ -2747,6 +2805,16 @@ public class ProLeapFrontend {
 				}
 				item.put("redefines", targetName);
 			}
+		}
+
+		/** True when `text` is a subscripted reference TABLE(sub) to a declared
+		 *  OCCURS table (O1). The subscript's decidability is checked in layer C. */
+		boolean isTableSubscript(final String text) {
+			final int lp = text.indexOf('(');
+			if (lp <= 0 || !text.endsWith(")")) {
+				return false;
+			}
+			return occursTables.containsKey(text.substring(0, lp));
 		}
 
 		boolean elementaryNumericDisplay(final Map<String, Object> item) {

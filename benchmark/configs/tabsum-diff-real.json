@@ -1,0 +1,21 @@
+{
+  "$comment": "Layer B selection cases for TABSUM vs the real GnuCOBOL harness image (OCCURS O1/O2, docs/occurs.md). Input is four amounts (one per line) read into W-VAL OCCURS 4 TIMES, summed through a PERFORM VARYING loop index, with a 2% fee ROUNDED. Candidate B drops the last table cell (the off-by-one bound defect); any case with a non-zero fourth amount catches it. Cases cover a typical table, a rounding half-cent, the all-equal case, a zeroed table, and a table whose weight is entirely in the last cell.",
+  "legacy": {
+    "image": "legacymind/legacy-tabsum",
+    "label": "COBOL 85 TABSUM (GnuCOBOL via harness image legacymind/legacy-tabsum)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/tabsum/migrate/candidate-a", "Tabsum"],
+    "label": "Java 21 tabsum (migrated candidate A)"
+  },
+  "protocol": { "input": "stdin-lines", "output": "kv-lines" },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "cases": [
+    { "id": "typical", "stdin": ["10.00", "20.50", "5.25", "100.00"] },
+    { "id": "rounding-half-up", "stdin": ["137.75", "0.00", "0.00", "0.00"] },
+    { "id": "all-equal", "stdin": ["25.00", "25.00", "25.00", "25.00"] },
+    { "id": "zeros", "stdin": ["0.00", "0.00", "0.00", "0.00"] },
+    { "id": "weight-in-last", "stdin": ["0.00", "0.00", "0.00", "88.88"] }
+  ]
+}

@@ -181,7 +181,10 @@ export function extractLegacyFlows(ir: ModuleIR): { outputs: Map<string, FlowRec
   const walk = (stmts: Statement[]): void => {
     for (const s of stmts) {
       if (s.kind === "accept") {
-        merged(s.target).inputs.add(stdinCounter++);
+        // OCCURS O1 (docs/occurs.md): a subscripted ACCEPT target fills one
+        // table cell; key it under the table's base name so all cells union
+        // into one logical region (the table's value refs use that base).
+        merged(s.target.replace(/\([^)]*\)$/, "")).inputs.add(stdinCounter++);
       } else if (s.kind === "read") {
         // The record area is written from the input stream: one logical
         // input position, unioned over all iterations (flow-insensitive) —
@@ -201,17 +204,20 @@ export function extractLegacyFlows(ir: ModuleIR): { outputs: Map<string, FlowRec
         walk(s.atEnd);
         walk(s.notAtEnd);
       } else if (s.kind === "compute") {
-        const flow = merged(s.target);
+        // OCCURS O1: a subscripted target lands in the table's one region.
+        const tgt = s.target.replace(/\([^)]*\)$/, "");
+        const flow = merged(tgt);
         const e = exprFlow(s.expression.text, s.expression.refs);
         flow.sources = new Set([...flow.sources, ...e.sources]);
         for (const c of e.constants) flow.constants.add(c);
         flow.shifts.push(...e.shifts);
         if (s.rounded) flow.rounding.push("half-up"); // COBOL ROUNDED: half away from zero
-        const cap = capacityOf(s.target);
+        const cap = capacityOf(tgt);
         if (cap) flow.capacities.add(cap);
       } else if (s.kind === "move") {
         const e = exprFlow(s.from.text, s.from.refs);
-        for (const target of s.to) {
+        for (const rawTarget of s.to) {
+          const target = rawTarget.replace(/\([^)]*\)$/, "");
           const flow = merged(target);
           flow.sources = new Set([...flow.sources, ...e.sources]);
           for (const c of e.constants) flow.constants.add(c);
