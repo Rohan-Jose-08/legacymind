@@ -254,6 +254,26 @@ to follow `substring` (a field derives from its record line) and taught
 both sides that a numeric field's implied `V` decimal is a real decimal
 shift of the raw input bytes, so the flows match without a hack.
 
+The DUES module is the first REDEFINES program (stage R1a,
+docs/redefines.md): the legacy record stores a dues amount as a whole
+number of cents, and `WS-DOLLARS REDEFINES` that field reinterprets the
+same six digits as dollars-and-cents for the money math. REDEFINES is
+byte aliasing, and layer C's store is keyed by name, so it needs its own
+stage — but the read-only, equal-width, numeric-over-numeric subset
+reduces to a pure decimal shift (`value(view) = value(target) ·
+10^(target.scale − view.scale)`), the operation layers C and D already
+model. The frontend gate admits exactly that shape and rejects the rest
+with a specific reason (a written view, a width mismatch, a non-numeric
+view). Because the reinterpreted view is affine in the input, layer C is
+gap-free: it verifies both the 100.00 tier boundary and the 5% fee
+rounding half-cent directly (the congruence lands the fee on a half-cent
+at every cents value ≡ 10 mod 20). Candidate B carries the wrong-scale
+reinterpretation — the archetypal REDEFINES defect, reading the view at
+its target's scale so every amount comes out 100x too large — caught by
+layer B on every non-zero case and by layer D as a missing decimal
+shift. The same layout vocabulary now underwrites records (2b),
+REDEFINES, and, next, OCCURS.
+
 ## Running
 
 ```

@@ -1,0 +1,19 @@
+{
+  "$comment": "Layer C for DUES vs the real GnuCOBOL harness image (REDEFINES R1a, docs/redefines.md). Input position 0 is the cents integer (domain WS-CENTS, PIC 9(6)); WS-DOLLARS REDEFINES WS-CENTS, so a read of WS-DOLLARS resolves to WS-CENTS at a shifted scale (value * 10^(0-2)) - a pure decimal shift, affine in the input. The 5% fee rounding half-boundary and the 100.00 tier boundary are both affine obligations the engine solves directly.",
+  "legacy": {
+    "image": "legacymind/legacy-dues",
+    "label": "COBOL 85 DUES (GnuCOBOL via harness image legacymind/legacy-dues)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/dues/migrate/candidate-a", "Dues"],
+    "label": "Java 21 dues (migrated candidate A)"
+  },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "symbolic": {
+    "ir": "../../out/ir/DUES.ir.json",
+    "stdinFields": ["WS-CENTS"],
+    "baseCase": ["20010"],
+    "annotations": ["WS-FEE"]
+  }
+}

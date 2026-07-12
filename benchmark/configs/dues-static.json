@@ -1,0 +1,7 @@
+{
+  "$comment": "Layer D for DUES: static data-flow equivalence between the IR and migrated candidate A (REDEFINES R1a). WS-DOLLARS REDEFINES WS-CENTS, so on the legacy side the view derives from the cents input with a decimal shift of 2 - symmetric with the modern side's movePointLeft(2). DOLLARS carries that shift; FEE carries it plus the /100 shift, constant 5, and half-up rounding; TIER is control flow over WS-DOLLARS.",
+  "static": {
+    "ir": "../../out/ir/DUES.ir.json",
+    "modernJava": "../../out/bench/dues/migrate/candidate-a/Dues.java"
+  }
+}

@@ -42,6 +42,8 @@ export interface DataItem {
   path: string;
   /** Storage-only FILLER item (proleap engine): synthesized name, never referenced. */
   filler?: true;
+  /** REDEFINES R1a (proleap engine, docs/redefines.md): final name of the item this view aliases. */
+  redefines?: string;
   picture?: string;
   type?: PictureType;
   usage: string;

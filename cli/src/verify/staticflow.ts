@@ -138,6 +138,24 @@ export function extractLegacyFlows(ir: ModuleIR): { outputs: Map<string, FlowRec
     return f;
   };
 
+  // REDEFINES R1a (docs/redefines.md): a read-only numeric view derives from
+  // its target with a decimal shift equal to the scale difference — symmetric
+  // with the modern side's explicit movePointLeft when reinterpreting the
+  // same digits at a different implied scale.
+  const seedRedefines = (list: DataItem[]): void => {
+    for (const it of list) {
+      if (it.redefines) {
+        const target = findItem(items, it.redefines);
+        const f = merged(it.name);
+        f.sources.add(it.redefines);
+        const delta = (it.type?.scale ?? 0) - (target?.type?.scale ?? 0);
+        if (delta !== 0) f.shifts.push(delta);
+      }
+      seedRedefines(it.children ?? []);
+    }
+  };
+  seedRedefines(items);
+
   const exprFlow = (text: string, refs: string[]): FlowRec => {
     const flow = newFlow();
     for (const ref of refs) {

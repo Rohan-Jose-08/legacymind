@@ -6,10 +6,17 @@ ahead of qualified/subscripted MOVE at 3,161 and the whole file-I/O
 family). REDEFINES is the aliasing half of the byte-layout model that
 file I/O stage 2b built (`docs/memory-layout.md`): 2b decodes one byte
 range through one layout; REDEFINES decodes the *same* byte range through
-*two*. This document designs the model before any verifier code is
-written. Every claim is validated against real artifacts — GnuCOBOL
-3.1.2 was probed through `examples/probes/redefines.cbl`, and the ProLeap
-API surface was confirmed by a live frontend run.
+*two*. This document designs the model. Every claim is validated against
+real artifacts — GnuCOBOL 3.1.2 was probed through
+`examples/probes/redefines.cbl`, and the ProLeap API surface was
+confirmed by a live frontend run.
+
+**Status:** stage **R1a is implemented and certified** (the DUES module).
+The frontend gate admits the read-only, equal-width, numeric-over-numeric
+subset and rejects every other shape with a specific reason; layer C
+resolves a view read as the target's value at a shifted scale, and layer
+D carries the same shift on the legacy side. R1b (cross-category) and R2
+(write-through) remain designed-not-built below.
 
 ## What REDEFINES is
 

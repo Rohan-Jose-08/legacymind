@@ -220,5 +220,17 @@
     "staticConfig": "benchmark/configs/rebate-static.json",
     "migrateOut": "out/bench/rebate/migrate",
     "certCopy": "out/certification-rebate.json"
+  },
+  {
+    "id": "dues",
+    "programId": "DUES",
+    "source": "examples/dues.cbl",
+    "imageTag": "legacymind/legacy-dues",
+    "diffConfig": "benchmark/configs/dues-diff-real.json",
+    "propConfig": "benchmark/configs/dues-prop-real.json",
+    "symConfig": "benchmark/configs/dues-sym-real.json",
+    "staticConfig": "benchmark/configs/dues-static.json",
+    "migrateOut": "out/bench/dues/migrate",
+    "certCopy": "out/certification-dues.json"
   }
 ]

@@ -324,6 +324,21 @@ function parseExpression(text: string, ctx: ExprCtx): SymVal {
     const v = ctx.env.get(t);
     if (v) return v;
     const item = findItem(ctx.items, t);
+    if (item?.redefines) {
+      // REDEFINES R1a (docs/redefines.md): a read-only numeric view over the
+      // same digits as its target is the target's value at a shifted implied
+      // scale — a pure decimal shift, value(view) = value(target)·10^Δ with
+      // Δ = target.scale − view.scale.
+      const target = findItem(ctx.items, item.redefines);
+      const konstT = target ? constantRat(target, ctx.assigned) : null;
+      const tv = ctx.env.get(item.redefines) ?? (konstT ? { kind: "affine" as const, a: affineConst(konstT) } : null);
+      if (tv) {
+        const delta = (target?.type?.scale ?? 0) - (item.type?.scale ?? 0);
+        const k = delta >= 0 ? rat(10n ** BigInt(delta), 1n) : rat(1n, 10n ** BigInt(-delta));
+        return scaleVal(tv, k);
+      }
+      return opaque(`redefines target ${item.redefines} has no symbolic value at this point`);
+    }
     const konst = item ? constantRat(item, ctx.assigned) : null;
     if (konst) return { kind: "affine", a: affineConst(konst) };
     return opaque(`identifier ${t} has no symbolic value`);

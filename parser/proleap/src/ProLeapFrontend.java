@@ -254,6 +254,8 @@ public class ProLeapFrontend {
 		final Map<String, Map<String, Object>> fileEntries = new LinkedHashMap<>();
 		/** File name -> its FD record's item map (for stage-2a shape checks). */
 		final Map<String, Map<String, Object>> fileRecordItems = new LinkedHashMap<>();
+		/** REDEFINES R1a (docs/redefines.md): {redefiningItemMap, rawTargetText, ctx}. */
+		final List<Object[]> pendingRedefines = new ArrayList<>();
 
 		/** preprocessed line number (1-based) -> original line number; null when inexact. */
 		int[] lineMap;
@@ -627,6 +629,9 @@ public class ProLeapFrontend {
 			gateGotos(paragraphs);
 			// File I/O gate: modes, stage-2a READ placement, ACCEPT exclusion.
 			gateFiles(paragraphs);
+			// REDEFINES gate: R1a sound subset (numeric-over-numeric, equal
+			// digits, read-only redefining view).
+			gateRedefines(paragraphs);
 
 			if (!unsupported.isEmpty()) {
 				return null;
@@ -719,8 +724,14 @@ public class ProLeapFrontend {
 			if (!g.getOccursClauses().isEmpty()) {
 				reject(ctx, "OCCURS");
 			}
-			if (g.getRedefinesClause() != null) {
-				reject(ctx, "REDEFINES");
+			// REDEFINES R1a (docs/redefines.md): capture the target; gateRedefines
+			// enforces the sound subset (numeric-over-numeric, equal digits,
+			// read-only redefining view) once the whole program is lowered.
+			String redefinesTarget = null;
+			if (g.getRedefinesClause() != null && g.getRedefinesClause().getRedefinesCall() != null) {
+				redefinesTarget = textOf(g.getRedefinesClause().getRedefinesCall().getCtx());
+			} else if (g.getRedefinesClause() != null) {
+				reject(ctx, "REDEFINES without a resolvable target");
 			}
 			if (g.getSignClause() != null || g.getJustifiedClause() != null || g.getSynchronizedClause() != null
 					|| g.getBlankWhenZeroClause() != null || g.getExternalClause() != null
@@ -811,6 +822,9 @@ public class ProLeapFrontend {
 					}
 				}
 				pendingItems.add(new Object[] { item, name, ancestors });
+			}
+			if (redefinesTarget != null) {
+				pendingRedefines.add(new Object[] { item, redefinesTarget, ctx });
 			}
 			return item;
 		}
@@ -2666,6 +2680,129 @@ public class ProLeapFrontend {
 					for (final Object r : (List<?>) refs) {
 						out.add((String) r);
 					}
+				}
+			}
+		}
+
+		/**
+		 * REDEFINES gate. Stage R1a (docs/redefines.md): a redefining view is
+		 * accepted only when it and its target are both elementary unsigned
+		 * numeric DISPLAY items of equal digit count (so the reinterpret is a
+		 * pure decimal shift) and the redefining view is never written (so
+		 * there is no aliasing update - only an aliasing read). The resolved
+		 * target name is attached as the item's "redefines"; every other shape
+		 * is rejected with a specific reason.
+		 */
+		void gateRedefines(final List<Object> paragraphs) {
+			if (pendingRedefines.isEmpty()) {
+				return;
+			}
+			final Map<String, Map<String, Object>> byName = new LinkedHashMap<>();
+			for (final Object[] pi : pendingItems) {
+				@SuppressWarnings("unchecked")
+				final Map<String, Object> it = (Map<String, Object>) pi[0];
+				byName.put((String) it.get("name"), it);
+			}
+			final Set<String> written = new LinkedHashSet<>();
+			for (final Object po : paragraphs) {
+				collectWriteTargets((List<?>) ((Map<?, ?>) po).get("statements"), written);
+			}
+			for (final Object[] pr : pendingRedefines) {
+				@SuppressWarnings("unchecked")
+				final Map<String, Object> item = (Map<String, Object>) pr[0];
+				final String rawTarget = (String) pr[1];
+				final ParserRuleContext ctx = (ParserRuleContext) pr[2];
+				final String itemName = (String) item.get("name");
+				final String targetName = resolveQualified(rawTarget, ctx);
+				if (targetName == null) {
+					continue; // resolveQualified enumerated the ambiguity
+				}
+				final Map<String, Object> target = byName.get(targetName);
+				if (target == null) {
+					unsupported.add("REDEFINES " + rawTarget
+							+ " which is not a WORKING-STORAGE data item (file I/O REDEFINES R1a)");
+					continue;
+				}
+				if (!elementaryNumericDisplay(item)) {
+					unsupported.add("REDEFINES view " + itemName
+							+ " is not an elementary unsigned numeric DISPLAY item (REDEFINES R1a)");
+					continue;
+				}
+				if (!elementaryNumericDisplay(target)) {
+					unsupported.add("REDEFINES target " + targetName
+							+ " is not an elementary unsigned numeric DISPLAY item (REDEFINES R1a)");
+					continue;
+				}
+				final int di = digitsOf(item);
+				final int dt = digitsOf(target);
+				if (di != dt) {
+					unsupported.add("REDEFINES view " + itemName + " (" + di + " digits) and target " + targetName
+							+ " (" + dt + " digits) differ in width (REDEFINES R1a requires equal digit count)");
+					continue;
+				}
+				if (written.contains(itemName)) {
+					unsupported.add("REDEFINES view " + itemName + " is written in the PROCEDURE DIVISION"
+							+ " (REDEFINES R1a requires the redefining view to be read-only)");
+					continue;
+				}
+				item.put("redefines", targetName);
+			}
+		}
+
+		boolean elementaryNumericDisplay(final Map<String, Object> item) {
+			final List<?> ch = (List<?>) item.get("children");
+			if (ch != null && !ch.isEmpty()) {
+				return false;
+			}
+			if (!"DISPLAY".equals(item.get("usage"))) {
+				return false;
+			}
+			final Map<?, ?> t = (Map<?, ?>) item.get("type");
+			if (t == null || !"numeric".equals(t.get("category")) || Boolean.TRUE.equals(t.get("signed"))) {
+				return false;
+			}
+			return true;
+		}
+
+		int digitsOf(final Map<String, Object> item) {
+			final Map<?, ?> t = (Map<?, ?>) item.get("type");
+			final Object d = t == null ? null : t.get("digits");
+			return d instanceof Integer ? (Integer) d : -1;
+		}
+
+		/** Data items written (assigned) anywhere in the procedure division. */
+		void collectWriteTargets(final List<?> stmts, final Set<String> out) {
+			for (final Object so : stmts) {
+				final Map<?, ?> s = (Map<?, ?>) so;
+				final String kind = (String) s.get("kind");
+				switch (kind) {
+				case "move":
+					for (final Object t : (List<?>) s.get("to")) {
+						out.add((String) t);
+					}
+					break;
+				case "compute":
+					out.add((String) s.get("target"));
+					break;
+				case "accept":
+					out.add((String) s.get("target"));
+					break;
+				case "read":
+					out.add((String) s.get("record"));
+					collectWriteTargets((List<?>) s.get("atEnd"), out);
+					collectWriteTargets((List<?>) s.get("notAtEnd"), out);
+					break;
+				case "perform-varying":
+					out.add((String) ((Map<?, ?>) s.get("varying")).get("var"));
+					break;
+				case "if":
+					collectWriteTargets((List<?>) s.get("then"), out);
+					if (s.get("else") != null) {
+						collectWriteTargets((List<?>) s.get("else"), out);
+					}
+					break;
+				default:
+					break;
 				}
 			}
 		}

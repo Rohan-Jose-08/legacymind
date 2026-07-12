@@ -1,0 +1,23 @@
+{
+  "$comment": "Layer B selection cases for DUES vs the real GnuCOBOL harness image (REDEFINES R1a, docs/redefines.md). Input is the dues amount in whole cents; WS-DOLLARS REDEFINES the cents field, reinterpreting the same digits at scale 2 (a pure decimal shift). Candidate B misreads the view at the same scale as its target - the wrong-scale reinterpretation - so every dues value comes out 100x too large. Cases cover the 100.00 tier boundary (LOW, since 100 is not > 100), just over it, a rounding half-cent, and small and large amounts.",
+  "legacy": {
+    "image": "legacymind/legacy-dues",
+    "label": "COBOL 85 DUES (GnuCOBOL via harness image legacymind/legacy-dues)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/dues/migrate/candidate-a", "Dues"],
+    "label": "Java 21 dues (migrated candidate A)"
+  },
+  "protocol": { "input": "stdin-lines", "output": "kv-lines" },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "cases": [
+    { "id": "tier-boundary", "stdin": ["10000"] },
+    { "id": "just-over-boundary", "stdin": ["10001"] },
+    { "id": "rounding-half-up", "stdin": ["20010"] },
+    { "id": "typical-high", "stdin": ["15025"] },
+    { "id": "low-tier", "stdin": ["05000"] },
+    { "id": "tiny", "stdin": ["00010"] },
+    { "id": "zero", "stdin": ["00000"] }
+  ]
+}

@@ -1,7 +1,7 @@
 {
   "tool": "legacymind benchmark",
   "version": "0.1.0",
-  "generatedAt": "2026-07-11T19:31:29.232Z",
+  "generatedAt": "2026-07-12T09:06:29.059Z",
   "toolchain": {
     "parser": "proleap engine (ProLeap ANTLR4 COBOL85 grammar + reference-format preprocessor, JVM)",
     "legacy": "GnuCOBOL 3.1.2 (debian:bookworm-slim, sandboxed: --network none, --rm)",
@@ -14,7 +14,7 @@
       "programId": "PAYROLL",
       "source": "examples/payroll.cbl",
       "loc": 59,
-      "wallSeconds": 63.1,
+      "wallSeconds": 79,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -75,7 +75,7 @@
       "programId": "INTEREST",
       "source": "benchmark/modules/interest.cbl",
       "loc": 53,
-      "wallSeconds": 62.3,
+      "wallSeconds": 70,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -134,7 +134,7 @@
       "programId": "DISCOUNT",
       "source": "benchmark/modules/discount.cbl",
       "loc": 54,
-      "wallSeconds": 61.2,
+      "wallSeconds": 68.4,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -195,7 +195,7 @@
       "programId": "LEDGER",
       "source": "benchmark/modules/ledger.cbl",
       "loc": 72,
-      "wallSeconds": 66.1,
+      "wallSeconds": 90.4,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -256,7 +256,7 @@
       "programId": "COMPOUND",
       "source": "benchmark/modules/compound.cbl",
       "loc": 52,
-      "wallSeconds": 66.3,
+      "wallSeconds": 78.7,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -315,7 +315,7 @@
       "programId": "TAXCALC",
       "source": "benchmark/modules/taxcalc.cbl",
       "loc": 58,
-      "wallSeconds": 68,
+      "wallSeconds": 82.7,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -374,7 +374,7 @@
       "programId": "GRADE",
       "source": "benchmark/modules/grade.cbl",
       "loc": 47,
-      "wallSeconds": 65.3,
+      "wallSeconds": 78.4,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -436,7 +436,7 @@
       "programId": "COMMISSION",
       "source": "benchmark/modules/commission.cbl",
       "loc": 49,
-      "wallSeconds": 65.8,
+      "wallSeconds": 77,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -495,7 +495,7 @@
       "programId": "SENIOR",
       "source": "benchmark/modules/senior.cbl",
       "loc": 38,
-      "wallSeconds": 64,
+      "wallSeconds": 63.7,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -557,7 +557,7 @@
       "programId": "TIER",
       "source": "benchmark/modules/tier.cbl",
       "loc": 37,
-      "wallSeconds": 68.7,
+      "wallSeconds": 71.1,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -616,7 +616,7 @@
       "programId": "INVOICE",
       "source": "benchmark/modules/invoice.cbl",
       "loc": 41,
-      "wallSeconds": 67.3,
+      "wallSeconds": 73.2,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -675,7 +675,7 @@
       "programId": "SHIPPING",
       "source": "benchmark/modules/shipping.cbl",
       "loc": 55,
-      "wallSeconds": 67,
+      "wallSeconds": 67.9,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -734,7 +734,7 @@
       "programId": "TRANSFER",
       "source": "benchmark/modules/transfer.cbl",
       "loc": 52,
-      "wallSeconds": 68.5,
+      "wallSeconds": 63.8,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -793,7 +793,7 @@
       "programId": "RETAIL",
       "source": "benchmark/modules/retail.cbl",
       "loc": 45,
-      "wallSeconds": 63,
+      "wallSeconds": 72.1,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -855,7 +855,7 @@
       "programId": "PAYSLIP",
       "source": "benchmark/modules/payslip.cbl",
       "loc": 55,
-      "wallSeconds": 87.7,
+      "wallSeconds": 94.5,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -916,7 +916,7 @@
       "programId": "BONUS",
       "source": "benchmark/modules/bonus.cbl",
       "loc": 46,
-      "wallSeconds": 72.7,
+      "wallSeconds": 94.3,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -977,7 +977,7 @@
       "programId": "BATCHSUM",
       "source": "examples/batchsum.cbl",
       "loc": 44,
-      "wallSeconds": 70.2,
+      "wallSeconds": 85,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -1039,7 +1039,7 @@
       "programId": "REBATE",
       "source": "examples/rebate.cbl",
       "loc": 52,
-      "wallSeconds": 82.9,
+      "wallSeconds": 101.7,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -1090,6 +1090,67 @@
         "layer C: 2 obligation(s) could not be realized as inputs (see report)",
         "layer C: 13 obligation-path combination(s) unrealized (see report)",
         "layer D: 2 storage-capacity difference(s) flagged as warnings — statically inconclusive, covered dynamically by layers A/B/C"
+      ],
+      "signature": {
+        "algorithm": "ed25519",
+        "keyId": "9b70a354efb9feab",
+        "verified": true
+      }
+    },
+    {
+      "id": "dues",
+      "programId": "DUES",
+      "source": "examples/dues.cbl",
+      "loc": 35,
+      "wallSeconds": 85.8,
+      "steps": {
+        "parse": true,
+        "image": "skipped",
+        "migrate": true,
+        "layerA": true,
+        "layerC": true,
+        "layerD": true,
+        "certify": true,
+        "verifyCert": true
+      },
+      "verdict": "CERTIFIED",
+      "winner": "a",
+      "candidates": 2,
+      "costUsd": 0,
+      "layerB": {
+        "curatedCases": 7
+      },
+      "layerA": {
+        "passed": 200,
+        "generated": 200,
+        "seed": 20260711
+      },
+      "layerC": {
+        "obligations": {
+          "total": 2,
+          "verified": 2,
+          "divergent": 0,
+          "unrealized": 0,
+          "notApplicable": 0
+        },
+        "paths": {
+          "total": 2,
+          "covered": 2,
+          "unknown": 0,
+          "infeasible": 0
+        }
+      },
+      "layerD": {
+        "keys": {
+          "total": 3,
+          "verified": 3,
+          "divergent": 0,
+          "unresolved": 0
+        },
+        "capacityWarnings": 1
+      },
+      "gaps": [
+        "layer D: 1 storage-capacity difference(s) flagged as warnings — statically inconclusive, covered dynamically by layers A/B/C"
       ],
       "signature": {
         "algorithm": "ed25519",

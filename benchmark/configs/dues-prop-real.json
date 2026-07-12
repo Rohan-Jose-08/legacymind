@@ -1,0 +1,19 @@
+{
+  "$comment": "Layer A for DUES vs the real GnuCOBOL harness image (REDEFINES R1a). Generated cents span the PIC 9(6) range; each is read as text, NUMVAL'd into WS-CENTS, and reinterpreted through the REDEFINES view. The small-value bias exercises the sub-dollar region and the tier boundary.",
+  "legacy": {
+    "image": "legacymind/legacy-dues",
+    "label": "COBOL 85 DUES (GnuCOBOL via harness image legacymind/legacy-dues)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/dues/migrate/candidate-a", "Dues"],
+    "label": "Java 21 dues (migrated candidate A)"
+  },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "generator": {
+    "ir": "../../out/ir/DUES.ir.json",
+    "stdinFields": ["WS-CENTS"],
+    "count": 200,
+    "seed": 20260711
+  }
+}
