@@ -2263,6 +2263,25 @@ export function runSymExec(configPath: string, outPath: string): number {
         continue;
       }
       if (exprVal.kind === "affine") {
+        // The expression reads a value that was itself rounded. Try the
+        // composed congruence (docs/composed-rounding.md) — solve for the
+        // rounded intermediate, then invert its rounding to an input — before
+        // disclosing the path as unrealized.
+        const ex = exactOf(exprVal);
+        const composed = ex
+          ? solveComposedRounding(ex, st, inputs, fixedCandidatesFor(pathId), path.state.constraints, maxSolutions)
+          : [];
+        if (composed.length > 0) {
+          anySolvable = true;
+          for (const { x, j } of composed) {
+            ob.cases.push({
+              id: `sym-${ob.id}-p${pathId}-${ob.cases.length}`,
+              stdin: toStdin(x, path.state.readCount),
+              note: `${inputs[j]!.name} = ${ratToDecimal(x[j]!, inputs[j]!.scale)} lands ${cmp.target} on a half-${st === 0 ? "unit" : "cent"} through a rounded intermediate (path #${pathId})`,
+            });
+          }
+          continue;
+        }
         ob.unrealizedPaths.push({ path: pathId, reason: "expression carries rounding drift on this path" });
         continue;
       }
@@ -2507,6 +2526,102 @@ function solveThroughRounding(
     if (solved) return solved;
   }
   return null;
+}
+
+/**
+ * Composed rounding (docs/composed-rounding.md): realize a rounding
+ * half-boundary for an expression that reads a value that was itself
+ * rounded — A0 + coeff·round_s(a·x_j + b), constant A0, affine inner over
+ * one input variable. The pre-rounded value coeff·D + A0 (D the
+ * intermediate's rounded value) is discrete in D, so: (1) solve the outer
+ * congruence for D such that coeff·D + A0 lands on a half-unit at target
+ * scale `st`; (2) invert round_s(a·x_j+b) = D to an on-grid input; (3)
+ * return survivors of the full path-constraint filter. A bad proposal is
+ * dropped, never trusted. First-implementation subset: half-up inner,
+ * a > 0, unsigned; everything else returns [] and keeps the disclosure.
+ */
+function solveComposedRounding(
+  exact: ExactForm,
+  st: number,
+  inputs: InputVar[],
+  fixedCandidates: Assignment[],
+  constraints: Constraint[],
+  maxSolutions: number,
+): { x: Assignment; j: number }[] {
+  if (exact.rounds.length !== 1 || exact.affine.terms.size !== 0) return [];
+  const rt = exact.rounds[0]!;
+  if (rt.mode !== "half-up" || rt.inner.rounds.length > 0) return [];
+  const inner = rt.inner.affine;
+  if (inner.terms.size !== 1) return [];
+  const [j, a] = [...inner.terms.entries()][0]!;
+  const spec = inputs[j];
+  if (!spec?.numeric || rCmp(a, R0) <= 0 || rCmp(rt.coeff, R0) <= 0) return [];
+  const A0 = exact.affine.c;
+  const coeff = rt.coeff;
+  const b = inner.c;
+  const innerScale = rt.scale;
+
+  // scaleL: smallest scale at which P = A0 + coeff·D is integral for every
+  // integer grid value D·10^innerScale. Then m = 10^(scaleL−st), h = m/2 is
+  // the half-unit at the target scale.
+  const sc = pow10Scale(coeff.d);
+  const sA = pow10Scale(A0.d);
+  if (sc === null || sA === null) return [];
+  const scaleL = Math.max(sc + innerScale, sA);
+  const modExp = scaleL - st;
+  if (modExp <= 0) return []; // P is exact at the target scale; no boundary
+  const m = 10n ** BigInt(modExp);
+  const h = m / 2n;
+  // P·10^scaleL = A0s + K·D_grid, both integers.
+  const A0s = rMul(A0, { n: 10n ** BigInt(scaleL), d: 1n });
+  const K = rMul(coeff, { n: 10n ** BigInt(scaleL - innerScale), d: 1n });
+  if (A0s.d !== 1n || K.d !== 1n) return [];
+
+  // Half-up round of a rational to scale `s`, as its integer grid value.
+  const roundGrid = (y: Rat, s: number): bigint => {
+    const t = rAdd(rMul(y, { n: 10n ** BigInt(s), d: 1n }), { n: 1n, d: 2n });
+    return t.n >= 0n ? t.n / t.d : -((-t.n + t.d - 1n) / t.d);
+  };
+  const innerAtMax = rAdd(rMul(a, spec.max), b);
+  const dMaxGrid = roundGrid(innerAtMax, innerScale);
+  if (dMaxGrid <= 0n) return [];
+
+  // Start the D search at the smallest intermediate reachable under this
+  // path's constraints, derived from any linear lower bound on the input
+  // (e.g. a rounded compute gated behind WS-SALES > 50000). Only affects
+  // where the search starts; the filter still decides.
+  let minDGrid = 0n;
+  const minAScaled = freeVarLowerBoundScaled(constraints, j, spec.scale);
+  if (minAScaled !== null && minAScaled > 0n) {
+    const dLow = roundGrid(rAdd(rMul(a, rat(minAScaled, 10n ** BigInt(spec.scale))), b), innerScale);
+    if (dLow > 0n) minDGrid = dLow;
+  }
+
+  // Outer congruence: K·D_grid ≡ (h − A0s) (mod m).
+  const target = (((h - A0s.n) % m) + m) % m;
+  const dSols = solveCongruence(K.n, target, m, maxSolutions * 3, dMaxGrid, minDGrid);
+
+  const halfInner = rDiv(ulpOf(innerScale), { n: 2n, d: 1n });
+  const xUlp = ulpOf(spec.scale);
+  const out: { x: Assignment; j: number }[] = [];
+  for (const dGrid of dSols) {
+    if (out.length >= maxSolutions) break;
+    const D = rat(dGrid, 10n ** BigInt(innerScale));
+    // round_s(a·x+b) = D ⟺ a·x+b ∈ [D−½ulp, D+½ulp) for half-up.
+    const lo = rDiv(rSub(rSub(D, halfInner), b), a);
+    const hi = rDiv(rSub(rAdd(D, halfInner), b), a);
+    const x0 = gridCeil(lo, xUlp, false);
+    if (rCmp(x0, R0) < 0 || rCmp(x0, hi) >= 0 || rCmp(x0, spec.max) > 0) continue;
+    for (const base of fixedCandidates) {
+      const x: Assignment = [...base];
+      x[j] = x0;
+      if (allConstraintsHold(constraints, x) === true) {
+        out.push({ x, j });
+        break;
+      }
+    }
+  }
+  return out;
 }
 
 /**

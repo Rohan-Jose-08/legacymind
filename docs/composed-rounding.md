@@ -120,12 +120,23 @@ these expressions.
 
 ## Per-obligation effect and regression bar
 
-- **RETAIL** `round-2` moves `UNREALIZED → VERIFIED`; the RETAIL
-  certificate becomes gap-free (its only remaining disclosure was this
-  one).
-- **BONUS** (nested uplift over 50000) and **PAYSLIP** carry the same
-  shape and should tighten similarly; each is checked against its own
-  ground truth before claiming it.
+- **RETAIL** `round-2` moves `UNREALIZED → VERIFIED` (witnesses
+  A = 1.67, 6.12, 10.56, 15.00, 19.45, all confirmed on the real binary).
+  A residual disclosure remains on the high-tier path, where the gating
+  constraint is `WS-TOTAL > 500` over the *rounded* total — a linear
+  lower bound on the input cannot be derived from a rounded constraint,
+  so the composed search cannot start in that region. That is the same
+  limit RETAIL's `round-1` already discloses on the same path, not a new
+  one, and is a named future depth (a lower bound *through* a rounding).
+- **BONUS** (nested uplift over 50000) becomes **gap-free**: its uplift
+  is gated behind `IF WS-SALES > 50000` — a *direct-input* constraint —
+  so `freeVarLowerBoundScaled` yields the lower bound and the composed
+  search starts at the reachable intermediate (witness WS-SALES ≈
+  50000.17, D = 1500.01), confirmed on the binary.
+
+So the composed solve starts its congruence at the smallest intermediate
+reachable under the path's *linear* input bounds; where the gate is a
+rounded quantity (RETAIL's high tier) the honest disclosure stays.
 - **The regression bar is absolute**: every other module's layer-C
   summary must stay byte-identical (the composed solve only fires on the
   new shape — affine-with-round-drift single-term expressions — which no
