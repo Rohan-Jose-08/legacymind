@@ -1,0 +1,7 @@
+{
+  "$comment": "Layer D for REMIT: static data-flow equivalence for the PROGRAM outputs (ACCT_ID, ROWS). The advice file's AMT/CHG/NET records are outside layer D at file I/O stage 1 - the candidate serializes them via System.out.write, which the extractor deliberately does not treat as key derivation - and are covered dynamically by layers A/B/C on every case through the file-serializing wrapper (candidate B's stale-buffer CHG line is layer B's catch).",
+  "static": {
+    "ir": "../../out/ir/REMIT.ir.json",
+    "modernJava": "../../out/bench/remit/migrate/candidate-a/Remit.java"
+  }
+}

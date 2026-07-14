@@ -339,6 +339,23 @@ read input 1). Misaligned widths, written view leaves, and
 group-as-whole references are each rejected loudly with the specific
 reason, validated by probe.
 
+The REMIT module brings `WRITE ... FROM` into the lowered subset. The
+phrase is clean sugar (ISO 14.9.47): `WRITE rec FROM x` is `MOVE x TO
+rec` followed by `WRITE rec`, and the frontend desugars it to exactly
+that statement pair — validated byte-for-byte against GnuCOBOL first
+(`examples/probes/writefrom.cbl`, which also confirms the record area
+keeps the moved bytes afterward: a bare re-WRITE emits them again). The
+remittance advice builds each AMT/CHG/NET line in a WORKING-STORAGE
+group and writes the record FROM it; the 1.5% handling charge's ROUNDED
+half-cent ties land at odd whole dollars, congruence-solved by layer C
+with every witness confirmed on the real binary. Candidate B drops the
+desugared MOVE on the second write and emits the stale record buffer —
+the classic WRITE FROM migration bug — caught by layer B on every case
+as a missing CHG key and a duplicated AMT line. ADVANCING, END-OF-PAGE
+and INVALID KEY remain rejected, now under their own histogram bucket so
+the corpus backlog distinguishes the sugar (lowered) from the page-
+control family (not).
+
 ## Running
 
 ```

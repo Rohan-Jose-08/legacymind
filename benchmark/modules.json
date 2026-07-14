@@ -268,5 +268,19 @@
     "staticConfig": "benchmark/configs/locker-static.json",
     "migrateOut": "out/bench/locker/migrate",
     "certCopy": "out/certification-locker.json"
+  },
+  {
+    "id": "remit",
+    "programId": "REMIT",
+    "source": "benchmark/modules/remit.cbl",
+    "imageTag": "legacymind/legacy-remit",
+    "dockerfile": "harness/gnucobol/Dockerfile.file",
+    "outFile": "remit.dat",
+    "diffConfig": "benchmark/configs/remit-diff-real.json",
+    "propConfig": "benchmark/configs/remit-prop-real.json",
+    "symConfig": "benchmark/configs/remit-sym-real.json",
+    "staticConfig": "benchmark/configs/remit-static.json",
+    "migrateOut": "out/bench/remit/migrate",
+    "certCopy": "out/certification-remit.json"
   }
 ]

@@ -1,0 +1,19 @@
+{
+  "$comment": "Layer A for REMIT vs the real GnuCOBOL harness image (file I/O stage 1 + WRITE ... FROM). Generated amounts span the PIC 9(7)V99 range; every generated case exercises the full file round trip (build the WS line, move it into the record, write, close, serialize) on the legacy side and the mirrored temp-file round trip on the modern side.",
+  "legacy": {
+    "image": "legacymind/legacy-remit",
+    "label": "COBOL 85 REMIT (GnuCOBOL via harness image legacymind/legacy-remit, file-serializing wrapper)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/remit/migrate/candidate-a", "Remit"],
+    "label": "Java 21 remit (migrated candidate A)"
+  },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "generator": {
+    "ir": "../../out/ir/REMIT.ir.json",
+    "stdinFields": ["WS-ACCT-ID", "WS-GROSS"],
+    "count": 200,
+    "seed": 20260714
+  }
+}

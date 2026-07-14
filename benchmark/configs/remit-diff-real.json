@@ -1,0 +1,22 @@
+{
+  "$comment": "Layer B selection cases for REMIT vs the real GnuCOBOL harness image (file I/O stage 1 + WRITE ... FROM, desugared to MOVE + WRITE per examples/probes/writefrom.cbl). The legacy side runs the wrapper entrypoint: program output (ACCT_ID/ROWS) followed by the serialized remit.dat records (AMT/CHG/NET), one KV stream. Candidate B drops the desugared MOVE on the second WRITE and emits the stale record buffer (the AMT line again in place of CHG) - the classic WRITE FROM migration bug, caught on every case. Cases cover a typical advice, the charge half-cent tie, a charge rounding to zero, and zero and max amounts.",
+  "legacy": {
+    "image": "legacymind/legacy-remit",
+    "label": "COBOL 85 REMIT (GnuCOBOL via harness image legacymind/legacy-remit, file-serializing wrapper)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/remit/migrate/candidate-a", "Remit"],
+    "label": "Java 21 remit (migrated candidate A)"
+  },
+  "protocol": { "input": "stdin-lines", "output": "kv-lines" },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "cases": [
+    { "id": "typical", "stdin": ["ACCT0001", "200.00"] },
+    { "id": "charge-half-cent", "stdin": ["ACCT0002", "1.00"] },
+    { "id": "charge-rounds-to-zero", "stdin": ["ACCT0003", "0.30"] },
+    { "id": "mid", "stdin": ["ACCT0004", "123.45"] },
+    { "id": "max", "stdin": ["ACCT0005", "9999999.99"] },
+    { "id": "zero", "stdin": ["ACCT0006", "0.00"] }
+  ]
+}

@@ -1343,10 +1343,10 @@ public class ProLeapFrontend {
 			case WRITE: {
 				final io.proleap.cobol.asg.metamodel.procedure.write.WriteStatement w =
 						(io.proleap.cobol.asg.metamodel.procedure.write.WriteStatement) s;
-				if (w.getFrom() != null || w.getAdvancingPhrase() != null || w.getAtEndOfPagePhrase() != null
+				if (w.getAdvancingPhrase() != null || w.getAtEndOfPagePhrase() != null
 						|| w.getNotAtEndOfPagePhrase() != null || w.getInvalidKeyPhrase() != null
 						|| w.getNotInvalidKeyPhrase() != null) {
-					reject(ctx, "WRITE with FROM/ADVANCING/END-OF-PAGE/INVALID KEY (outside file I/O stage 1)");
+					reject(ctx, "WRITE with ADVANCING/END-OF-PAGE/INVALID KEY (outside file I/O stage 1)");
 					return;
 				}
 				final String recText = w.getRecordCall() != null
@@ -1359,6 +1359,27 @@ public class ProLeapFrontend {
 				if (file == null) {
 					reject(ctx, "WRITE " + recText + " which is not a file record");
 					return;
+				}
+				if (w.getFrom() != null) {
+					// WRITE ... FROM x is clean sugar (ISO 14.9.47): MOVE x TO
+					// record, then WRITE record - validated byte-for-byte against
+					// GnuCOBOL (examples/probes/writefrom.cbl), including that the
+					// record area keeps the moved bytes afterward. Desugar to
+					// exactly that statement pair.
+					final String fromText = resolveQualified(textOf(w.getFrom().getFromValueStmt().getCtx()), ctx);
+					if (fromText == null) {
+						return;
+					}
+					final Map<String, Object> mv = new LinkedHashMap<>();
+					mv.put("kind", "move");
+					final Map<String, Object> from = new LinkedHashMap<>();
+					from.put("text", fromText);
+					from.put("refs", refsIn(fromText));
+					mv.put("from", from);
+					mv.put("to", new ArrayList<>(List.of(recText)));
+					mv.put("text", "MOVE " + fromText + " TO " + recText + " (desugared WRITE FROM)");
+					mv.put("span", span(ctx));
+					out.add(mv);
 				}
 				final Map<String, Object> m = new LinkedHashMap<>();
 				m.put("kind", "write");

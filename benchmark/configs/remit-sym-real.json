@@ -1,0 +1,19 @@
+{
+  "$comment": "Layer C for REMIT vs the real GnuCOBOL harness image (file I/O stage 1 + WRITE ... FROM). The desugared MOVE WS-LINE TO REMIT-REC pairs are ordinary moves into flow-neutral record storage (OPEN/WRITE/CLOSE do not touch the symbolic store); the 1.5% charge's ROUNDED half-cent boundary is congruence-solved on the single path, and every realized case runs through the file-serializing wrapper differentially.",
+  "legacy": {
+    "image": "legacymind/legacy-remit",
+    "label": "COBOL 85 REMIT (GnuCOBOL via harness image legacymind/legacy-remit, file-serializing wrapper)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/remit/migrate/candidate-a", "Remit"],
+    "label": "Java 21 remit (migrated candidate A)"
+  },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "symbolic": {
+    "ir": "../../out/ir/REMIT.ir.json",
+    "stdinFields": ["WS-ACCT-ID", "WS-GROSS"],
+    "baseCase": ["ACCT0001", "200.00"],
+    "maxBoundarySolutions": 5
+  }
+}

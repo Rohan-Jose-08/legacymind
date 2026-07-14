@@ -1,7 +1,7 @@
 {
   "tool": "legacymind benchmark",
   "version": "0.1.0",
-  "generatedAt": "2026-07-14T19:21:58.659Z",
+  "generatedAt": "2026-07-14T20:06:17.292Z",
   "toolchain": {
     "parser": "proleap engine (ProLeap ANTLR4 COBOL85 grammar + reference-format preprocessor, JVM)",
     "legacy": "GnuCOBOL 3.1.2 (debian:bookworm-slim, sandboxed: --network none, --rm)",
@@ -14,7 +14,7 @@
       "programId": "PAYROLL",
       "source": "examples/payroll.cbl",
       "loc": 59,
-      "wallSeconds": 67.6,
+      "wallSeconds": 71.1,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -75,7 +75,7 @@
       "programId": "INTEREST",
       "source": "benchmark/modules/interest.cbl",
       "loc": 53,
-      "wallSeconds": 72.2,
+      "wallSeconds": 67.8,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -134,7 +134,7 @@
       "programId": "DISCOUNT",
       "source": "benchmark/modules/discount.cbl",
       "loc": 54,
-      "wallSeconds": 64.6,
+      "wallSeconds": 69,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -195,7 +195,7 @@
       "programId": "LEDGER",
       "source": "benchmark/modules/ledger.cbl",
       "loc": 72,
-      "wallSeconds": 70.1,
+      "wallSeconds": 84,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -256,7 +256,7 @@
       "programId": "COMPOUND",
       "source": "benchmark/modules/compound.cbl",
       "loc": 52,
-      "wallSeconds": 67.8,
+      "wallSeconds": 83.8,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -315,7 +315,7 @@
       "programId": "TAXCALC",
       "source": "benchmark/modules/taxcalc.cbl",
       "loc": 58,
-      "wallSeconds": 62.8,
+      "wallSeconds": 66,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -374,7 +374,7 @@
       "programId": "GRADE",
       "source": "benchmark/modules/grade.cbl",
       "loc": 47,
-      "wallSeconds": 60.2,
+      "wallSeconds": 63.1,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -436,7 +436,7 @@
       "programId": "COMMISSION",
       "source": "benchmark/modules/commission.cbl",
       "loc": 49,
-      "wallSeconds": 62,
+      "wallSeconds": 64.4,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -495,7 +495,7 @@
       "programId": "SENIOR",
       "source": "benchmark/modules/senior.cbl",
       "loc": 38,
-      "wallSeconds": 61.1,
+      "wallSeconds": 63.2,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -557,7 +557,7 @@
       "programId": "TIER",
       "source": "benchmark/modules/tier.cbl",
       "loc": 37,
-      "wallSeconds": 65.5,
+      "wallSeconds": 68.7,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -616,7 +616,7 @@
       "programId": "INVOICE",
       "source": "benchmark/modules/invoice.cbl",
       "loc": 41,
-      "wallSeconds": 60.7,
+      "wallSeconds": 67.5,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -675,7 +675,7 @@
       "programId": "SHIPPING",
       "source": "benchmark/modules/shipping.cbl",
       "loc": 55,
-      "wallSeconds": 62.5,
+      "wallSeconds": 63.2,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -734,7 +734,7 @@
       "programId": "TRANSFER",
       "source": "benchmark/modules/transfer.cbl",
       "loc": 52,
-      "wallSeconds": 62.3,
+      "wallSeconds": 62.1,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -793,7 +793,7 @@
       "programId": "RETAIL",
       "source": "benchmark/modules/retail.cbl",
       "loc": 45,
-      "wallSeconds": 64.3,
+      "wallSeconds": 64.2,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -852,7 +852,7 @@
       "programId": "PAYSLIP",
       "source": "benchmark/modules/payslip.cbl",
       "loc": 55,
-      "wallSeconds": 75.7,
+      "wallSeconds": 74.9,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -913,7 +913,7 @@
       "programId": "BONUS",
       "source": "benchmark/modules/bonus.cbl",
       "loc": 46,
-      "wallSeconds": 64.1,
+      "wallSeconds": 63.1,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -972,7 +972,7 @@
       "programId": "BATCHSUM",
       "source": "examples/batchsum.cbl",
       "loc": 44,
-      "wallSeconds": 79.9,
+      "wallSeconds": 59.9,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -1034,7 +1034,7 @@
       "programId": "REBATE",
       "source": "examples/rebate.cbl",
       "loc": 52,
-      "wallSeconds": 88.4,
+      "wallSeconds": 70.8,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -1097,7 +1097,7 @@
       "programId": "DUES",
       "source": "examples/dues.cbl",
       "loc": 35,
-      "wallSeconds": 77.1,
+      "wallSeconds": 62.3,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -1158,7 +1158,7 @@
       "programId": "TABSUM",
       "source": "examples/tabsum.cbl",
       "loc": 40,
-      "wallSeconds": 73.4,
+      "wallSeconds": 59.3,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -1219,7 +1219,7 @@
       "programId": "SETTLE",
       "source": "examples/settle.cbl",
       "loc": 41,
-      "wallSeconds": 73.2,
+      "wallSeconds": 59.1,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -1280,7 +1280,7 @@
       "programId": "LOCKER",
       "source": "examples/locker.cbl",
       "loc": 48,
-      "wallSeconds": 74.3,
+      "wallSeconds": 62.4,
       "steps": {
         "parse": true,
         "image": "skipped",
@@ -1328,6 +1328,67 @@
         "capacityWarnings": 0
       },
       "gaps": [],
+      "signature": {
+        "algorithm": "ed25519",
+        "keyId": "9b70a354efb9feab",
+        "verified": true
+      }
+    },
+    {
+      "id": "remit",
+      "programId": "REMIT",
+      "source": "benchmark/modules/remit.cbl",
+      "loc": 59,
+      "wallSeconds": 76.3,
+      "steps": {
+        "parse": true,
+        "image": "skipped",
+        "migrate": true,
+        "layerA": true,
+        "layerC": true,
+        "layerD": true,
+        "certify": true,
+        "verifyCert": true
+      },
+      "verdict": "CERTIFIED",
+      "winner": "a",
+      "candidates": 2,
+      "costUsd": 0,
+      "layerB": {
+        "curatedCases": 6
+      },
+      "layerA": {
+        "passed": 200,
+        "generated": 200,
+        "seed": 20260714
+      },
+      "layerC": {
+        "obligations": {
+          "total": 1,
+          "verified": 1,
+          "divergent": 0,
+          "unrealized": 0,
+          "notApplicable": 0
+        },
+        "paths": {
+          "total": 1,
+          "covered": 1,
+          "unknown": 0,
+          "infeasible": 0
+        }
+      },
+      "layerD": {
+        "keys": {
+          "total": 2,
+          "verified": 2,
+          "divergent": 0,
+          "unresolved": 0
+        },
+        "capacityWarnings": 1
+      },
+      "gaps": [
+        "layer D: 1 storage-capacity difference(s) flagged as warnings — statically inconclusive, covered dynamically by layers A/B/C"
+      ],
       "signature": {
         "algorithm": "ed25519",
         "keyId": "9b70a354efb9feab",
