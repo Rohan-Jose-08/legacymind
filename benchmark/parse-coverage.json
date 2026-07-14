@@ -1,6 +1,6 @@
 {
   "tool": "legacymind parse-sweep",
-  "generatedAt": "2026-07-12T21:04:10.080Z",
+  "generatedAt": "2026-07-14T19:01:45.428Z",
   "corpus": "https://github.com/uwol/proleap-cobol-parser",
   "commit": "d1bfe75bdd6d480f70c74c6345bcc02610ac30d3",
   "total": 759,
@@ -144,12 +144,12 @@
         "count": 3160
       },
       {
-        "reason": "REDEFINES view \"…\" is a group, not elementary unsigned numeric DISPLAY (REDEFINES R1a)",
-        "count": 961
-      },
-      {
         "reason": "CLOSE of \"…\" which is not a lowered file",
         "count": 951
+      },
+      {
+        "reason": "REDEFINES group view \"…\" over elementary target \"…\" (RG aligns group leaves to group leaves)",
+        "count": 911
       },
       {
         "reason": "OPEN of \"…\" which is not a lowered file",
@@ -748,6 +748,10 @@
         "count": 10
       },
       {
+        "reason": "REDEFINES group view leaf \"…\" is alphanumeric, not elementary unsigned numeric DISPLAY (RG first sub",
+        "count": 9
+      },
+      {
         "reason": "SELECT IX-FS1 ASSIGN TO a non-literal (XXXXX024)",
         "count": 9
       },
@@ -924,7 +928,15 @@
         "count": 6
       },
       {
+        "reason": "REDEFINES group view \"…\" has 1 leaves but target \"…\" has 75 (RG requires one-to-one leaf alignment)",
+        "count": 6
+      },
+      {
         "reason": "FD TFIL2 without a matching LINE SEQUENTIAL SELECT",
+        "count": 6
+      },
+      {
+        "reason": "REDEFINES group view \"…\" has 1 leaves but target \"…\" has 9 (RG requires one-to-one leaf alignment)",
         "count": 6
       },
       {
@@ -1096,6 +1108,10 @@
         "count": 5
       },
       {
+        "reason": "REDEFINES group view \"…\" has 6 leaves but target \"…\" has 1 (RG requires one-to-one leaf alignment)",
+        "count": 5
+      },
+      {
         "reason": "GO TO END-ROUTINE-2 inside PERFORM-reachable paragraph END-ROUTINE-1 is neither a structured range e",
         "count": 4
       },
@@ -1217,6 +1233,10 @@
       },
       {
         "reason": "paragraph EXIT-DECL outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 4
+      },
+      {
+        "reason": "REDEFINES group view \"…\" has 3 leaves but target \"…\" has 2 (RG requires one-to-one leaf alignment)",
         "count": 4
       },
       {
@@ -1457,6 +1477,10 @@
       },
       {
         "reason": "FD RR-FS1 without a matching LINE SEQUENTIAL SELECT",
+        "count": 3
+      },
+      {
+        "reason": "REDEFINES group view \"…\" has 1 leaves but target \"…\" has 2 (RG requires one-to-one leaf alignment)",
         "count": 3
       },
       {
@@ -1756,6 +1780,14 @@
         "count": 2
       },
       {
+        "reason": "REDEFINES group view leaf \"…\" is a group, not elementary unsigned numeric DISPLAY (RG first subset)",
+        "count": 2
+      },
+      {
+        "reason": "REDEFINES group view \"…\" has 4 leaves but target \"…\" has 1 (RG requires one-to-one leaf alignment)",
+        "count": 2
+      },
+      {
         "reason": "GO TO LINK-TEST-12 is a backward or self jump; only strictly forward top-level jumps are supported",
         "count": 2
       },
@@ -1909,6 +1941,10 @@
       },
       {
         "reason": "GO TO IF-TEST-GF-Y is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 2
+      },
+      {
+        "reason": "REDEFINES group view \"…\" has 1 leaves but target \"…\" has 5 (RG requires one-to-one leaf alignment)",
         "count": 2
       },
       {
@@ -2524,6 +2560,10 @@
         "count": 1
       },
       {
+        "reason": "REDEFINES group view \"…\" has 1 leaves but target \"…\" has 4 (RG requires one-to-one leaf alignment)",
+        "count": 1
+      },
+      {
         "reason": "GO TO TAKE-NEXT-MSG is a backward or self jump; only strictly forward top-level jumps are supported",
         "count": 1
       },
@@ -2653,6 +2693,10 @@
       },
       {
         "reason": "GO TO PROC-069-PFM-WRITE-6 is a backward or self jump; only strictly forward top-level jumps are sup",
+        "count": 1
+      },
+      {
+        "reason": "REDEFINES group view \"…\" has 1 leaves but target \"…\" has 227 (RG requires one-to-one leaf alignment)",
         "count": 1
       },
       {
@@ -2945,6 +2989,14 @@
       },
       {
         "reason": "GO TO X30-EXIT inside PERFORM-reachable paragraph X30-1 is neither a structured range early-exit nor",
+        "count": 1
+      },
+      {
+        "reason": "REDEFINES group view \"…\" has 10 leaves but target \"…\" has 2 (RG requires one-to-one leaf alignment)",
+        "count": 1
+      },
+      {
+        "reason": "REDEFINES group view \"…\" has 1 leaves but target \"…\" has 26 (RG requires one-to-one leaf alignment)",
         "count": 1
       },
       {
@@ -3384,6 +3436,14 @@
         "count": 1
       },
       {
+        "reason": "REDEFINES group view \"…\" has 2 leaves but target \"…\" has 4 (RG requires one-to-one leaf alignment)",
+        "count": 1
+      },
+      {
+        "reason": "REDEFINES group view \"…\" has 6 leaves but target \"…\" has 4 (RG requires one-to-one leaf alignment)",
+        "count": 1
+      },
+      {
         "reason": "ACCEPT target \"…\" (qualified/subscripted)",
         "count": 1
       },
@@ -3572,6 +3632,10 @@
         "count": 1
       },
       {
+        "reason": "REDEFINES group view \"…\" has 1 leaves but target \"…\" has 64 (RG requires one-to-one leaf alignment)",
+        "count": 1
+      },
+      {
         "reason": "GO TO REF-INIT-GF-3 is a backward or self jump; only strictly forward top-level jumps are supported",
         "count": 1
       },
@@ -3596,6 +3660,10 @@
         "count": 1
       },
       {
+        "reason": "REDEFINES group view \"…\" has 1 leaves but target \"…\" has 16 (RG requires one-to-one leaf alignment)",
+        "count": 1
+      },
+      {
         "reason": "GO TO BUILD-ENTRY is a backward or self jump; only strictly forward top-level jumps are supported",
         "count": 1
       },
@@ -3609,6 +3677,18 @@
       },
       {
         "reason": "COMPUTE with multiple receiving fields",
+        "count": 1
+      },
+      {
+        "reason": "REDEFINES group view \"…\" has 3 leaves but target \"…\" has 5 (RG requires one-to-one leaf alignment)",
+        "count": 1
+      },
+      {
+        "reason": "REDEFINES group view \"…\" has 6 leaves but target \"…\" has 5 (RG requires one-to-one leaf alignment)",
+        "count": 1
+      },
+      {
+        "reason": "REDEFINES group view \"…\" has 2 leaves but target \"…\" has 5 (RG requires one-to-one leaf alignment)",
         "count": 1
       },
       {

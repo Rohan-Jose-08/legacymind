@@ -2,6 +2,12 @@
 
 Design stage for the second REDEFINES front: the numeric-**edited** and
 **group** redefining views that make up the corpus's #1 rejection head.
+
+**Status:** the **RG group-view subset below is implemented and
+certified** (the LOCKER module): one-to-one leaf alignment, read-only
+view, per-leaf `redefines` emission — the verifier needed zero changes.
+The RE edited subset remains designed-not-built, de-prioritized per the
+contamination finding.
 Stage R1a (elementary numeric-over-numeric, read-only) is live in the DUES
 module; `docs/redefines.md` designed R1b (cross-category `X`↔`9`) and R2
 (write-through) for elementary scalars. This document covers the shapes

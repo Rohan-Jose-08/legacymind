@@ -1,0 +1,19 @@
+{
+  "$comment": "Layer A for LOCKER vs the real GnuCOBOL harness image (group REDEFINES RG). Generated member ids span PIC 9(4) and cents span PIC 9(6); each pair is read as text, NUMVAL'd into the record leaves, and reinterpreted through the group money view. The small-value bias exercises the sub-dollar region and the 200.00 tier boundary.",
+  "legacy": {
+    "image": "legacymind/legacy-locker",
+    "label": "COBOL 85 LOCKER (GnuCOBOL via harness image legacymind/legacy-locker)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/locker/migrate/candidate-a", "Locker"],
+    "label": "Java 21 locker (migrated candidate A)"
+  },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "generator": {
+    "ir": "../../out/ir/LOCKER.ir.json",
+    "stdinFields": ["WS-MEM-ID", "WS-BAL-CENTS"],
+    "count": 200,
+    "seed": 20260714
+  }
+}

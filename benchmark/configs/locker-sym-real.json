@@ -1,0 +1,19 @@
+{
+  "$comment": "Layer C for LOCKER vs the real GnuCOBOL harness image (group REDEFINES RG, docs/redefines-edited.md). Input position 0 is the member id (PIC 9(4)), position 1 the balance in cents (PIC 9(6)). WS-MONEY REDEFINES WS-REC leaf for leaf, so a read of WS-BAL-DOL resolves to WS-BAL-CENTS at a shifted scale (value * 10^(0-2)) and WS-MEM-KEY to WS-MEM-ID unshifted - each leaf a pure decimal shift, affine in its input. The 2.5% fee rounding half-boundary and the 200.00 tier boundary are both affine obligations the engine solves directly.",
+  "legacy": {
+    "image": "legacymind/legacy-locker",
+    "label": "COBOL 85 LOCKER (GnuCOBOL via harness image legacymind/legacy-locker)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/locker/migrate/candidate-a", "Locker"],
+    "label": "Java 21 locker (migrated candidate A)"
+  },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "symbolic": {
+    "ir": "../../out/ir/LOCKER.ir.json",
+    "stdinFields": ["WS-MEM-ID", "WS-BAL-CENTS"],
+    "baseCase": ["0042", "012345"],
+    "annotations": ["WS-FEE"]
+  }
+}

@@ -256,5 +256,17 @@
     "staticConfig": "benchmark/configs/settle-static.json",
     "migrateOut": "out/bench/settle/migrate",
     "certCopy": "out/certification-settle.json"
+  },
+  {
+    "id": "locker",
+    "programId": "LOCKER",
+    "source": "examples/locker.cbl",
+    "imageTag": "legacymind/legacy-locker",
+    "diffConfig": "benchmark/configs/locker-diff-real.json",
+    "propConfig": "benchmark/configs/locker-prop-real.json",
+    "symConfig": "benchmark/configs/locker-sym-real.json",
+    "staticConfig": "benchmark/configs/locker-static.json",
+    "migrateOut": "out/bench/locker/migrate",
+    "certCopy": "out/certification-locker.json"
   }
 ]

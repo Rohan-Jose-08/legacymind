@@ -1,0 +1,7 @@
+{
+  "$comment": "Layer D for LOCKER: static data-flow equivalence between the IR and migrated candidate A (group REDEFINES RG). WS-MONEY REDEFINES WS-REC leaf for leaf: WS-MEM-KEY derives from WS-MEM-ID (shift 0) and WS-BAL-DOL from WS-BAL-CENTS with a decimal shift of 2 - symmetric with the modern side's movePointLeft(2). KEY carries the id flow; FEE carries the balance flow with the shift, the 25/1000 constants and half-up rounding; TOTAL joins them; TIER is control flow over the shifted view. The wrong-leaf re-slice (candidate B reads the money view from the id leaf) shows as FEE/TOTAL sourcing the wrong input.",
+  "static": {
+    "ir": "../../out/ir/LOCKER.ir.json",
+    "modernJava": "../../out/bench/locker/migrate/candidate-a/Locker.java"
+  }
+}

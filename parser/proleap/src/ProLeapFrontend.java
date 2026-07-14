@@ -2766,8 +2766,10 @@ public class ProLeapFrontend {
 				byName.put((String) it.get("name"), it);
 			}
 			final Set<String> written = new LinkedHashSet<>();
+			final Set<String> allRefs = new LinkedHashSet<>();
 			for (final Object po : paragraphs) {
 				collectWriteTargets((List<?>) ((Map<?, ?>) po).get("statements"), written);
+				collectDataRefs((List<?>) ((Map<?, ?>) po).get("statements"), allRefs);
 			}
 			for (final Object[] pr : pendingRedefines) {
 				@SuppressWarnings("unchecked")
@@ -2783,6 +2785,17 @@ public class ProLeapFrontend {
 				if (target == null) {
 					unsupported.add("REDEFINES \"" + rawTarget
 							+ "\" which is not a WORKING-STORAGE data item (file I/O REDEFINES R1a)");
+					continue;
+				}
+				final List<?> viewCh = (List<?>) item.get("children");
+				if (viewCh != null && !viewCh.isEmpty()) {
+					// RG (docs/redefines-edited.md): a read-only GROUP view whose
+					// leaves align one-to-one with the target group's leaves is
+					// REDEFINES R1a applied per aligned leaf - each view leaf gets
+					// the ordinary per-item "redefines" the verifier already
+					// resolves as a decimal shift. Anything outside that shape is
+					// rejected with a specific reason.
+					gateGroupRedefines(item, target, itemName, targetName, written, allRefs);
 					continue;
 				}
 				if (!elementaryNumericDisplay(item)) {
@@ -2808,6 +2821,92 @@ public class ProLeapFrontend {
 					continue;
 				}
 				item.put("redefines", targetName);
+			}
+		}
+
+		/**
+		 * RG gate (docs/redefines-edited.md): a group REDEFINES view is sound
+		 * when (a) the target is a group of the same leaf count, (b) neither
+		 * side nests subgroups or carries OCCURS, (c) each aligned leaf pair is
+		 * elementary unsigned numeric DISPLAY of equal digit count - digit
+		 * count is byte width for numeric DISPLAY, so pairwise-equal widths
+		 * make every leaf boundary coincide (whole-leaf alignment, no mid-leaf
+		 * splits), (d) the view is read-only (no leaf written), and (e) both
+		 * group names stay out of the PROCEDURE DIVISION (leaf references
+		 * only - a group reference is a concatenated read/write the model does
+		 * not cover). On success each view leaf gets "redefines" naming its
+		 * aligned target leaf: R1a per leaf, no new verifier surface.
+		 */
+		void gateGroupRedefines(final Map<String, Object> view, final Map<String, Object> target,
+				final String viewName, final String targetName, final Set<String> written,
+				final Set<String> allRefs) {
+			final List<?> vch = (List<?>) view.get("children");
+			final List<?> tch = (List<?>) target.get("children");
+			if (tch == null || tch.isEmpty()) {
+				unsupported.add("REDEFINES group view \"" + viewName + "\" over elementary target \""
+						+ targetName + "\" (RG aligns group leaves to group leaves)");
+				return;
+			}
+			if (view.get("occurs") != null || target.get("occurs") != null) {
+				unsupported.add("REDEFINES view \"" + viewName + "\" or target \"" + targetName
+						+ "\" carries OCCURS (RG excludes REDEFINES+OCCURS)");
+				return;
+			}
+			if (vch.size() != tch.size()) {
+				unsupported.add("REDEFINES group view \"" + viewName + "\" has " + vch.size()
+						+ " leaves but target \"" + targetName + "\" has " + tch.size()
+						+ " (RG requires one-to-one leaf alignment)");
+				return;
+			}
+			for (int i = 0; i < vch.size(); i++) {
+				@SuppressWarnings("unchecked")
+				final Map<String, Object> vl = (Map<String, Object>) vch.get(i);
+				@SuppressWarnings("unchecked")
+				final Map<String, Object> tl = (Map<String, Object>) tch.get(i);
+				final String vn = (String) vl.get("name");
+				final String tn = (String) tl.get("name");
+				if (vl.get("occurs") != null || tl.get("occurs") != null) {
+					unsupported.add("REDEFINES leaf pair \"" + vn + "\"/\"" + tn
+							+ "\" carries OCCURS (RG excludes REDEFINES+OCCURS)");
+					return;
+				}
+				if (!elementaryNumericDisplay(vl)) {
+					unsupported.add("REDEFINES group view leaf \"" + vn + "\" is " + redefineShape(vl)
+							+ ", not elementary unsigned numeric DISPLAY (RG first subset)");
+					return;
+				}
+				if (!elementaryNumericDisplay(tl)) {
+					unsupported.add("REDEFINES group target leaf \"" + tn + "\" is " + redefineShape(tl)
+							+ ", not elementary unsigned numeric DISPLAY (RG first subset)");
+					return;
+				}
+				final int dv = digitsOf(vl);
+				final int dt = digitsOf(tl);
+				if (dv != dt) {
+					unsupported.add("REDEFINES leaf pair \"" + vn + "\" (" + dv + " digits) / \"" + tn
+							+ "\" (" + dt + " digits) differ in width - boundaries would not align (RG)");
+					return;
+				}
+				if (written.contains(vn)) {
+					unsupported.add("REDEFINES group view leaf \"" + vn
+							+ "\" is written in the PROCEDURE DIVISION (RG requires a read-only view)");
+					return;
+				}
+			}
+			if (allRefs.contains(viewName) || written.contains(viewName)) {
+				unsupported.add("REDEFINES group view \"" + viewName
+						+ "\" is referenced as a group in the PROCEDURE DIVISION (RG models leaf references only)");
+				return;
+			}
+			if (allRefs.contains(targetName) || written.contains(targetName)) {
+				unsupported.add("REDEFINES target group \"" + targetName
+						+ "\" is referenced as a group in the PROCEDURE DIVISION (RG models leaf references only)");
+				return;
+			}
+			for (int i = 0; i < vch.size(); i++) {
+				@SuppressWarnings("unchecked")
+				final Map<String, Object> vl = (Map<String, Object>) vch.get(i);
+				vl.put("redefines", ((Map<?, ?>) tch.get(i)).get("name"));
 			}
 		}
 

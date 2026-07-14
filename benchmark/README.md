@@ -316,6 +316,29 @@ on any ledger whose two columns differ). Layer C still verifies the fee
 rounding half-cent directly. The byte-layout vocabulary now spans records
 (2b), REDEFINES, and OCCURS — and OCCURS reads, writes, and strides.
 
+The LOCKER module is the group-REDEFINES program (stage RG,
+docs/redefines-edited.md): the member record stores raw digits — a
+4-digit id and the balance as a whole number of cents — and WS-MONEY
+REDEFINES the record group leaf for leaf, reinterpreting the balance
+digits as dollars-and-cents for the 2.5% late-fee math and the 200.00
+GOLD tier. The sound subset is one-to-one leaf alignment: each view leaf
+pairs with the target leaf at the same offset and byte width, so a group
+view is REDEFINES R1a applied per aligned leaf — the frontend validates
+the alignment (equal leaf counts, pairwise-equal digit counts, read-only
+view, no group-as-whole references, no OCCURS) and emits the ordinary
+per-item redefines mapping on each view leaf, and the verifier needed
+**zero changes**: layer C resolves each view-leaf read as the aligned
+target's value at the shifted scale (the fee half-cent ties land at
+cents ≡ 20 mod 40, realized on both tier paths), and layer D derives
+each view leaf from its aligned target's flow. Candidate B carries the
+wrong-leaf re-slice — the money view read from the id leaf's bytes, the
+archetypal group-overlay offset confusion — caught twice: layer B on
+values (a zero balance with a nonzero id yields a phantom fee) and layer
+D structurally (FEE/TOTAL derive from input 0 where the legacy flows
+read input 1). Misaligned widths, written view leaves, and
+group-as-whole references are each rejected loudly with the specific
+reason, validated by probe.
+
 ## Running
 
 ```

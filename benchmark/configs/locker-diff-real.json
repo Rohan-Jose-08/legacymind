@@ -1,0 +1,22 @@
+{
+  "$comment": "Layer B selection cases for LOCKER vs the real GnuCOBOL harness image (group REDEFINES RG, docs/redefines-edited.md). Input is a 4-digit member id and the balance in whole cents; WS-MONEY REDEFINES the record group leaf for leaf, so the balance digits are reinterpreted at scale 2 (a per-leaf decimal shift). Candidate B carries the wrong-leaf re-slice - the money view read from the id leaf's bytes - so fee and total come out wrong whenever id*100 != cents. Cases cover the 200.00 tier boundary, just over it, the fee half-cent tie (cents = 20 mod 40), and small and large balances.",
+  "legacy": {
+    "image": "legacymind/legacy-locker",
+    "label": "COBOL 85 LOCKER (GnuCOBOL via harness image legacymind/legacy-locker)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/locker/migrate/candidate-a", "Locker"],
+    "label": "Java 21 locker (migrated candidate A)"
+  },
+  "protocol": { "input": "stdin-lines", "output": "kv-lines" },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "cases": [
+    { "id": "tier-boundary", "stdin": ["7777", "020000"] },
+    { "id": "just-over-boundary", "stdin": ["7777", "020001"] },
+    { "id": "fee-half-cent", "stdin": ["0042", "000020"] },
+    { "id": "typical", "stdin": ["0042", "012345"] },
+    { "id": "max-balance", "stdin": ["0001", "999999"] },
+    { "id": "zero", "stdin": ["9999", "000000"] }
+  ]
+}

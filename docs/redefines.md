@@ -15,8 +15,11 @@ confirmed by a live frontend run.
 The frontend gate admits the read-only, equal-width, numeric-over-numeric
 subset and rejects every other shape with a specific reason; layer C
 resolves a view read as the target's value at a shifted scale, and layer
-D carries the same shift on the legacy side. R1b (cross-category) and R2
-(write-through) remain designed-not-built below.
+D carries the same shift on the legacy side. **RG (group views, one-to-one
+leaf alignment) is implemented and certified** (the LOCKER module,
+docs/redefines-edited.md) — a group view is R1a applied per aligned leaf.
+R1b (cross-category) and R2 (write-through) remain designed-not-built
+below.
 
 ## What REDEFINES is
 
