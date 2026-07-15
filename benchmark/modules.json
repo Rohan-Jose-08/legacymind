@@ -306,5 +306,17 @@
     "staticConfig": "benchmark/configs/manifest-static.json",
     "migrateOut": "out/bench/manifest/migrate",
     "certCopy": "out/certification-manifest.json"
+  },
+  {
+    "id": "reorder",
+    "programId": "REORDER",
+    "source": "benchmark/modules/reorder.cbl",
+    "imageTag": "legacymind/legacy-reorder",
+    "diffConfig": "benchmark/configs/reorder-diff-real.json",
+    "propConfig": "benchmark/configs/reorder-prop-real.json",
+    "symConfig": "benchmark/configs/reorder-sym-real.json",
+    "staticConfig": "benchmark/configs/reorder-static.json",
+    "migrateOut": "out/bench/reorder/migrate",
+    "certCopy": "out/certification-reorder.json"
   }
 ]

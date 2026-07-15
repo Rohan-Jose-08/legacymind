@@ -1,6 +1,6 @@
 {
   "tool": "legacymind parse-sweep",
-  "generatedAt": "2026-07-15T09:40:40.425Z",
+  "generatedAt": "2026-07-15T14:10:07.956Z",
   "corpus": "https://github.com/uwol/proleap-cobol-parser",
   "commit": "d1bfe75bdd6d480f70c74c6345bcc02610ac30d3",
   "total": 759,
@@ -141,7 +141,7 @@
       },
       {
         "reason": "MOVE target \"…\" is subscripted but not a lowered table (O3 backlog)",
-        "count": 2759
+        "count": 2607
       },
       {
         "reason": "CLOSE of \"…\" which is not a lowered file",
@@ -154,10 +154,6 @@
       {
         "reason": "OPEN of \"…\" which is not a lowered file",
         "count": 878
-      },
-      {
-        "reason": "SET target(s) TO a value other than TRUE (only SET condition-name TO TRUE is supported)",
-        "count": 825
       },
       {
         "reason": "WRITE with ADVANCING/END-OF-PAGE/INVALID KEY (outside file I/O stage 1)",
@@ -188,6 +184,10 @@
         "count": 368
       },
       {
+        "reason": "SET target(s) TO a value other than TRUE (only SET condition-name TO TRUE or SET index TO n is suppo",
+        "count": 331
+      },
+      {
         "reason": "PERFORM target \"…\" is not a paragraph in this program",
         "count": 306
       },
@@ -197,11 +197,11 @@
       },
       {
         "reason": "ADD receiving field \"…\" (qualified/subscripted)",
-        "count": 228
+        "count": 227
       },
       {
         "reason": "OCCURS group \"…\" leaf \"…\" is a group, not elementary unsigned numeric or alphanumeric DISPLAY (O3-fl",
-        "count": 208
+        "count": 220
       },
       {
         "reason": "procedure name \"…\" is not representable in the IR",
@@ -244,15 +244,7 @@
         "count": 104
       },
       {
-        "reason": "OCCURS INDEXED BY",
-        "count": 98
-      },
-      {
         "reason": "ALTER statement",
-        "count": 97
-      },
-      {
-        "reason": "SET ... UP/DOWN BY (index adjustment, outside the subset)",
         "count": 97
       },
       {
@@ -372,10 +364,6 @@
         "count": 29
       },
       {
-        "reason": "ADD operand \"…\" (qualified/subscripted)",
-        "count": 29
-      },
-      {
         "reason": "EXEC SQL data entry",
         "count": 29
       },
@@ -386,6 +374,14 @@
       {
         "reason": "66-level RENAMES",
         "count": 27
+      },
+      {
+        "reason": "ADD operand \"…\" (qualified/subscripted)",
+        "count": 27
+      },
+      {
+        "reason": "OCCURS group \"…\" leaf \"…\" carries nested OCCURS (multi-dimensional tables are outside O3-flat)",
+        "count": 26
       },
       {
         "reason": "ambiguous unqualified reference \"…\" (declared more than once)",
@@ -448,10 +444,6 @@
         "count": 23
       },
       {
-        "reason": "DIVIDE operand \"…\" (qualified/subscripted)",
-        "count": 23
-      },
-      {
         "reason": "FD SQ-FS4 without a matching LINE SEQUENTIAL SELECT",
         "count": 23
       },
@@ -465,10 +457,6 @@
       },
       {
         "reason": "GO TO READ-TEST-GF-01 is a backward or self jump; only strictly forward top-level jumps are supporte",
-        "count": 22
-      },
-      {
-        "reason": "SUBTRACT operand \"…\" (qualified/subscripted)",
         "count": 22
       },
       {
@@ -492,16 +480,16 @@
         "count": 20
       },
       {
+        "reason": "SUBTRACT operand \"…\" (qualified/subscripted)",
+        "count": 20
+      },
+      {
         "reason": "DISABLE statement",
         "count": 19
       },
       {
         "reason": "FD SQ-FS2 without a matching LINE SEQUENTIAL SELECT",
         "count": 19
-      },
-      {
-        "reason": "OCCURS group \"…\" leaf \"…\" carries nested OCCURS (multi-dimensional tables are outside O3-flat)",
-        "count": 18
       },
       {
         "reason": "DIVIDE ... REMAINDER",
@@ -517,10 +505,6 @@
       },
       {
         "reason": "FD TFIL without a matching LINE SEQUENTIAL SELECT",
-        "count": 17
-      },
-      {
-        "reason": "MULTIPLY operand \"…\" (qualified/subscripted)",
         "count": 17
       },
       {
@@ -548,8 +532,16 @@
         "count": 15
       },
       {
+        "reason": "DIVIDE operand \"…\" (qualified/subscripted)",
+        "count": 15
+      },
+      {
         "reason": "SELECT SQ-FS4 ASSIGN TO a non-literal (XXXXX014)",
         "count": 15
+      },
+      {
+        "reason": "MULTIPLY operand \"…\" (qualified/subscripted)",
+        "count": 14
       },
       {
         "reason": "GO TO REL-TEST-010-R is a backward or self jump; only strictly forward top-level jumps are supported",
@@ -684,6 +676,10 @@
         "count": 11
       },
       {
+        "reason": "OCCURS element \"…\" is non-DISPLAY (COMP), not an elementary unsigned numeric or alphanumeric DISPLAY",
+        "count": 11
+      },
+      {
         "reason": "INITIALIZE statement",
         "count": 11
       },
@@ -732,7 +728,7 @@
         "count": 10
       },
       {
-        "reason": "OCCURS element \"…\" is non-DISPLAY (COMP), not an elementary unsigned numeric or alphanumeric DISPLAY",
+        "reason": "OCCURS element \"…\" is signed numeric, not an elementary unsigned numeric or alphanumeric DISPLAY ite",
         "count": 10
       },
       {
@@ -792,6 +788,10 @@
         "count": 8
       },
       {
+        "reason": "MOVE from \"…\" reads an OCCURS group element whole (byte concatenation - outside O3-flat; leaf refere",
+        "count": 8
+      },
+      {
         "reason": "GO TO PROC-005-GO--TEST-2 is a backward or self jump; only strictly forward top-level jumps are supp",
         "count": 8
       },
@@ -805,6 +805,14 @@
       },
       {
         "reason": "GO TO GO--TEST-F2-1 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 8
+      },
+      {
+        "reason": "OCCURS group \"…\" leaf \"…\" is signed numeric, not elementary unsigned numeric or alphanumeric DISPLAY",
+        "count": 8
+      },
+      {
+        "reason": "SET IDX-1 UP/DOWN BY on a target that is not an INDEXED BY index-name",
         "count": 8
       },
       {
@@ -968,10 +976,6 @@
         "count": 6
       },
       {
-        "reason": "OCCURS group \"…\" leaf \"…\" is signed numeric, not elementary unsigned numeric or alphanumeric DISPLAY",
-        "count": 6
-      },
-      {
         "reason": "EVALUATE <subject> WHEN VALUE_THROUGH (THRU range / ANY / condition outside the subset)",
         "count": 6
       },
@@ -1060,15 +1064,15 @@
         "count": 5
       },
       {
-        "reason": "OCCURS element \"…\" is signed numeric, not an elementary unsigned numeric or alphanumeric DISPLAY ite",
-        "count": 5
-      },
-      {
         "reason": "GO TO MOVE-VALUE is a backward or self jump; only strictly forward top-level jumps are supported",
         "count": 5
       },
       {
         "reason": "REDEFINES target \"…\" is a group, not elementary unsigned numeric DISPLAY (REDEFINES R1a)",
+        "count": 5
+      },
+      {
+        "reason": "OCCURS with ASCENDING/DESCENDING KEY",
         "count": 5
       },
       {
@@ -1272,7 +1276,7 @@
         "count": 4
       },
       {
-        "reason": "MOVE from \"…\" reads an OCCURS group element whole (byte concatenation - outside O3-flat; leaf refere",
+        "reason": "SET target(s) TO a compound or missing value",
         "count": 4
       },
       {
@@ -1964,15 +1968,15 @@
         "count": 2
       },
       {
-        "reason": "PERFORM TIMES operand \"…\" (qualified/subscripted)",
-        "count": 2
-      },
-      {
         "reason": "GO TO IND-FAIL-GF-29 is a backward or self jump; only strictly forward top-level jumps are supported",
         "count": 2
       },
       {
         "reason": "GO TO IND-FAIL-GF-30 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 2
+      },
+      {
+        "reason": "OCCURS group \"…\" leaf \"…\" is non-DISPLAY (COMP), not elementary unsigned numeric or alphanumeric DIS",
         "count": 2
       },
       {
@@ -1997,6 +2001,10 @@
       },
       {
         "reason": "GO TO SPECIAL-2-LEVEL-SEARCH is a backward or self jump; only strictly forward top-level jumps are s",
+        "count": 2
+      },
+      {
+        "reason": "SET IDX-2 UP/DOWN BY on a target that is not an INDEXED BY index-name",
         "count": 2
       },
       {
@@ -3052,6 +3060,10 @@
         "count": 1
       },
       {
+        "reason": "SET IN3 UP/DOWN BY on a target that is not an INDEXED BY index-name",
+        "count": 1
+      },
+      {
         "reason": "GO TO LINK-TEST-08 is a backward or self jump; only strictly forward top-level jumps are supported",
         "count": 1
       },
@@ -3560,10 +3572,6 @@
         "count": 1
       },
       {
-        "reason": "DISPLAY operand \"…\" (qualified/subscripted)",
-        "count": 1
-      },
-      {
         "reason": "GO TO EDI-INIT-GF-14 is a backward or self jump; only strictly forward top-level jumps are supported",
         "count": 1
       },
@@ -3605,10 +3613,6 @@
       },
       {
         "reason": "GO TO FINE inside PERFORM-reachable paragraph AAAA is neither a structured range early-exit nor a to",
-        "count": 1
-      },
-      {
-        "reason": "OCCURS group \"…\" leaf \"…\" is non-DISPLAY (COMP), not elementary unsigned numeric or alphanumeric DIS",
         "count": 1
       },
       {
@@ -3712,6 +3716,14 @@
         "count": 1
       },
       {
+        "reason": "SET IDX-4 UP/DOWN BY on a target that is not an INDEXED BY index-name",
+        "count": 1
+      },
+      {
+        "reason": "SET IDX-7 UP/DOWN BY on a target that is not an INDEXED BY index-name",
+        "count": 1
+      },
+      {
         "reason": "GO TO BUILD-LOOP-1 is a backward or self jump; only strictly forward top-level jumps are supported",
         "count": 1
       },
@@ -3757,10 +3769,6 @@
       },
       {
         "reason": "SELECT TFIL-2 ASSIGN TO a non-literal (XXXXX002)",
-        "count": 1
-      },
-      {
-        "reason": "OCCURS with ASCENDING/DESCENDING KEY",
         "count": 1
       },
       {
@@ -5345,6 +5353,10 @@
       },
       {
         "reason": "FD FILEOUT without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "DISPLAY of \"…\" reads an OCCURS group element whole (byte concatenation - outside O3-flat; leaf refer",
         "count": 1
       },
       {

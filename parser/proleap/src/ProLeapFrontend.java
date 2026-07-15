@@ -262,6 +262,10 @@ public class ProLeapFrontend {
 		final Map<String, Integer> occursTables = new LinkedHashMap<>();
 		/** O3-flat group-table names: whole-element references reject loudly. */
 		final Set<String> groupTables = new LinkedHashSet<>();
+		/** INDEXED BY index-names (occurrence-number variables). */
+		final Set<String> indexNames = new LinkedHashSet<>();
+		/** Synthetic numeric items for index-names, injected before finalizeNames. */
+		final List<Map<String, Object>> pendingIndexItems = new ArrayList<>();
 
 		/** preprocessed line number (1-based) -> original line number; null when inexact. */
 		int[] lineMap;
@@ -514,6 +518,14 @@ public class ProLeapFrontend {
 					}
 				}
 			}
+			// INDEXED BY (docs/occurs-indexed.md): inject the synthetic
+			// index-name items as top-level numeric data items before name
+			// finalization, so they enter `declared` and resolve like any
+			// numeric variable (SET writes them, subscripts read them).
+			for (final Map<String, Object> ix : pendingIndexItems) {
+				items.add(ix);
+				pendingItems.add(new Object[] { ix, ix.get("name"), new ArrayList<String>() });
+			}
 			// Unique final names (duplicated leaves renamed), declared set,
 			// leaf index for OF/IN resolution, and 88-level captures.
 			finalizeNames();
@@ -753,8 +765,6 @@ public class ProLeapFrontend {
 							g.getOccursClauses().get(0);
 					if (oc.getOccursDepending() != null) {
 						reject(ctx, "OCCURS DEPENDING ON (variable-length table)");
-					} else if (oc.getOccursIndexed() != null) {
-						reject(ctx, "OCCURS INDEXED BY");
 					} else if (!oc.getOccursSorts().isEmpty()) {
 						reject(ctx, "OCCURS with ASCENDING/DESCENDING KEY");
 					} else if (oc.getTo() != null) {
@@ -767,6 +777,20 @@ public class ProLeapFrontend {
 						final String cnt = textOf(oc.getFrom().getCtx());
 						if (cnt.matches("\\d+")) {
 							occursCount = Integer.parseInt(cnt);
+							// INDEXED BY (docs/occurs-indexed.md) is an ADDITIONAL
+							// clause on a fixed table, not an alternative to the
+							// count: register each index-name as a synthetic
+							// occurrence-number variable so SET and subscript use
+							// ride the ordinary numeric machinery. The table's own
+							// shape is still gated (O1/O2x/O3-flat) below.
+							if (oc.getOccursIndexed() != null) {
+								for (final io.proleap.cobol.asg.metamodel.data.datadescription.Index ix
+										: oc.getOccursIndexed().getIndices()) {
+									if (ix.getName() != null) {
+										registerIndexName(ix.getName().toUpperCase());
+									}
+								}
+							}
 						} else {
 							reject(ctx, "OCCURS count \"" + cnt + "\" is not a fixed integer");
 						}
@@ -1244,33 +1268,90 @@ public class ProLeapFrontend {
 				return;
 			}
 			case SET: {
-				// SET condition-name TO TRUE is the write side of 88-levels: pure
-				// sugar for MOVE <the 88's VALUE> TO <its parent item> (the read
-				// side, IF condition-name, is expanded elsewhere). Only this form
-				// is in the subset; SET UP/DOWN BY (index), SET ... TO a
-				// value/ON/OFF/FALSE, and SET on a non-condition target are
-				// rejected. Multiple condition names in one SET emit one MOVE each.
+				// Two forms in the subset. SET condition-name TO TRUE is the
+				// write side of 88-levels: sugar for MOVE <the 88's VALUE> TO
+				// <its parent item>. SET on an INDEXED BY index-name
+				// (docs/occurs-indexed.md) is occurrence-number arithmetic:
+				// SET idx TO n desugars to MOVE n, SET idx UP/DOWN BY n to
+				// COMPUTE idx = idx +/- n - both over the synthetic numeric
+				// item, so the verifier is untouched. Everything else (SET on a
+				// non-condition/non-index target, ON/OFF/FALSE) is rejected.
 				final io.proleap.cobol.asg.metamodel.procedure.set.SetStatement set =
 						(io.proleap.cobol.asg.metamodel.procedure.set.SetStatement) s;
-				if (set.getSetType() != io.proleap.cobol.asg.metamodel.procedure.set.SetStatement.SetType.TO) {
-					reject(ctx, "SET ... UP/DOWN BY (index adjustment, outside the subset)");
-					return;
-				}
-				final List<Map<String, Object>> moves = new ArrayList<>();
-				for (final io.proleap.cobol.asg.metamodel.procedure.set.SetTo st : set.getSetTos()) {
-					final List<io.proleap.cobol.asg.metamodel.procedure.set.Value> vals = st.getValues();
-					if (vals.size() != 1 || vals.get(0).getValueStmt() == null
-							|| !"TRUE".equals(textOf(vals.get(0).getValueStmt().getCtx()))) {
-						reject(ctx, "SET target(s) TO a value other than TRUE (only SET condition-name TO TRUE is supported)");
+				final List<Map<String, Object>> stmts = new ArrayList<>();
+				if (set.getSetType() == io.proleap.cobol.asg.metamodel.procedure.set.SetStatement.SetType.BY) {
+					// SET idx UP/DOWN BY n: index adjustment (index targets only).
+					final io.proleap.cobol.asg.metamodel.procedure.set.SetBy by = set.getSetBy();
+					final boolean up = by != null && by.getSetByType() == io.proleap.cobol.asg.metamodel.procedure.set.SetBy.SetByType.UP;
+					final String amt = by != null && by.getBy() != null && by.getBy().getByValueStmt() != null
+							? resolveQualified(textOf(by.getBy().getByValueStmt().getCtx()), ctx) : null;
+					if (amt == null) {
+						reject(ctx, "SET ... UP/DOWN BY with no resolvable amount");
 						return;
 					}
+					for (final io.proleap.cobol.asg.metamodel.procedure.set.To to : by.getTos()) {
+						final Call call = to.getToCall();
+						final String tgt = call != null && call.getName() != null ? call.getName().toUpperCase() : null;
+						if (tgt == null || !indexNames.contains(tgt)) {
+							reject(ctx, "SET " + (tgt != null ? tgt : "target")
+									+ " UP/DOWN BY on a target that is not an INDEXED BY index-name");
+							return;
+						}
+						final String expr = tgt + (up ? " + " : " - ") + amt;
+						final Map<String, Object> cp = new LinkedHashMap<>();
+						cp.put("kind", "compute");
+						cp.put("target", tgt);
+						cp.put("rounded", false);
+						final Map<String, Object> e = new LinkedHashMap<>();
+						e.put("text", expr);
+						e.put("refs", refsIn(expr));
+						cp.put("expression", e);
+						cp.put("text", textOf(ctx));
+						cp.put("span", span(ctx));
+						stmts.add(cp);
+					}
+					for (final Map<String, Object> st : stmts) {
+						out.add(st);
+					}
+					return;
+				}
+				for (final io.proleap.cobol.asg.metamodel.procedure.set.SetTo st : set.getSetTos()) {
+					final List<io.proleap.cobol.asg.metamodel.procedure.set.Value> vals = st.getValues();
+					if (vals.size() != 1 || vals.get(0).getValueStmt() == null) {
+						reject(ctx, "SET target(s) TO a compound or missing value");
+						return;
+					}
+					final String valText = textOf(vals.get(0).getValueStmt().getCtx());
+					final boolean isTrue = "TRUE".equals(valText);
 					for (final io.proleap.cobol.asg.metamodel.procedure.set.To to : st.getTos()) {
 						final Call call = to.getToCall();
 						final String cn = call != null && call.getName() != null ? call.getName().toUpperCase() : null;
-						final String[] parentValue = cn != null ? conditionNames.get(cn) : null;
+						if (!isTrue && cn != null && indexNames.contains(cn)) {
+							// SET idx TO n: MOVE the occurrence number into the index.
+							final String from = resolveQualified(valText, ctx);
+							if (from == null) {
+								return;
+							}
+							final Map<String, Object> mv = new LinkedHashMap<>();
+							mv.put("kind", "move");
+							final Map<String, Object> f = new LinkedHashMap<>();
+							f.put("text", from);
+							f.put("refs", refsIn(from));
+							mv.put("from", f);
+							final List<Object> toList = new ArrayList<>();
+							toList.add(cn);
+							mv.put("to", toList);
+							mv.put("text", textOf(ctx));
+							mv.put("span", span(ctx));
+							stmts.add(mv);
+							continue;
+						}
+						final String[] parentValue = cn != null && isTrue ? conditionNames.get(cn) : null;
 						if (parentValue == null) {
-							reject(ctx, "SET " + (cn != null ? cn : "target")
-									+ " TO TRUE where it is not an 88-level condition name in this program");
+							reject(ctx, !isTrue
+									? "SET target(s) TO a value other than TRUE (only SET condition-name TO TRUE or SET index TO n is supported)"
+									: "SET " + (cn != null ? cn : "target")
+											+ " TO TRUE where it is not an 88-level condition name in this program");
 							return;
 						}
 						final Map<String, Object> mv = new LinkedHashMap<>();
@@ -1284,10 +1365,10 @@ public class ProLeapFrontend {
 						mv.put("to", toList);
 						mv.put("text", textOf(ctx));
 						mv.put("span", span(ctx));
-						moves.add(mv);
+						stmts.add(mv);
 					}
 				}
-				for (final Map<String, Object> mv : moves) {
+				for (final Map<String, Object> mv : stmts) {
 					out.add(mv);
 				}
 				return;
@@ -3130,6 +3211,35 @@ public class ProLeapFrontend {
 				return false;
 			}
 			return true;
+		}
+
+		/**
+		 * Register an INDEXED BY index-name (docs/occurs-indexed.md) as a
+		 * synthetic elementary unsigned numeric DISPLAY item - an
+		 * occurrence-number variable. PIC 9(4) holds any realistic occurrence
+		 * plus its loop-exit overshoot; scale 0. Idempotent: a name shared by
+		 * two OCCURS clauses (legal but rare) registers once.
+		 */
+		void registerIndexName(final String name) {
+			if (!indexNames.add(name)) {
+				return;
+			}
+			final Map<String, Object> type = new LinkedHashMap<>();
+			type.put("raw", "9(4)");
+			type.put("category", "numeric");
+			type.put("digits", 4);
+			type.put("scale", 0);
+			type.put("signed", false);
+			final Map<String, Object> item = new LinkedHashMap<>();
+			item.put("level", 77);
+			item.put("name", name);
+			item.put("path", name);
+			item.put("picture", "9(4)");
+			item.put("type", type);
+			item.put("usage", "DISPLAY");
+			item.put("children", new ArrayList<>());
+			item.put("indexName", true);
+			pendingIndexItems.add(item);
 		}
 
 		/** Elementary alphanumeric DISPLAY item (X(n)) - the O2x element shape. */

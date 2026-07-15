@@ -1,0 +1,8 @@
+{
+  "$comment": "Layer A for REORDER vs the real GnuCOBOL harness image (OCCURS INDEXED BY). Generated quantities span PIC 9(5)V99; every case exercises the PERFORM VARYING index sum, the SET-driven relative pick (occurrence 3), and the 5% ROUNDED fee, with the small-value bias hitting the sub-dollar region and the 500.00 boundary.",
+  "legacy": { "image": "legacymind/legacy-reorder", "label": "COBOL 85 REORDER (GnuCOBOL via harness image legacymind/legacy-reorder)" },
+  "modern": { "argv": ["java", "-cp", "../../out/bench/reorder/migrate/candidate-a", "Reorder"], "label": "Java 21 reorder (migrated candidate A)" },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "generator": { "ir": "../../out/ir/REORDER.ir.json", "stdinFields": ["WS-QTY"], "count": 200, "seed": 20260715 }
+}

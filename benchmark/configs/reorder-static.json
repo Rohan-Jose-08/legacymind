@@ -1,0 +1,4 @@
+{
+  "$comment": "Layer D for REORDER: static data-flow equivalence between the IR and migrated candidate A (OCCURS INDEXED BY). The price table is one constants region (legacy table union vs the modern array region); SUMP and PICK derive from it, BASE from the quantity input times a price constant, FEE from BASE with the 5/100 constants and half-up rounding, TOTAL joins them, TIER is control flow over the total. The index PX is a numeric variable, not an output key. Candidate B's off-by-one SET is invisible here (same price region) and is layer B's catch.",
+  "static": { "ir": "../../out/ir/REORDER.ir.json", "modernJava": "../../out/bench/reorder/migrate/candidate-a/Reorder.java" }
+}

@@ -1,0 +1,8 @@
+{
+  "$comment": "Layer C for REORDER vs the real GnuCOBOL harness image (OCCURS INDEXED BY, docs/occurs-indexed.md). Input 0 is the demand quantity (PIC 9(5)V99). The price cells are constants; the index PX is a numeric occurrence-number variable driven by PERFORM VARYING (the table sum) and by SET PX TO 1 / SET PX UP BY 2 (constant-folded to occurrence 3). WS-BASE = WS-QTY * price(3) is affine over the input, so the 5% fee's ROUNDED half-cent boundary is congruence-solved and the BULK tier (total > 500) splits on the affine total.",
+  "legacy": { "image": "legacymind/legacy-reorder", "label": "COBOL 85 REORDER (GnuCOBOL via harness image legacymind/legacy-reorder)" },
+  "modern": { "argv": ["java", "-cp", "../../out/bench/reorder/migrate/candidate-a", "Reorder"], "label": "Java 21 reorder (migrated candidate A)" },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "symbolic": { "ir": "../../out/ir/REORDER.ir.json", "stdinFields": ["WS-QTY"], "baseCase": ["100.00"], "maxBoundarySolutions": 5 }
+}

@@ -1,0 +1,15 @@
+{
+  "$comment": "Layer B selection cases for REORDER vs the real GnuCOBOL harness image (OCCURS INDEXED BY). Candidate B makes the SET UP BY off by one (picks price occurrence 2, 1.55, instead of 3, 1.75), so BASE/FEE/TOTAL are wrong on every non-zero quantity - the index-arithmetic defect, caught by layer B. Cases cover a typical order, the 500.00 BULK boundary, a fee half-cent tie, and zero and max quantities.",
+  "legacy": { "image": "legacymind/legacy-reorder", "label": "COBOL 85 REORDER (GnuCOBOL via harness image legacymind/legacy-reorder)" },
+  "modern": { "argv": ["java", "-cp", "../../out/bench/reorder/migrate/candidate-a", "Reorder"], "label": "Java 21 reorder (migrated candidate A)" },
+  "protocol": { "input": "stdin-lines", "output": "kv-lines" },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "cases": [
+    { "id": "typical", "stdin": ["100.00"] },
+    { "id": "bulk-tier", "stdin": ["300.00"] },
+    { "id": "ties", "stdin": ["0.02"] },
+    { "id": "max", "stdin": ["99999.99"] },
+    { "id": "zero", "stdin": ["0.00"] }
+  ]
+}

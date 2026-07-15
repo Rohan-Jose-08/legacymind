@@ -26,8 +26,12 @@ table model is type-agnostic, matching a modern String[] array region.
 **O3-flat — flat group-element tables — is implemented and certified**
 (the MANIFEST module, docs/occurs-groups.md): a flat group of elementary
 leaves decomposes into parallel per-leaf tables, each riding the O1/O2x
-machinery unchanged; whole-element access rejects loudly. Nested/
-multi-dimensional tables and INDEXED BY remain out (named residuals). The frontend lowers a fixed `OCCURS n TIMES` and admits
+machinery unchanged; whole-element access rejects loudly. **INDEXED BY
+index-names are implemented and certified** (the REORDER module,
+docs/occurs-indexed.md): an index-name is a synthetic occurrence-number
+variable, and SET idx TO n / SET idx UP BY n desugar to move / compute
+over it - verifier untouched. Nested/multi-dimensional tables and SEARCH
+remain out (named residuals). The frontend lowers a fixed `OCCURS n TIMES` and admits
 subscripted references (ACCEPT / arithmetic / COMPUTE / MOVE targets, and
 affine subscripts like `W-VAL(2*I)`) to a table, rejecting DEPENDING ON /
 INDEXED / SORT / group elements; layer C resolves a subscript to a

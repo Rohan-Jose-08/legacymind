@@ -406,6 +406,24 @@ is honestly noted (no on-grid input hits it on any probed line), and the
 module's one remaining disclosure is the documented loop-condition
 class.
 
+The REORDER module brings `OCCURS ... INDEXED BY` index-names into the
+subset (docs/occurs-indexed.md). Measured first, the corpus INDEXED BY
+population is mostly the NIST multi-dimensional table series and SEARCH
+(148 uses) — both larger constructs — while the everyday 1-D
+index-driven idiom it under-represents is what real pre-`PERFORM` COBOL
+uses constantly. An index-name is an occurrence-number variable, so
+`SET idx TO n` desugars to `MOVE n` and `SET idx UP BY n` to `COMPUTE idx
+= idx + n` over a synthetic numeric item — the verifier is untouched,
+the RG/O2x/O3 leverage once more. REORDER fills a price table at literal
+subscripts, sums it by `PERFORM VARYING` the index, and selects a tier
+price by relative indexing (`SET PX TO 1` then `SET PX UP BY 2`); the
+ROUNDED base and the 5% ROUNDED fee both verify — the fee, a round over
+the rounded base, even exercises the composed-rounding solver — leaving
+only the loop-condition disclosure. Candidate B makes the `SET UP BY`
+off by one (picks the wrong occurrence), the index-arithmetic defect,
+caught by layer B on every non-zero quantity. Multi-dimensional tables
+and SEARCH are named residuals.
+
 ## Running
 
 ```
