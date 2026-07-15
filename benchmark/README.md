@@ -545,7 +545,11 @@ the corpus named in the founding spec (759 files, commit pinned in
   histogram is that O3 table-shape family, the
   file-I/O statement family (OPEN/CLOSE/WRITE-with-clauses/READ outside
   the supported files), SET to a non-condition target (825), and the
-  remaining GO TO shapes (backward and PERFORM-reachable jumps). This
+  GO TO shapes (2,616 backward/self and PERFORM-reachable jumps) — which,
+  measured the same way (docs/backward-goto.md), are 86% the CCVS
+  harness's FAIL-ROUTINE/BAIL-OUT/CLOSE-FILES bail-out plumbing, a
+  structured early-exit construct, not the pre-PERFORM backward *loop*
+  the count seems to promise. This
   corpus is ProLeap's own test suite and deliberately exercises every
   exotic construct, so the IR-complete rate is adversarially low by
   construction; the LEDGER module shows what the lowered subset covers
