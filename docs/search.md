@@ -3,10 +3,17 @@
 Design stage for the `SEARCH` statement, the natural companion to the
 `INDEXED BY` index-names that stage 52 brought in. As with every recent
 head, the corpus population is measured first and is almost entirely
-conformance-test scaffold; the value, if built, is a genuine proof-grade
-capability the desugar makes cheap. Ground truth is validated against
-GnuCOBOL 3.1.2 (`examples/probes/search.cbl`) and the ProLeap API by
-javap before any engine code.
+conformance-test scaffold. Ground truth is validated against GnuCOBOL
+3.1.2 (`examples/probes/search.cbl`) and the ProLeap API by javap.
+
+**Status: designed, and the design was corrected by a build attempt.**
+The desugar below is sound and lowers, but pushing the hand-written
+desugared form through the symbolic engine
+(`examples/probes/search-desugar.cbl`) showed Layer C cannot yet reason
+about the search — so SEARCH is a two-part effort (frontend desugar +
+a new Layer C search-enumeration capability), not the cheap
+desugar-and-reuse first assumed. Not built; see the corrected
+recommendation.
 
 ## The corpus population, measured
 
@@ -59,22 +66,40 @@ a synthetic no-op body paragraph for the `PERFORM` to range over (the
 invasive than the data-item injection stage 52 used, because paragraphs
 carry order, CFG edges, and PERFORM-reachability.
 
-## What Layer C then does — bounded search reasoning
+## What Layer C then does — measured, and it is NOT free (design correction)
 
-Because the loop unrolls at most `N` times over a fixed table, Layer C
-enumerates the `N + 1` outcome paths (matched at each occurrence, or ran
-off the end):
+The first draft of this design claimed Layer C would enumerate the
+`N + 1` outcome paths "for free" via the existing unroller. **That was
+wrong, and the correction is the load-bearing finding of the build
+attempt.** The desugar was hand-written as real COBOL
+(`examples/probes/search-desugar.cbl`), lowered, and run through the
+symbolic engine. The desugar is sound — it parses, and it matches the
+binary (code 33 → price 3.75, missing code → default). But Layer C
+realizes **0 of 4 obligations**, every one honestly disclosed:
 
-- **Constant search key** (search a literal): the table cells are
-  constants, the loop is fully determined, and the found index folds to a
-  constant — every path resolved.
-- **Symbolic numeric key** (search an input over a numeric key column):
-  the found index is a function of the input; Layer C enumerates the
-  outcome paths, and each is realizable by the input that lands the key on
-  that cell — genuine new verified reasoning about a search.
-- **Symbolic text key** (alphanumeric key column): comparisons over text
-  fall to the existing text-twin treatment (never solved over), so those
-  paths are disclosed, not mis-answered.
+```
+UNREALIZED branch: IF IX > 5 OR W-CODE(IX) = W-WANT
+  condition is not an affine form on any path; needs nonlinear reasoning
+UNREALIZED round:  COMPUTE W-FEE ROUNDED = W-FOUND * 5 / 100
+  expression not solvable on any path (W-FOUND is a data-dependent select)
+```
+
+The reasons are structural, not incidental: (a) the loop guard is a
+**compound `OR`** the affine condition-evaluator does not split into its
+two branches; (b) the `WHEN` half, `W-CODE(IX) = W-WANT`, is an
+**equality over a subscripted cell** that the evaluator does not resolve
+even with `IX` pinned per iteration; and (c) the searched-out value
+`W-FOUND` is a **data-dependent selection** (which cell matched), not an
+affine form, so every obligation downstream of the search falls through.
+
+So the found-index-as-a-function-of-input reasoning — the thing that
+makes verifying a search valuable — is exactly what the current engine
+**cannot** do. Realizing it needs genuinely new Layer C machinery:
+`OR`-condition path-splitting, subscript-in-condition resolution under a
+pinned index, and match-position forking (fork the search into "matched
+at cell k, so `key = cell_k` and `key ≠ cell_1..k-1`" for each k, plus
+no-match). That is a crown-jewel-executor change and its own stage — not
+the verifier-untouched reuse this document first assumed.
 
 ## The sound subset — SR (serial search, flat table)
 
@@ -95,19 +120,32 @@ Everything else rejects loudly.
   **multiple `WHEN`s** and **compound conditions**; **multi-dimensional
   tables** (the NIST corpus shape).
 
-## Recommendation
+## Recommendation (revised after the build attempt)
 
-Unlike backward `GO TO` (deferred because it desugars to `PERFORM`, which
-adds no new verified behaviour), `SEARCH` earns its build: verifying that
-a Java translation of a table search finds the same element at the same
-position — the found index as a function of the input — is genuine
-proof-grade reasoning about the class of code where off-by-one and
-boundary bugs live, and it is the natural completion of the OCCURS/index
-family the last four stages built. The desugar reuses everything;
-the only real cost is the synthetic-paragraph injection.
+The build attempt reset the estimate. SEARCH is two pieces, not one:
 
-So **SR is ready to build**, and is the strongest remaining
-capability slice. Build it next if capability breadth is the goal;
-the alternative is the non-corpus product roadmap (dashboard/CI). Either
-way `SEARCH ALL` and the multi-dimensional/scaffold forms stay named
-residuals, not silent gaps.
+1. **The frontend desugar** — recognize `SEARCH`, emit the `PERFORM
+   VARYING` + `IF` + synthetic no-op paragraph. Cheap and validated; it
+   lowers, runs, and would certify a module **through Layers A/B/D**
+   (differential execution and flow), with Layer C disclosing the search
+   obligations as unrealized — the same shape as BATCHSUM, which certifies
+   with zero Layer C obligations realized. Honest, but it undersells the
+   differentiator on precisely the construct where symbolic proof is most
+   valuable.
+2. **The Layer C search-enumeration engine** — `OR`-condition splitting,
+   subscript-in-condition resolution, and match-position forking, so the
+   found index and the selected value become verified functions of the
+   input. This is the real value and the real cost; it is a crown-jewel
+   executor change, and it warrants its own design+build stage of the kind
+   the composed-rounding and through-rounding solvers each got.
+
+So SEARCH is **not** the cheap "desugar-and-reuse" this document first
+claimed, and shipping only piece 1 would be a Layer-C-hollow module on a
+construct that exists to be symbolically reasoned about. The honest plan
+is to build SEARCH properly — piece 1 plus piece 2 — as a dedicated
+Layer C stage, or to shelve it for the product roadmap (dashboard/CI).
+`SEARCH ALL` and the multi-dimensional/scaffold forms remain named
+residuals either way. The correction itself — that a plausible desugar
+can lower and run yet leave the symbolic engine unable to reason —
+belongs in the findings log: the layers cross-check the *design*, not
+just the code.

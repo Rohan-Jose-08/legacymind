@@ -507,6 +507,22 @@ in the order found. They are the sales pitch:
    as every other statement kind already does); the unquoted-literal
    fallback stays for genuine numeric literals, and a typo'd identifier
    cannot reach it because cobc fails the harness image build first.
+8. **A plausible desugar lowered and ran, but the engine refused to prove
+   it (2026-07-15).** The SEARCH design (docs/search.md) proposed
+   desugaring a serial table search to `PERFORM VARYING IX ... UNTIL IX >
+   N OR cell(IX) = key` — every piece already lowered, so the design
+   claimed the verifier came for free. Hand-writing the desugared form
+   (examples/probes/search-desugar.cbl) and running it proved the claim
+   half-wrong: it parses and matches the binary, but Layer C realizes zero
+   of its obligations and discloses each one — the compound `OR` guard and
+   the equality over a subscripted cell are outside the affine
+   condition-evaluator, and the searched-out value is a data-dependent
+   selection. The engine did not quietly emit weak witnesses or a hollow
+   certificate; it refused, honestly, and the refusal corrected an
+   over-optimistic design estimate before any engine code was written.
+   The layers cross-check the *design*, not only the code — and "prefer
+   refusing over mis-answering" held on a construct the symbolic engine
+   cannot yet reason about.
 
 ## Parser-coverage sweep
 
