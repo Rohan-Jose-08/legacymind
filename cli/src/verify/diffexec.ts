@@ -16,9 +16,12 @@
  *
  * The harness is deliberately command-agnostic: "legacy" can be a
  * cobc-compiled binary, "modern" a `java -cp … Main` invocation, or (as
- * in the bundled demo) mock scripts. Sandboxing (Docker, no network,
- * ephemeral fs, injected clock) belongs to harness/ and is NOT provided
- * here yet — see verifier/README.md for the roadmap.
+ * in the bundled demo) mock scripts. The legacy side runs in a pinned
+ * GnuCOBOL container (no network, ephemeral fs, injected clock). The
+ * modern side runs on the host JDK by default; setting LM_JAVA_IMAGE
+ * (harness/openjdk) runs it in a pinned OpenJDK container with the same
+ * sandbox — no network, ephemeral fs, read-only classpath — so a
+ * sandboxed run gives both sides the same provenance.
  */
 
 import { spawnSync } from "node:child_process";
@@ -261,11 +264,29 @@ export function runSide(side: SideConfig, stdinLines: string[], baseDir: string,
   const started = Date.now();
   let argv0: string;
   let argvRest: string[];
+  // The modern Java side runs in a pinned OpenJDK container when
+  // LM_JAVA_IMAGE is set (harness/openjdk), so it carries the same
+  // provenance and sandbox — pinned runtime, no network, ephemeral fs,
+  // read-only classpath — as the legacy GnuCOBOL container. Opt-in and
+  // shape-gated (a `java -cp <dir> <Main>` argv), so configs are unchanged
+  // and an unset env keeps the host-JDK path exactly as before.
+  const javaImage = process.env.LM_JAVA_IMAGE;
+  const containerizeJava =
+    !side.image && javaImage && side.argv?.[0] === "java" && side.argv[1] === "-cp" && side.argv.length >= 4;
   if (side.image) {
     const c = persistentContainer(side.image);
     const envFlags = Object.entries(side.env ?? {}).flatMap(([k, v]) => ["-e", `${k}=${v}`]);
     argv0 = "docker";
     argvRest = ["exec", "-i", ...envFlags, c.id, ...c.command];
+  } else if (containerizeJava) {
+    // Docker needs the drive-letter path with forward slashes (C:/...); the
+    // classpath dir mounts read-only at /work and the image entrypoint is
+    // `java`, so the remaining argv (main class + program args) follows -cp.
+    const cpAbs = resolve(baseDir, side.argv![2]!).replace(/\\/g, "/");
+    const rest = side.argv!.slice(3);
+    const envFlags = Object.entries(side.env ?? {}).flatMap(([k, v]) => ["-e", `${k}=${v}`]);
+    argv0 = "docker";
+    argvRest = ["run", "--rm", "-i", "--network", "none", ...envFlags, "-v", `${cpAbs}:/work:ro`, javaImage!, "-cp", "/work", ...rest];
   } else {
     argv0 = side.argv![0]!;
     argvRest = side.argv!.slice(1);
@@ -278,7 +299,9 @@ export function runSide(side: SideConfig, stdinLines: string[], baseDir: string,
     input: stdinLines.length > 0 ? stdinLines.join("\n") + "\n" : "",
     encoding: "utf8",
     timeout: timeoutMs,
-    env: { ...process.env, ...(side.image ? {} : side.env ?? {}) },
+    // side.env is passed to the candidate via -e in both container modes;
+    // only the plain host-spawn path injects it into the process env.
+    env: { ...process.env, ...(side.image || containerizeJava ? {} : side.env ?? {}) },
     windowsHide: true,
     shell: false,
   });

@@ -1,11 +1,12 @@
-# harness/ — sandboxed legacy execution
+# harness/ — sandboxed execution (both sides)
 
 ## Purpose
 
-Runs the *real* legacy toolchain inside Docker so verification evidence
-stops being conditional on mock fidelity. The GnuCOBOL image compiles the
-legacy module at build time; verification cases execute it in one of two
-modes:
+Runs the *real* toolchains inside Docker so verification evidence stops
+being conditional on mock fidelity — the legacy GnuCOBOL binary always,
+and the modern Java candidate too when sandboxed provenance is wanted
+(see "Modern side" below). The GnuCOBOL image compiles the legacy module
+at build time; verification cases execute it in one of two modes:
 
 - **Persistent-container mode** (the default in every real config):
   `"legacy": { "image": "legacymind/legacy-payroll" }` — the harness
@@ -45,6 +46,29 @@ From the repo root:
 (or the equivalent `docker build` on other platforms — see the script.)
 The image records its compiler in `/opt/legacy/cobc-version.txt`.
 
+## Modern side — sandboxed Java (OpenJDK image)
+
+By default the modern candidate runs on the host JDK. Setting
+`LM_JAVA_IMAGE` runs it instead in a pinned OpenJDK container
+(`harness/openjdk`, `eclipse-temurin:21.0.5_11-jre-jammy`) with the same
+sandbox as the legacy side — `--network none`, `--rm` ephemeral fs, and
+the compiled classpath mounted **read-only** at `/work`. Candidates are
+compiled with `javac --release 21`, so their bytecode runs unchanged on
+the pinned Java 21 runtime. Build and use it from the repo root:
+
+```
+docker build -f harness/openjdk/Dockerfile -t legacymind/harness-jdk21 .
+LM_JAVA_IMAGE=legacymind/harness-jdk21 node benchmark/run-benchmark.mjs --skip-images
+```
+
+The env var flows through to every layer's differential run (A, B, and
+C's witness checks), so a sandboxed benchmark run gives both sides the
+same provenance. It is **opt-in** because it uses one `docker run` per
+case (no host-JDK dependency, but ~1s startup each) — a persistent
+`docker exec` container, matching the legacy side's fast mode, is the
+named follow-on. Verified byte-identical: with the image set, REORDER's
+layer-B selection reaches the same candidate as the host JDK.
+
 ## Mock validation
 
 `examples/mock-validation.json` points the harness at the real binary as
@@ -78,8 +102,10 @@ way to drive the image.
   runner is the planned optimization.
 - The Docker daemon must be running; the harness reports a spawn error per
   case otherwise (case status ERROR, never a silent skip).
-- The Java side still runs on the host in this MVP. The spec's OpenJDK 21
-  image is the symmetric next step so both sides are sandboxed.
+- The Java side runs on the host JDK by default; the OpenJDK 21 image
+  (see "Modern side") sandboxes it symmetrically when `LM_JAVA_IMAGE` is
+  set. The remaining asymmetry is speed — the modern container is one-shot
+  per case, not yet persistent like the legacy side.
 - `debian:bookworm-slim` + `gnucobol3` pins the dialect to GnuCOBOL 3.x.
   Customers on Micro Focus / IBM Enterprise COBOL have dialect differences
   the image does not capture — certificates name the exact toolchain.
