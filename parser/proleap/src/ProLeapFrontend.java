@@ -860,13 +860,18 @@ public class ProLeapFrontend {
 			item.put("children", children);
 			if (occursCount != null) {
 				// O1 (docs/occurs.md): an elementary unsigned numeric DISPLAY
-				// element only; group tables and non-numeric elements are O3.
-				if (!elementaryNumericDisplay(item)) {
-					reject(ctx, "OCCURS element \"" + name
-							+ "\" is not an elementary unsigned numeric DISPLAY item (OCCURS O1)");
-				} else {
+				// element; O2x additionally admits elementary alphanumeric
+				// DISPLAY elements (code/label tables) - layer C carries X
+				// cells as text values it never solves over, exactly like X
+				// scalars, and layer D's one-region table model is
+				// type-agnostic. Group tables and other elements stay O3.
+				if (elementaryNumericDisplay(item) || elementaryAlnumDisplay(item)) {
 					item.put("occurs", occursCount);
 					pendingOccurs.add(item);
+				} else {
+					reject(ctx, "OCCURS element \"" + name
+							+ "\" is " + redefineShape(item)
+							+ ", not an elementary unsigned numeric or alphanumeric DISPLAY item (OCCURS O1/O2x)");
 				}
 			}
 			if (!filler) {
@@ -1778,7 +1783,22 @@ public class ProLeapFrontend {
 					return null;
 				}
 				if (!ID_ONLY.matcher(target).matches() && !isTableSubscript(target)) {
-					reject(ctx, "MOVE target \"" + target + "\" (qualified/subscripted)");
+					// Sub-classify so the corpus histogram separates reference
+					// modification, subscripts into non-lowered tables (the O3
+					// backlog), and unresolved qualification - measured because
+					// the raw head was 73% NIST CCVS FILE-RECORD-INFO scaffold.
+					final int lp = target.indexOf('(');
+					if (lp > 0 && target.endsWith(")")) {
+						if (target.substring(lp).contains(":")) {
+							reject(ctx, "MOVE target \"" + target.substring(0, lp)
+									+ "\" uses reference modification");
+						} else {
+							reject(ctx, "MOVE target \"" + target.substring(0, lp)
+									+ "\" is subscripted but not a lowered table (O3 backlog)");
+						}
+					} else {
+						reject(ctx, "MOVE target \"" + target + "\" (qualified/subscripted)");
+					}
 					return null;
 				}
 				to.add(target);
@@ -2173,7 +2193,18 @@ public class ProLeapFrontend {
 				} else if (declared.contains(text)) {
 					o.put("kind", "ref");
 					o.put("name", text);
+				} else if (isTableSubscript(text)) {
+					// A subscripted table cell is a reference, not a literal -
+					// without this it fell into the unquoted-literal fallback
+					// below and layer D silently dropped the output key
+					// (caught building TARIFF, the first module to DISPLAY a
+					// cell). Layer D keys it under the table's base region.
+					o.put("kind", "ref");
+					o.put("name", text);
 				} else if (!text.contains(" ")) {
+					// Unquoted no-space operand: a numeric literal (DISPLAY 5).
+					// A typo'd identifier cannot reach here - cobc fails the
+					// harness image build on undeclared names.
 					o.put("kind", "literal");
 					o.put("value", text);
 				} else {
@@ -2979,6 +3010,19 @@ public class ProLeapFrontend {
 				return false;
 			}
 			return true;
+		}
+
+		/** Elementary alphanumeric DISPLAY item (X(n)) - the O2x element shape. */
+		boolean elementaryAlnumDisplay(final Map<String, Object> item) {
+			final List<?> ch = (List<?>) item.get("children");
+			if (ch != null && !ch.isEmpty()) {
+				return false;
+			}
+			if (!"DISPLAY".equals(item.get("usage"))) {
+				return false;
+			}
+			final Map<?, ?> t = (Map<?, ?>) item.get("type");
+			return t != null && "alphanumeric".equals(t.get("category"));
 		}
 
 		int digitsOf(final Map<String, Object> item) {

@@ -356,6 +356,25 @@ and INVALID KEY remain rejected, now under their own histogram bucket so
 the corpus backlog distinguishes the sugar (lowered) from the page-
 control family (not).
 
+The TARIFF module brings alphanumeric tables into OCCURS (stage O2x,
+docs/occurs.md) — measured first: the corpus's #2 head ("MOVE target
+qualified/subscripted", 3,160) turned out to be 73% the NIST CCVS
+FILE-RECORD-INFO scaffold and almost all of the rest literal subscripts
+into non-lowered tables, so the real gap was the table *shapes*, not
+MOVE. A PIC X(3) zone-code table and a numeric rate table are filled at
+literal subscripts; each per-zone charge is ROUNDED to the cent (three
+affine half-cent obligations over the weight), and the BULK tier splits
+on a sum of three rounded values — a single-variable monotone staircase,
+with the BULK-path ties seeded through the rounded gate by the
+through-rounding bound. Layer C carries the X cells as text it never
+solves over, exactly the X-scalar treatment; layer D matches the legacy
+table region against the modern `String[]` — the array-region model is
+type-agnostic. Candidate B fills the code table in the wrong order (the
+0/1-base slip): the charges stay right and only the labels shuffle,
+caught by layer B on every case. Building the module also caught finding
+7 below — the first DISPLAY of a table cell exposed an IR
+misclassification only the static layer could see.
+
 ## Running
 
 ```
@@ -425,6 +444,20 @@ in the order found. They are the sales pitch:
    input bytes, so modeling it on the legacy side (symmetric with the
    Java candidate's explicit scaling) turned a spurious DIVERGENT into a
    verified match without weakening the check.
+7. **The IR mislabeled a displayed table cell as a literal (2026-07-15).**
+   Building TARIFF — the first module to DISPLAY a table cell — layer D
+   failed with "output key present only in modern side": C1/C2/C3 never
+   existed on the legacy side. The frontend's DISPLAY lowering classified
+   the subscripted reference `WS-ZONE-CODE(1)` through its unquoted-
+   literal fallback (meant for `DISPLAY 5`), so the static extractor saw
+   a literal that isn't a KEY= prefix and dropped the key silently. The
+   execution layers can't catch this class — the real binary prints the
+   real cell either way — so the static layer's key-set comparison is
+   what surfaced a frontend bug that had no dynamic symptom. Fixed by
+   recognizing table subscripts as refs (keyed to the table's one region,
+   as every other statement kind already does); the unquoted-literal
+   fallback stays for genuine numeric literals, and a typo'd identifier
+   cannot reach it because cobc fails the harness image build first.
 
 ## Parser-coverage sweep
 
@@ -468,9 +501,17 @@ the corpus named in the founding spec (759 files, commit pinned in
   tail is a few hundred lines. That measurement (and its consequence — do
   not build an edit-picture engine to chase a test count) is written up in
   `docs/redefines-edited.md`. OCCURS similarly split into the
-  fixed-numeric-table subset (lowered) versus 381 group/non-numeric-element
-  tables (O3). Past the scaffold-inflated REDEFINES head, the real
-  histogram is qualified/subscripted MOVE (3,160), the
+  fixed-numeric-and-alphanumeric-element subset (lowered — O2x brought
+  X(n) code tables in, and ~110 corpus tables with it) versus 254
+  group-element tables (O3), 98 INDEXED BY, and small COMP/edited tails.
+  The same measuring discipline then took apart the #2 head: the
+  3,160-count "MOVE target (qualified/subscripted)" bucket is 73% the
+  NIST CCVS FILE-RECORD-INFO scaffold by raw line count, and the sweep
+  now splits it into 3,042 subscripts into not-yet-lowered tables (the
+  O3 backlog wearing MOVE's clothes — the MOVE machinery itself is done),
+  115 unresolved qualifications, and a negligible reference-modification
+  tail. Past the scaffold-inflated REDEFINES head, the real
+  histogram is that O3 table-shape family, the
   file-I/O statement family (OPEN/CLOSE/WRITE-with-clauses/READ outside
   the supported files), SET to a non-condition target (825), and the
   remaining GO TO shapes (backward and PERFORM-reachable jumps). This

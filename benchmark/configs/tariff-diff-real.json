@@ -1,0 +1,22 @@
+{
+  "$comment": "Layer B selection cases for TARIFF vs the real GnuCOBOL harness image (OCCURS O2x, an alphanumeric code table at literal subscripts). Candidate B fills the zone-code table in the wrong order (the 0/1-base fill slip), so C1..C3 come out shuffled while the charges stay right - caught on every case. Cases cover the 50.00 BULK boundary (TOTAL exactly 50.00 at weight 19.61 stays STD; 19.62 goes BULK), a triple half-cent weight, and small and max weights.",
+  "legacy": {
+    "image": "legacymind/legacy-tariff",
+    "label": "COBOL 85 TARIFF (GnuCOBOL via harness image legacymind/legacy-tariff)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/tariff/migrate/candidate-a", "Tariff"],
+    "label": "Java 21 tariff (migrated candidate A)"
+  },
+  "protocol": { "input": "stdin-lines", "output": "kv-lines" },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "cases": [
+    { "id": "typical", "stdin": ["10.00"] },
+    { "id": "tier-boundary-exact", "stdin": ["19.61"] },
+    { "id": "just-over-boundary", "stdin": ["19.62"] },
+    { "id": "ties", "stdin": ["0.02"] },
+    { "id": "max", "stdin": ["99999.99"] },
+    { "id": "zero", "stdin": ["0.00"] }
+  ]
+}

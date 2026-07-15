@@ -282,5 +282,17 @@
     "staticConfig": "benchmark/configs/remit-static.json",
     "migrateOut": "out/bench/remit/migrate",
     "certCopy": "out/certification-remit.json"
+  },
+  {
+    "id": "tariff",
+    "programId": "TARIFF",
+    "source": "benchmark/modules/tariff.cbl",
+    "imageTag": "legacymind/legacy-tariff",
+    "diffConfig": "benchmark/configs/tariff-diff-real.json",
+    "propConfig": "benchmark/configs/tariff-prop-real.json",
+    "symConfig": "benchmark/configs/tariff-sym-real.json",
+    "staticConfig": "benchmark/configs/tariff-static.json",
+    "migrateOut": "out/bench/tariff/migrate",
+    "certCopy": "out/certification-tariff.json"
   }
 ]

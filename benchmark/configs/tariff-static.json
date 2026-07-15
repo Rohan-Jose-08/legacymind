@@ -1,0 +1,7 @@
+{
+  "$comment": "Layer D for TARIFF: static data-flow equivalence between the IR and migrated candidate A (OCCURS O2x). Both zone-code tables are one flow region of constants (the legacy X table and the modern String[] array - the array-region model is type-agnostic); C1..C3 derive from that region, F1..F3 and TOTAL from the weight input with the rate constants and half-up rounding, TIER is control flow over the total.",
+  "static": {
+    "ir": "../../out/ir/TARIFF.ir.json",
+    "modernJava": "../../out/bench/tariff/migrate/candidate-a/Tariff.java"
+  }
+}

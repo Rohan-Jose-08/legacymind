@@ -1,0 +1,19 @@
+{
+  "$comment": "Layer A for TARIFF vs the real GnuCOBOL harness image (OCCURS O2x). Generated weights span the PIC 9(5)V99 range with the small-value bias exercising the sub-dollar charges and the 50.00 BULK boundary; the zone-code table content is constant and checked on every case.",
+  "legacy": {
+    "image": "legacymind/legacy-tariff",
+    "label": "COBOL 85 TARIFF (GnuCOBOL via harness image legacymind/legacy-tariff)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/tariff/migrate/candidate-a", "Tariff"],
+    "label": "Java 21 tariff (migrated candidate A)"
+  },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "generator": {
+    "ir": "../../out/ir/TARIFF.ir.json",
+    "stdinFields": ["WS-WEIGHT"],
+    "count": 200,
+    "seed": 20260714
+  }
+}

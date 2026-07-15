@@ -251,7 +251,9 @@ export function extractLegacyFlows(ir: ModuleIR): { outputs: Map<string, FlowRec
             pendingKey = m ? m[1]! : null;
           } else if (pendingKey) {
             const flow = outputs.get(pendingKey) ?? newFlow();
-            flow.sources.add(op.name);
+            // OCCURS: a displayed table cell reads the table's one region -
+            // key under the base name, as accept/compute/move targets do.
+            flow.sources.add(op.name.replace(/\([^)]*\)$/, ""));
             outputs.set(pendingKey, flow);
             pendingKey = null;
           }

@@ -1,0 +1,19 @@
+{
+  "$comment": "Layer C for TARIFF vs the real GnuCOBOL harness image (OCCURS O2x). Input position 0 is the weight (PIC 9(5)V99). The X(3) zone-code cells are text values layer C carries but never solves over (exactly the X-scalar treatment); the numeric rate cells are constants, so each per-zone ROUNDED charge is an affine half-cent obligation over the weight, and the BULK tier splits on a sum of three rounded values - a single-variable monotone staircase (solveMixedRounding), with the BULK-path obligations seeded through the rounded gate by the through-rounding lower bound.",
+  "legacy": {
+    "image": "legacymind/legacy-tariff",
+    "label": "COBOL 85 TARIFF (GnuCOBOL via harness image legacymind/legacy-tariff)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/tariff/migrate/candidate-a", "Tariff"],
+    "label": "Java 21 tariff (migrated candidate A)"
+  },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "symbolic": {
+    "ir": "../../out/ir/TARIFF.ir.json",
+    "stdinFields": ["WS-WEIGHT"],
+    "baseCase": ["10.00"],
+    "maxBoundarySolutions": 5
+  }
+}

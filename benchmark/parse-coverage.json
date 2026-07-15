@@ -1,6 +1,6 @@
 {
   "tool": "legacymind parse-sweep",
-  "generatedAt": "2026-07-14T19:46:35.837Z",
+  "generatedAt": "2026-07-15T08:31:55.223Z",
   "corpus": "https://github.com/uwol/proleap-cobol-parser",
   "commit": "d1bfe75bdd6d480f70c74c6345bcc02610ac30d3",
   "total": 759,
@@ -140,8 +140,8 @@
         "count": 3218
       },
       {
-        "reason": "MOVE target \"…\" (qualified/subscripted)",
-        "count": 3160
+        "reason": "MOVE target \"…\" is subscripted but not a lowered table (O3 backlog)",
+        "count": 3042
       },
       {
         "reason": "CLOSE of \"…\" which is not a lowered file",
@@ -180,10 +180,6 @@
         "count": 397
       },
       {
-        "reason": "OCCURS element \"…\" is not an elementary unsigned numeric DISPLAY item (OCCURS O1)",
-        "count": 381
-      },
-      {
         "reason": "GO TO BAIL-OUT-WRITE inside PERFORM-reachable paragraph BAIL-OUT is neither a structured range early",
         "count": 375
       },
@@ -194,6 +190,10 @@
       {
         "reason": "PERFORM target \"…\" is not a paragraph in this program",
         "count": 306
+      },
+      {
+        "reason": "OCCURS element \"…\" is a group, not an elementary unsigned numeric or alphanumeric DISPLAY item (OCCU",
+        "count": 254
       },
       {
         "reason": "PROCEDURE DIVISION has no paragraphs",
@@ -230,6 +230,10 @@
       {
         "reason": "PICTURE …: P scaling is not supported",
         "count": 140
+      },
+      {
+        "reason": "MOVE target \"…\" (qualified/subscripted)",
+        "count": 115
       },
       {
         "reason": "DIVIDE ... ON SIZE ERROR",
@@ -724,6 +728,10 @@
         "count": 10
       },
       {
+        "reason": "OCCURS element \"…\" is non-DISPLAY (COMP), not an elementary unsigned numeric or alphanumeric DISPLAY",
+        "count": 10
+      },
+      {
         "reason": "STOP STOP_RUN_AND_DISPLAY",
         "count": 10
       },
@@ -746,10 +754,6 @@
       {
         "reason": "GO TO R1-EXIT inside PERFORM-reachable paragraph RD-1 is neither a structured range early-exit nor a",
         "count": 10
-      },
-      {
-        "reason": "REDEFINES group view leaf \"…\" is alphanumeric, not elementary unsigned numeric DISPLAY (RG first sub",
-        "count": 9
       },
       {
         "reason": "SELECT IX-FS1 ASSIGN TO a non-literal (XXXXX024)",
@@ -948,6 +952,10 @@
         "count": 6
       },
       {
+        "reason": "REDEFINES leaf pair \"…\"/\"…\" carries OCCURS (RG excludes REDEFINES+OCCURS)",
+        "count": 6
+      },
+      {
         "reason": "GO TO BUILD-LEVEL-2 is a backward or self jump; only strictly forward top-level jumps are supported",
         "count": 6
       },
@@ -1008,6 +1016,10 @@
         "count": 6
       },
       {
+        "reason": "OCCURS element \"…\" is numeric-edited, not an elementary unsigned numeric or alphanumeric DISPLAY ite",
+        "count": 6
+      },
+      {
         "reason": "paragraph DB-COMMON outside any section in a sectioned PROCEDURE DIVISION",
         "count": 5
       },
@@ -1037,6 +1049,10 @@
       },
       {
         "reason": "SELECT IX-FD1 ASSIGN TO a non-literal (XXXXX024)",
+        "count": 5
+      },
+      {
+        "reason": "OCCURS element \"…\" is signed numeric, not an elementary unsigned numeric or alphanumeric DISPLAY ite",
         "count": 5
       },
       {
@@ -1445,6 +1461,10 @@
       },
       {
         "reason": "GO TO D20-20-UPDATED-POP-CHECK inside PERFORM-reachable paragraph D20-10-SOURCE-CHECK is neither a s",
+        "count": 3
+      },
+      {
+        "reason": "REDEFINES group view leaf \"…\" is alphanumeric, not elementary unsigned numeric DISPLAY (RG first sub",
         "count": 3
       },
       {
