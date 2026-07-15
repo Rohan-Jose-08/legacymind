@@ -294,5 +294,17 @@
     "staticConfig": "benchmark/configs/tariff-static.json",
     "migrateOut": "out/bench/tariff/migrate",
     "certCopy": "out/certification-tariff.json"
+  },
+  {
+    "id": "manifest",
+    "programId": "MANIFEST",
+    "source": "benchmark/modules/manifest.cbl",
+    "imageTag": "legacymind/legacy-manifest",
+    "diffConfig": "benchmark/configs/manifest-diff-real.json",
+    "propConfig": "benchmark/configs/manifest-prop-real.json",
+    "symConfig": "benchmark/configs/manifest-sym-real.json",
+    "staticConfig": "benchmark/configs/manifest-static.json",
+    "migrateOut": "out/bench/manifest/migrate",
+    "certCopy": "out/certification-manifest.json"
   }
 ]

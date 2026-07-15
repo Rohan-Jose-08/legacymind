@@ -1,0 +1,22 @@
+{
+  "$comment": "Layer B selection cases for MANIFEST vs the real GnuCOBOL harness image (OCCURS O3-flat: a group table decomposed into parallel per-leaf tables). Candidate B collapses the per-row storage into one shared quantity field (only the last read survives), so every extension prices from row 3's quantity - caught on every case whose quantities differ. Cases cover the triple half-cent tie at odd tenths, the 100.00 BIG boundary, distinct quantities, and zero and max rows.",
+  "legacy": {
+    "image": "legacymind/legacy-manifest",
+    "label": "COBOL 85 MANIFEST (GnuCOBOL via harness image legacymind/legacy-manifest)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/manifest/migrate/candidate-a", "Manifest"],
+    "label": "Java 21 manifest (migrated candidate A)"
+  },
+  "protocol": { "input": "stdin-lines", "output": "kv-lines" },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "cases": [
+    { "id": "typical-distinct", "stdin": ["10.0", "5.5", "2.1"] },
+    { "id": "triple-tie", "stdin": ["0.1", "0.1", "0.1"] },
+    { "id": "big-tier", "stdin": ["30.0", "25.0", "10.0"] },
+    { "id": "max-rows", "stdin": ["999.9", "999.9", "999.9"] },
+    { "id": "zero", "stdin": ["0.0", "0.0", "0.0"] },
+    { "id": "single-row", "stdin": ["7.3", "0.0", "0.0"] }
+  ]
+}

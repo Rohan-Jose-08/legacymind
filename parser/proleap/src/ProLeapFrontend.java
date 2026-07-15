@@ -260,6 +260,8 @@ public class ProLeapFrontend {
 		final List<Map<String, Object>> pendingOccurs = new ArrayList<>();
 		/** Final table name -> element count. Basis for subscripted-reference acceptance. */
 		final Map<String, Integer> occursTables = new LinkedHashMap<>();
+		/** O3-flat group-table names: whole-element references reject loudly. */
+		final Set<String> groupTables = new LinkedHashSet<>();
 
 		/** preprocessed line number (1-based) -> original line number; null when inexact. */
 		int[] lineMap;
@@ -868,6 +870,19 @@ public class ProLeapFrontend {
 				if (elementaryNumericDisplay(item) || elementaryAlnumDisplay(item)) {
 					item.put("occurs", occursCount);
 					pendingOccurs.add(item);
+				} else if (!children.isEmpty()) {
+					// O3-flat (docs/occurs-groups.md): a FLAT group table whose
+					// leaves are all elementary numeric/alphanumeric DISPLAY is
+					// semantically PARALLEL PER-LEAF TABLES when every access
+					// is leaf-wise (validated byte-for-byte on GnuCOBOL,
+					// examples/probes/occurs-group.cbl): each leaf becomes its
+					// own logical table of the group's count and rides the
+					// O1/O2x machinery unchanged. Group-as-whole element access
+					// stays rejected by the reference gates (a whole-element
+					// read is byte concatenation - the named byte-layout x
+					// OCCURS residual). FILLER leaves are dead storage here (no
+					// group-whole access can observe them) and are skipped.
+					gateGroupOccurs(item, name, occursCount, ctx);
 				} else {
 					reject(ctx, "OCCURS element \"" + name
 							+ "\" is " + redefineShape(item)
@@ -988,10 +1003,25 @@ public class ProLeapFrontend {
 		 * ambiguous and rejected — never guessed. Returns the rewritten text,
 		 * or null after enumerating the problem into `unsupported`.
 		 */
+		/**
+		 * A lone subscripted reference may carry a space before its subscript -
+		 * from the source ("W-QTY (2)") or from the qualifier rejoin ("W-QTY OF
+		 * W-ROW (2)" resolving to "W-QTY (2)"). Canonicalize to NAME(sub) so
+		 * every base-name parse (isTableSubscript here, tableCell in layer C,
+		 * the suffix strip in layer D) agrees. Deliberately narrow: only a
+		 * single NAME followed by one parenthesized suffix matches, so
+		 * expression texts (where " (" is meaningful) are never touched.
+		 */
+		static String canonicalizeSubscript(final String text) {
+			return text != null && text.matches("[A-Z0-9-]+ +\\(.*\\)")
+					? text.replaceFirst(" +\\(", "(")
+					: text;
+		}
+
 		String resolveQualified(final String text, final ParserRuleContext ctx) {
 			if (leafIndex.isEmpty() || (!text.contains(" OF ") && !text.contains(" IN ")
 					&& duplicatedLeavesAbsent(text))) {
-				return text; // fast path: nothing to resolve or validate
+				return canonicalizeSubscript(text); // fast path: nothing to resolve
 			}
 			final List<String> toks = new ArrayList<>();
 			final Matcher m = TOKEN.matcher(text);
@@ -1053,7 +1083,7 @@ public class ProLeapFrontend {
 				out.add((String) candidates.get(0)[0]);
 				i = j;
 			}
-			return String.join(" ", out);
+			return canonicalizeSubscript(String.join(" ", out));
 		}
 
 		/** Cheap pre-check: does the text avoid every duplicated leaf name? */
@@ -1776,10 +1806,20 @@ public class ProLeapFrontend {
 			if (fromText == null) {
 				return null;
 			}
+			if (isGroupElementRef(fromText) || groupTables.contains(fromText)) {
+				reject(ctx, "MOVE from \"" + fromText + "\" reads an OCCURS group element whole"
+						+ " (byte concatenation - outside O3-flat; leaf references only)");
+				return null;
+			}
 			final List<String> to = new ArrayList<>();
 			for (final Call receiving : mt.getReceivingAreaCalls()) {
 				final String target = resolveQualified(textOf(receiving.getCtx()), ctx);
 				if (target == null) {
+					return null;
+				}
+				if (isGroupElementRef(target) || groupTables.contains(target)) {
+					reject(ctx, "MOVE to \"" + target + "\" writes an OCCURS group element whole"
+							+ " (byte concatenation - outside O3-flat; leaf references only)");
 					return null;
 				}
 				if (!ID_ONLY.matcher(target).matches() && !isTableSubscript(target)) {
@@ -2190,6 +2230,15 @@ public class ProLeapFrontend {
 				if (text.startsWith("\"") || text.startsWith("'")) {
 					o.put("kind", "literal");
 					o.put("value", text.substring(1, text.length() - 1));
+				} else if (isGroupElementRef(text) || groupTables.contains(text)) {
+					// Checked before the declared/ref branch: the group table
+					// is itself a declared item, and a whole-element (or
+					// whole-table) read is byte concatenation of its leaves -
+					// outside the parallel-leaf model (and it must never fall
+					// into the literal fallback - the finding-7 class).
+					reject(ctx, "DISPLAY of \"" + text + "\" reads an OCCURS group element whole"
+							+ " (byte concatenation - outside O3-flat; leaf references only)");
+					return null;
 				} else if (declared.contains(text)) {
 					o.put("kind", "ref");
 					o.put("name", text);
@@ -2960,6 +3009,77 @@ public class ProLeapFrontend {
 				final Map<String, Object> vl = (Map<String, Object>) vch.get(i);
 				vl.put("redefines", ((Map<?, ?>) tch.get(i)).get("name"));
 			}
+		}
+
+		/**
+		 * O3-flat gate (docs/occurs-groups.md): a group OCCURS item is admitted
+		 * when every named leaf is elementary unsigned-numeric or alphanumeric
+		 * DISPLAY with no nested OCCURS/subgroup, no VALUE, and no REDEFINES -
+		 * then each leaf is registered as its own logical table of the group's
+		 * count (the parallel-table decomposition, sound because the reference
+		 * gates keep every access leaf-wise). Anything else rejects loudly.
+		 */
+		void gateGroupOccurs(final Map<String, Object> group, final String groupName,
+				final Integer occursCount, final ParserRuleContext ctx) {
+			final List<?> ch = (List<?>) group.get("children");
+			final List<Map<String, Object>> leaves = new ArrayList<>();
+			for (final Object co : ch) {
+				@SuppressWarnings("unchecked")
+				final Map<String, Object> child = (Map<String, Object>) co;
+				if (Boolean.TRUE.equals(child.get("filler"))) {
+					continue; // dead storage in this subset - unobservable
+				}
+				final String cn = (String) child.get("name");
+				if (child.get("occurs") != null) {
+					reject(ctx, "OCCURS group \"" + groupName + "\" leaf \"" + cn
+							+ "\" carries nested OCCURS (multi-dimensional tables are outside O3-flat)");
+					return;
+				}
+				if (!elementaryNumericDisplay(child) && !elementaryAlnumDisplay(child)) {
+					reject(ctx, "OCCURS group \"" + groupName + "\" leaf \"" + cn + "\" is "
+							+ redefineShape(child)
+							+ ", not elementary unsigned numeric or alphanumeric DISPLAY (O3-flat)");
+					return;
+				}
+				if (child.get("value") != null) {
+					reject(ctx, "OCCURS group \"" + groupName + "\" leaf \"" + cn
+							+ "\" carries VALUE (table-leaf initialization is outside O3-flat)");
+					return;
+				}
+				boolean redefining = false;
+				for (final Object[] pr : pendingRedefines) {
+					if (pr[0] == child) {
+						redefining = true;
+					}
+				}
+				if (redefining) {
+					reject(ctx, "OCCURS group \"" + groupName + "\" leaf \"" + cn
+							+ "\" carries REDEFINES (REDEFINES+OCCURS is outside O3-flat)");
+					return;
+				}
+				leaves.add(child);
+			}
+			if (leaves.isEmpty()) {
+				reject(ctx, "OCCURS group \"" + groupName + "\" has no named leaves (O3-flat)");
+				return;
+			}
+			for (final Map<String, Object> leaf : leaves) {
+				leaf.put("occurs", occursCount);
+				pendingOccurs.add(leaf);
+			}
+			group.put("occursGroup", occursCount);
+			groupTables.add(groupName);
+		}
+
+		/** True when `text` is NAME(sub) with NAME an O3-flat group table -
+		 *  a whole-element reference (byte concatenation), outside the
+		 *  parallel-leaf model and rejected loudly at every reference site. */
+		boolean isGroupElementRef(final String text) {
+			final int lp = text.indexOf('(');
+			if (lp <= 0 || !text.endsWith(")")) {
+				return false;
+			}
+			return groupTables.contains(text.substring(0, lp));
 		}
 
 		/** True when `text` is a subscripted reference TABLE(sub) to a declared

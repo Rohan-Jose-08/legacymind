@@ -1,0 +1,7 @@
+{
+  "$comment": "Layer D for MANIFEST: static data-flow equivalence between the IR and migrated candidate A (OCCURS O3-flat). Each decomposed leaf is one flow region on the legacy side, matched by one parallel array region on the modern side: S1-S3 derive from the sku constants region, E1-E3 and TOTAL from the qty input region with the price constants and half-up rounding, TIER is control flow over the total. Candidate B's per-row collapse is invisible here (same regions) and is layer B's catch, consistent with the coarse-region design.",
+  "static": {
+    "ir": "../../out/ir/MANIFEST.ir.json",
+    "modernJava": "../../out/bench/manifest/migrate/candidate-a/Manifest.java"
+  }
+}

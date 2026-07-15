@@ -1,0 +1,19 @@
+{
+  "$comment": "Layer A for MANIFEST vs the real GnuCOBOL harness image (OCCURS O3-flat). Three generated quantities span the PIC 9(3)V9 tenths grid; every case exercises the parallel-leaf fill, the per-row ROUNDED extensions written into table cells, and the BIG boundary.",
+  "legacy": {
+    "image": "legacymind/legacy-manifest",
+    "label": "COBOL 85 MANIFEST (GnuCOBOL via harness image legacymind/legacy-manifest)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/manifest/migrate/candidate-a", "Manifest"],
+    "label": "Java 21 manifest (migrated candidate A)"
+  },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "generator": {
+    "ir": "../../out/ir/MANIFEST.ir.json",
+    "stdinFields": ["W-QTY", "W-QTY", "W-QTY"],
+    "count": 200,
+    "seed": 20260715
+  }
+}

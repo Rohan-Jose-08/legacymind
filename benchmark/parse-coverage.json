@@ -1,6 +1,6 @@
 {
   "tool": "legacymind parse-sweep",
-  "generatedAt": "2026-07-15T08:31:55.223Z",
+  "generatedAt": "2026-07-15T09:40:40.425Z",
   "corpus": "https://github.com/uwol/proleap-cobol-parser",
   "commit": "d1bfe75bdd6d480f70c74c6345bcc02610ac30d3",
   "total": 759,
@@ -141,7 +141,7 @@
       },
       {
         "reason": "MOVE target \"…\" is subscripted but not a lowered table (O3 backlog)",
-        "count": 3042
+        "count": 2759
       },
       {
         "reason": "CLOSE of \"…\" which is not a lowered file",
@@ -192,16 +192,16 @@
         "count": 306
       },
       {
-        "reason": "OCCURS element \"…\" is a group, not an elementary unsigned numeric or alphanumeric DISPLAY item (OCCU",
-        "count": 254
-      },
-      {
         "reason": "PROCEDURE DIVISION has no paragraphs",
         "count": 253
       },
       {
         "reason": "ADD receiving field \"…\" (qualified/subscripted)",
-        "count": 229
+        "count": 228
+      },
+      {
+        "reason": "OCCURS group \"…\" leaf \"…\" is a group, not elementary unsigned numeric or alphanumeric DISPLAY (O3-fl",
+        "count": 208
       },
       {
         "reason": "procedure name \"…\" is not representable in the IR",
@@ -336,10 +336,6 @@
         "count": 38
       },
       {
-        "reason": "ADD operand \"…\" (qualified/subscripted)",
-        "count": 38
-      },
-      {
         "reason": "DATA DIVISION section outside WORKING-STORAGE",
         "count": 36
       },
@@ -368,19 +364,15 @@
         "count": 31
       },
       {
-        "reason": "DIVIDE operand \"…\" (qualified/subscripted)",
-        "count": 31
-      },
-      {
-        "reason": "SUBTRACT operand \"…\" (qualified/subscripted)",
-        "count": 30
-      },
-      {
         "reason": "SELECT SQ-FS1 ASSIGN TO a non-literal (XXXXX001)",
         "count": 30
       },
       {
         "reason": "ENABLE statement",
+        "count": 29
+      },
+      {
+        "reason": "ADD operand \"…\" (qualified/subscripted)",
         "count": 29
       },
       {
@@ -401,10 +393,6 @@
       },
       {
         "reason": "DISPLAY ... AT/UPON/WITH/ON EXCEPTION",
-        "count": 25
-      },
-      {
-        "reason": "MULTIPLY operand \"…\" (qualified/subscripted)",
         "count": 25
       },
       {
@@ -460,6 +448,10 @@
         "count": 23
       },
       {
+        "reason": "DIVIDE operand \"…\" (qualified/subscripted)",
+        "count": 23
+      },
+      {
         "reason": "FD SQ-FS4 without a matching LINE SEQUENTIAL SELECT",
         "count": 23
       },
@@ -473,6 +465,10 @@
       },
       {
         "reason": "GO TO READ-TEST-GF-01 is a backward or self jump; only strictly forward top-level jumps are supporte",
+        "count": 22
+      },
+      {
+        "reason": "SUBTRACT operand \"…\" (qualified/subscripted)",
         "count": 22
       },
       {
@@ -504,6 +500,10 @@
         "count": 19
       },
       {
+        "reason": "OCCURS group \"…\" leaf \"…\" carries nested OCCURS (multi-dimensional tables are outside O3-flat)",
+        "count": 18
+      },
+      {
         "reason": "DIVIDE ... REMAINDER",
         "count": 18
       },
@@ -517,6 +517,10 @@
       },
       {
         "reason": "FD TFIL without a matching LINE SEQUENTIAL SELECT",
+        "count": 17
+      },
+      {
+        "reason": "MULTIPLY operand \"…\" (qualified/subscripted)",
         "count": 17
       },
       {
@@ -964,6 +968,10 @@
         "count": 6
       },
       {
+        "reason": "OCCURS group \"…\" leaf \"…\" is signed numeric, not elementary unsigned numeric or alphanumeric DISPLAY",
+        "count": 6
+      },
+      {
         "reason": "EVALUATE <subject> WHEN VALUE_THROUGH (THRU range / ANY / condition outside the subset)",
         "count": 6
       },
@@ -1057,10 +1065,6 @@
       },
       {
         "reason": "GO TO MOVE-VALUE is a backward or self jump; only strictly forward top-level jumps are supported",
-        "count": 5
-      },
-      {
-        "reason": "MULTIPLY receiving field \"…\" (qualified/subscripted)",
         "count": 5
       },
       {
@@ -1268,7 +1272,7 @@
         "count": 4
       },
       {
-        "reason": "DISPLAY operand \"…\" (qualified/subscripted)",
+        "reason": "MOVE from \"…\" reads an OCCURS group element whole (byte concatenation - outside O3-flat; leaf refere",
         "count": 4
       },
       {
@@ -1445,10 +1449,6 @@
       },
       {
         "reason": "GO TO ALTERABLE-PARAGRAPH is a backward or self jump; only strictly forward top-level jumps are supp",
-        "count": 3
-      },
-      {
-        "reason": "SUBTRACT receiving field \"…\" (qualified/subscripted)",
         "count": 3
       },
       {
@@ -1765,6 +1765,10 @@
       },
       {
         "reason": "WRITE GEN-REC which is not a file record",
+        "count": 2
+      },
+      {
+        "reason": "SUBTRACT receiving field \"…\" (qualified/subscripted)",
         "count": 2
       },
       {
@@ -3492,10 +3496,6 @@
         "count": 1
       },
       {
-        "reason": "ACCEPT target \"…\" (qualified/subscripted)",
-        "count": 1
-      },
-      {
         "reason": "DISPLAY operand \"…\"ABCD\"…\" (qualified/subscripted)",
         "count": 1
       },
@@ -3536,6 +3536,10 @@
         "count": 1
       },
       {
+        "reason": "ACCEPT TAB-ACCEPT(2) textually follows a GO TO - stdin positions would become path-dependent",
+        "count": 1
+      },
+      {
         "reason": "ACCEPT X80-CHARACTER-FIELD textually follows a GO TO - stdin positions would become path-dependent",
         "count": 1
       },
@@ -3553,6 +3557,10 @@
       },
       {
         "reason": "GO TO MAR-TEST-8 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "DISPLAY operand \"…\" (qualified/subscripted)",
         "count": 1
       },
       {
@@ -3597,6 +3605,10 @@
       },
       {
         "reason": "GO TO FINE inside PERFORM-reachable paragraph AAAA is neither a structured range early-exit nor a to",
+        "count": 1
+      },
+      {
+        "reason": "OCCURS group \"…\" leaf \"…\" is non-DISPLAY (COMP), not elementary unsigned numeric or alphanumeric DIS",
         "count": 1
       },
       {
@@ -5241,6 +5253,10 @@
       },
       {
         "reason": "FD SORTFILE-2F without a matching LINE SEQUENTIAL SELECT",
+        "count": 1
+      },
+      {
+        "reason": "MULTIPLY receiving field \"…\" (qualified/subscripted)",
         "count": 1
       },
       {

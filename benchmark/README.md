@@ -375,6 +375,30 @@ caught by layer B on every case. Building the module also caught finding
 7 below — the first DISPLAY of a table cell exposed an IR
 misclassification only the static layer could see.
 
+The MANIFEST module brings group-element tables into OCCURS (stage
+O3-flat, docs/occurs-groups.md). Measured first, the group-OCCURS corpus
+population is scaffold — 165 declarations are the CCVS FILE-RECORD-INFO
+template block (group-as-whole skeleton moves) and the rest mostly
+triple-nested INDEXED BY feature tests — while the everyday real-COBOL
+shape is a flat group of elementary leaves accessed leaf-wise. That
+shape is semantically **parallel per-leaf tables** (validated
+byte-for-byte on GnuCOBOL, including qualified subscripted refs and
+leaf independence), so the frontend decomposes it: each leaf becomes its
+own logical table riding the O1/O2x machinery, and the verifier is
+untouched. Whole-element access — byte concatenation of the leaves — is
+rejected loudly at every reference site, checked before the display
+literal fallback so it can never repeat finding 7's silent-literal
+class. The manifest rows mix X and numeric leaves; each row's ROUNDED
+extension is written into its own table cell inside a PERFORM VARYING
+loop and read back at literal subscripts. Candidate B collapses the
+per-row storage into one shared quantity field — every row prices from
+the last quantity, the archetypal parallel-decomposition defect — caught
+by layer B on every case with distinct quantities. Layer C verifies the
+per-row rounding and discloses the BIG-tier boundary honestly: the total
+is a **three-input rounded sum**, the multi-variable solver depth named
+as future work since composed rounding — MANIFEST is the live module
+attached to that residual.
+
 ## Running
 
 ```

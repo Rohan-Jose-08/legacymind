@@ -1,0 +1,19 @@
+{
+  "$comment": "Layer C for MANIFEST vs the real GnuCOBOL harness image (OCCURS O3-flat, docs/occurs-groups.md). Inputs 0-2 are the three quantities (PIC 9(3)V9, tenths), each NUMVAL'd into its W-QTY cell. The group table is decomposed into parallel per-leaf tables: sku cells are text (never solved over), price cells constants, so each row's ROUNDED extension W-EXT(I) = W-QTY(I) * price(I) is an affine half-cent obligation over one input (ties at odd tenths), and the BIG tier splits on the affine sum of the three written cells.",
+  "legacy": {
+    "image": "legacymind/legacy-manifest",
+    "label": "COBOL 85 MANIFEST (GnuCOBOL via harness image legacymind/legacy-manifest)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/manifest/migrate/candidate-a", "Manifest"],
+    "label": "Java 21 manifest (migrated candidate A)"
+  },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "symbolic": {
+    "ir": "../../out/ir/MANIFEST.ir.json",
+    "stdinFields": ["W-QTY", "W-QTY", "W-QTY"],
+    "baseCase": ["10.0", "5.5", "2.1"],
+    "maxBoundarySolutions": 5
+  }
+}
