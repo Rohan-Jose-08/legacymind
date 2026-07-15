@@ -396,8 +396,15 @@ the last quantity, the archetypal parallel-decomposition defect — caught
 by layer B on every case with distinct quantities. Layer C verifies the
 per-row rounding and discloses the BIG-tier boundary honestly: the total
 is a **three-input rounded sum**, the multi-variable solver depth named
-as future work since composed rounding — MANIFEST is the live module
-attached to that residual.
+as future work since composed rounding — and closed one stage later by
+the restricted-line search (docs/multivar-boundary.md): fix all inputs
+but one at a path base case (partial evaluation of an exact form is
+exact on that line) and run the existing single-variable staircase, with
+the full constraint filter still deciding. The BIG boundary now verifies
+with ±1ulp witnesses confirmed on the real binary; the exact-zero case
+is honestly noted (no on-grid input hits it on any probed line), and the
+module's one remaining disclosure is the documented loop-condition
+class.
 
 ## Running
 

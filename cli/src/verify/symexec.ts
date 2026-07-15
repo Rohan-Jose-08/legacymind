@@ -2091,7 +2091,19 @@ export function runSymExec(configPath: string, outPath: string): number {
         exactVarSet(e[1].exact).size === 1 &&
         exactMonotonePositive(e[1].exact),
     );
-    if (affineSites.length === 0 && roundSites.length === 0 && mixedSites.length === 0) {
+    // Multi-variable mixed forms (docs/multivar-boundary.md): a monotone
+    // decision over several independently-rounded inputs — MANIFEST's tier
+    // gate over a sum of three rounded extensions. Solved by fixing all
+    // inputs but one at a path base case and searching the restricted line.
+    const multiVarSites = [...perPath.entries()].filter(
+      (e): e is [number, { diff: Affine | null; exact: ExactForm }] =>
+        e[1].exact !== null &&
+        e[1].exact.rounds.length >= 1 &&
+        exactVarSet(e[1].exact).size > 1 &&
+        exactMonotonePositive(e[1].exact),
+    );
+    if (affineSites.length === 0 && roundSites.length === 0 && mixedSites.length === 0
+        && multiVarSites.length === 0) {
       const any = [...perPath.values()].find((x) => x.diff !== null);
       ob.notes.push(
         any === undefined
@@ -2150,6 +2162,22 @@ export function runSymExec(configPath: string, outPath: string): number {
           if (solved) {
             solvedPath = pathId;
             how = "exact staircase search over the mixed affine+rounded form";
+            break;
+          }
+        }
+      }
+      if (!solved) {
+        for (const [pathId, site] of multiVarSites) {
+          solved = solveMixedRoundingMultiVar(
+            site.exact,
+            offset,
+            inputs,
+            fixedCandidatesFor(pathId),
+            paths[pathId]!.state.constraints,
+          );
+          if (solved) {
+            solvedPath = pathId;
+            how = "fixed all inputs but one; exact staircase on the restricted line";
             break;
           }
         }
@@ -2753,6 +2781,72 @@ function solveMixedRounding(
       const x: Assignment = [...base];
       x[j] = rat(cand, g);
       if (allConstraintsHold(constraints, x) === true) return x;
+    }
+  }
+  return null;
+}
+
+/**
+ * Partially evaluate `exact` at `base` for every input except `j`
+ * (docs/multivar-boundary.md): affine terms over other inputs fold into the
+ * constant, and round terms recurse — a term whose inner no longer mentions
+ * `j` after restriction evaluates to its exact rounded constant. The result
+ * is the exact decision value RESTRICTED TO THE LINE through `base` along
+ * `j`: partial evaluation of an exact form is exact, so any witness found on
+ * the line is a true witness of the full form. Returns null only when a
+ * needed base value is missing.
+ */
+function restrictExactToVar(exact: ExactForm, j: number, base: Assignment): ExactForm | null {
+  let c = exact.affine.c;
+  const terms = new Map<number, Rat>();
+  for (const [i, coeff] of exact.affine.terms) {
+    if (i === j) {
+      terms.set(i, coeff);
+      continue;
+    }
+    const v = base[i];
+    if (v === null || v === undefined) return null;
+    c = rAdd(c, rMul(coeff, v));
+  }
+  const rounds: RoundTerm[] = [];
+  for (const rt of exact.rounds) {
+    const inner = restrictExactToVar(rt.inner, j, base);
+    if (inner === null) return null;
+    if (exactVarSet(inner).size === 0) {
+      // fully determined by the base point: fold the exact rounded constant
+      c = rAdd(c, rMul(rt.coeff, ratRound(evalExact(inner, []), rt.scale, rt.mode)));
+    } else {
+      rounds.push({ coeff: rt.coeff, mode: rt.mode, scale: rt.scale, inner });
+    }
+  }
+  return { affine: { terms, c, fuzz: exact.affine.fuzz }, rounds };
+}
+
+/**
+ * Boundary cases for a decision value over SEVERAL inputs mixing affine and
+ * rounded terms (docs/multivar-boundary.md) — MANIFEST's tier gate over a
+ * sum of three independently-rounded extensions. For each input in turn,
+ * fix the others at a path base case and run the single-variable monotone
+ * staircase on the restricted line (solveMixedRounding re-checks the
+ * single-var monotone gate itself, so a restriction that is not monotone in
+ * the free input simply skips). The full constraint set still decides every
+ * candidate; a line search that finds nothing leaves the honest disclosure.
+ */
+function solveMixedRoundingMultiVar(
+  exact: ExactForm,
+  offset: bigint,
+  inputs: InputVar[],
+  fixedCandidates: Assignment[],
+  constraints: Constraint[],
+): Assignment | null {
+  const vars = [...exactVarSet(exact)];
+  if (vars.length < 2) return null;
+  for (const j of vars) {
+    for (const base of fixedCandidates) {
+      const restricted = restrictExactToVar(exact, j, base);
+      if (restricted === null) continue;
+      const solved = solveMixedRounding(restricted, offset, inputs, [base], constraints);
+      if (solved) return solved;
     }
   }
   return null;
