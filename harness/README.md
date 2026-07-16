@@ -63,11 +63,17 @@ LM_JAVA_IMAGE=legacymind/harness-jdk21 node benchmark/run-benchmark.mjs --skip-i
 
 The env var flows through to every layer's differential run (A, B, and
 C's witness checks), so a sandboxed benchmark run gives both sides the
-same provenance. It is **opt-in** because it uses one `docker run` per
-case (no host-JDK dependency, but ~1s startup each) — a persistent
-`docker exec` container, matching the legacy side's fast mode, is the
-named follow-on. Verified byte-identical: with the image set, REORDER's
-layer-B selection reaches the same candidate as the host JDK.
+same provenance. Execution uses the same fast mode as the legacy side:
+one persistent `sleep infinity` container per (image, classpath) pair —
+the classpath is a per-candidate read-only mount, so it keys the
+container — and each case is a `docker exec java -cp /work …`, paying
+container startup once per process instead of once per case. Containers
+carry the `legacymind-harness=1` label and are removed on process exit;
+a force-killed process leaves orphans, cleaned like the legacy side's
+(`docker rm -f $(docker ps -q --filter label=legacymind-harness)`).
+Verified byte-identical: a full 26-module benchmark run with the image
+set certifies 26/26 with every module's layer summaries, verdicts, and
+gaps identical to the host-JDK run.
 
 ## Mock validation
 
@@ -104,8 +110,9 @@ way to drive the image.
   case otherwise (case status ERROR, never a silent skip).
 - The Java side runs on the host JDK by default; the OpenJDK 21 image
   (see "Modern side") sandboxes it symmetrically when `LM_JAVA_IMAGE` is
-  set. The remaining asymmetry is speed — the modern container is one-shot
-  per case, not yet persistent like the legacy side.
+  set, with the same persistent-container fast mode as the legacy side.
+  The default stays host-JDK so machines without the image built keep
+  working; the sandboxed run is the provenance-grade configuration.
 - `debian:bookworm-slim` + `gnucobol3` pins the dialect to GnuCOBOL 3.x.
   Customers on Micro Focus / IBM Enterprise COBOL have dialect differences
   the image does not capture — certificates name the exact toolchain.

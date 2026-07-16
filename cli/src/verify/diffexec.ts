@@ -243,6 +243,32 @@ function persistentContainer(image: string): PersistentContainer {
   return container;
 }
 
+/**
+ * Persistent container for the SANDBOXED JAVA side (LM_JAVA_IMAGE): one
+ * long-lived `sleep infinity` container per (image, classpath) pair —
+ * the classpath is a per-candidate read-only mount, so it is part of the
+ * key — and each case is a `docker exec java -cp /work …`. Same shape and
+ * cleanup as the legacy side's persistent container; the startup cost is
+ * paid once per process instead of once per case.
+ */
+function persistentJavaContainer(image: string, cpAbs: string): PersistentContainer {
+  const key = `${image} ${cpAbs}`;
+  const existing = persistentContainers.get(key);
+  if (existing) return existing;
+  const id = dockerOrFail(
+    ["run", "-d", "--rm", "--network", "none", "--label", "legacymind-harness=1",
+      "-v", `${cpAbs}:/work:ro`, "--entrypoint", "sleep", image, "infinity"],
+    `starting persistent java container for ${image} (${cpAbs})`,
+  );
+  const container = { id, command: ["java", "-cp", "/work"] };
+  persistentContainers.set(key, container);
+  if (!cleanupHooked) {
+    cleanupHooked = true;
+    process.on("exit", stopPersistentContainers);
+  }
+  return container;
+}
+
 /** Human-readable side description for logs. */
 export function sideLabel(side: SideConfig): string {
   return side.label ?? (side.image ? `persistent container of ${side.image}` : side.argv!.join(" "));
@@ -280,13 +306,15 @@ export function runSide(side: SideConfig, stdinLines: string[], baseDir: string,
     argvRest = ["exec", "-i", ...envFlags, c.id, ...c.command];
   } else if (containerizeJava) {
     // Docker needs the drive-letter path with forward slashes (C:/...); the
-    // classpath dir mounts read-only at /work and the image entrypoint is
-    // `java`, so the remaining argv (main class + program args) follows -cp.
+    // classpath dir mounts read-only at /work in a persistent per-(image,
+    // classpath) container, and each case is an exec — container startup is
+    // paid once per process, not per case (the legacy side's fast mode).
     const cpAbs = resolve(baseDir, side.argv![2]!).replace(/\\/g, "/");
     const rest = side.argv!.slice(3);
     const envFlags = Object.entries(side.env ?? {}).flatMap(([k, v]) => ["-e", `${k}=${v}`]);
+    const c = persistentJavaContainer(javaImage!, cpAbs);
     argv0 = "docker";
-    argvRest = ["run", "--rm", "-i", "--network", "none", ...envFlags, "-v", `${cpAbs}:/work:ro`, javaImage!, "-cp", "/work", ...rest];
+    argvRest = ["exec", "-i", ...envFlags, c.id, ...c.command, ...rest];
   } else {
     argv0 = side.argv![0]!;
     argvRest = side.argv!.slice(1);

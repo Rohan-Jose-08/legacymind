@@ -171,7 +171,10 @@ const results = {
         ? "proleap engine (ProLeap ANTLR4 COBOL85 grammar + reference-format preprocessor, JVM)"
         : "stub engine (bounded fixed-format subset, TypeScript)",
     legacy: "GnuCOBOL 3.1.2 (debian:bookworm-slim, sandboxed: --network none, --rm)",
-    modern: "Java 21 (javac --release 21), executed on host",
+    modern: process.env.LM_JAVA_IMAGE
+      ? `Java 21 (javac --release 21), executed sandboxed in ${process.env.LM_JAVA_IMAGE} (--network none, ro classpath)`
+      : "Java 21 (javac --release 21), executed on host",
+    irValidator: "legacymind/ir-core (Rust typed IR contract, ir-core/)",
     transpiler: "claude-opus-4-8 via recorded replay cache (offline)",
   },
   modules: rows,
