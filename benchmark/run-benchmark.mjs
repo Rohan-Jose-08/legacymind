@@ -21,6 +21,9 @@ const ENGINE = process.argv.includes("--engine")
   : "proleap";
 const modules = JSON.parse(readFileSync(join(ROOT, "benchmark/modules.json"), "utf8"));
 
+// Docker volume mounts need the drive-letter path with forward slashes.
+const IR_MOUNT = `${join(ROOT, "out/ir").replace(/\\/g, "/")}:/ir:ro`;
+
 const run = (argv, label) => {
   const started = Date.now();
   const res = spawnSync(argv[0], argv.slice(1), { cwd: ROOT, encoding: "utf8", windowsHide: true });
@@ -36,6 +39,13 @@ const run = (argv, label) => {
 };
 
 const readJson = (p) => JSON.parse(readFileSync(join(ROOT, p), "utf8"));
+
+// The IR validator image depends only on ir-core/, not on any module, so
+// it builds once per run; --skip-images reuses the existing image (the
+// per-module validate step fails loudly if it is missing).
+if (!SKIP_IMAGES) {
+  run(["docker", "build", "-f", "ir-core/Dockerfile", "-t", "legacymind/ir-core", "."], "ir-core image (rust)");
+}
 
 const rows = [];
 for (const m of modules) {
@@ -53,11 +63,19 @@ for (const m of modules) {
   for (const p of [propOut, symOut, staticOut, certOut, `${m.migrateOut}/selection.json`]) {
     rmSync(join(ROOT, p), { force: true });
   }
-  const steps = { parse: null, image: null, migrate: null, layerA: null, layerC: null, layerD: null, certify: null, verifyCert: null };
+  const steps = { parse: null, validateIr: null, image: null, migrate: null, layerA: null, layerC: null, layerD: null, certify: null, verifyCert: null };
 
   steps.parse = run(
     ["node", "cli/dist/main.js", "parse", m.source, "--out", "out/ir/", "--engine", ENGINE],
     `parse (${ENGINE} engine)`,
+  );
+  // The Rust IR core (ir-core/) validates the emitted document against the
+  // typed contract: unknown statement kinds, version drift, and structural
+  // invariant violations fail the module here, before anything consumes
+  // the IR. Read-only mount; the image is built once before the loop.
+  steps.validateIr = run(
+    ["docker", "run", "--rm", "-v", IR_MOUNT, "legacymind/ir-core", `/ir/${m.programId}.ir.json`],
+    "validate IR (rust ir-core)",
   );
   if (!SKIP_IMAGES) {
     // File-writing modules use the wrapper Dockerfile (run, then serialize
@@ -131,6 +149,13 @@ for (const m of modules) {
     };
   } catch (e) {
     row.error = `artifact collection failed: ${e.message}`;
+  }
+  // A failed pipeline step must surface in the VERDICT, not only in the
+  // steps map: downstream steps can still produce a certificate after an
+  // earlier failure (e.g. IR validation failing while migrate/verify run
+  // on), and that certificate is not a clean pass.
+  if (Object.values(steps).some((s) => s && !s.ok)) {
+    row.verdict = "PIPELINE-FAILED";
   }
   rows.push(row);
 }

@@ -74,7 +74,12 @@ IF/ELSE branch structure and the decoded PICTURE types.
 
 ## Failure modes
 
-- A document that fails schema validation means a parser bug or a schema
-  drift — CI must run `cli/scripts/validate-ir.mjs` on every emitted IR.
+- A document that fails validation means a parser bug or a contract
+  drift. Two validators exist: `cli/scripts/validate-ir.mjs` (Ajv against
+  this schema; run by `npm test`) and the Rust typed contract
+  (`ir-core/`, the `legacymind/ir-core` image), which the benchmark
+  runner executes on every module's freshly emitted IR — an unknown
+  statement kind, a version bump, or a structural invariant violation
+  fails the module's pipeline there, before anything consumes the IR.
 - `irVersion` is pinned (`const`); a version bump is a deliberate migration,
   never silent.

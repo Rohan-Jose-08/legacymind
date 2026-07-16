@@ -29,6 +29,30 @@ REDEFINES/OCCURS/INDEXED BY).
   pipeline without becoming a lossy filter. Typing these is the named
   next increment, not a silent gap.
 
+## The validator binary — ir-core as a pipeline gate
+
+`src/bin/validate-ir.rs` turns the typed contract into an executable
+gate: it parses and validates every IR path it is given, enumerates
+every problem in every file (never just the first), and exits nonzero on
+any failure. `ir-core/Dockerfile` packages it as the pinned
+`legacymind/ir-core` image (multi-stage: the rust:1-slim toolchain
+builds `--release --locked`; the runtime stage is the same slim Debian
+base the legacy harness images use, carrying only the binary):
+
+```
+docker build -f ir-core/Dockerfile -t legacymind/ir-core .
+docker run --rm -v "<abs>/out/ir:/ir:ro" legacymind/ir-core /ir/DUES.ir.json
+```
+
+The benchmark runner calls it as the `validate IR (rust ir-core)` step
+immediately after every module's parse, so every emitted IR document is
+checked against the typed contract before anything consumes it — and a
+failed validation forces the module's verdict to PIPELINE-FAILED even if
+downstream steps still produce a certificate. Verified both ways: all
+real IR documents pass, and corrupted documents (an unknown statement
+kind, a version bump, a group carrying a PICTURE) each fail loudly with
+the specific reason and a nonzero exit.
+
 ## No host toolchain required
 
 This machine has no host Rust; the crate builds and tests in the pinned
