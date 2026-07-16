@@ -924,10 +924,15 @@ function store(state: PathState, ctx: ExecCtx, target: string, val: SymVal, roun
   }
 }
 
-function parseCondition(
-  text: string,
-  ctx: ExprCtx,
-): { diff: Affine; op: CmpOp; exact: ExactForm | null } | null {
+interface CondAtom {
+  diff: Affine;
+  op: CmpOp;
+  exact: ExactForm | null;
+  /** The atom's own source text (== the full condition text for a lone atom). */
+  text: string;
+}
+
+function parseCondition(text: string, ctx: ExprCtx): CondAtom | null {
   const m = /^(.*?)\s*(>=|<=|<>|>|<|=)\s*(.*)$/.exec(text.trim());
   if (!m) return null;
   const left = parseExpression(m[1]!, ctx);
@@ -939,7 +944,86 @@ function parseCondition(
     diff: affineCombine(left.a, right.a, -1),
     op: m[2] as CmpOp,
     exact: le && re ? exactCombine(le, re, -1) : null,
+    text: text.trim(),
   };
+}
+
+/**
+ * A compound condition, parsed as a flat chain of ONE connective over
+ * relational atoms (docs/search-enumeration.md). Mixed OR/AND chains and
+ * NOT are outside the subset and return null — the caller keeps today's
+ * honest "not affine" note. Splitting respects parenthesis depth, since
+ * table subscripts carry parentheses (`W-CODE(IX) = W-WANT`).
+ */
+type ParsedCond = {
+  kind: "atom" | "or" | "and";
+  /** null = the atom did not parse (its source text is in `texts`). */
+  atoms: (CondAtom | null)[];
+  /** Per-atom source texts for compounds (notes for null atoms). */
+  texts?: string[];
+};
+
+function parseConditionCompound(text: string, ctx: ExprCtx): ParsedCond | null {
+  const parts: string[] = [];
+  const connectives: string[] = [];
+  let depth = 0;
+  let start = 0;
+  const t = text.trim();
+  const boundary = /^(OR|AND)\b/;
+  for (let i = 0; i < t.length; i++) {
+    const ch = t[i]!;
+    if (ch === "(") depth++;
+    else if (ch === ")") depth--;
+    else if (depth === 0 && (ch === "O" || ch === "A") && i > 0 && /\s/.test(t[i - 1]!)) {
+      const m = boundary.exec(t.slice(i));
+      if (m && /\s/.test(t[i + m[1]!.length] ?? "")) {
+        parts.push(t.slice(start, i).trim());
+        connectives.push(m[1]!);
+        i += m[1]!.length;
+        start = i + 1;
+      }
+    }
+  }
+  parts.push(t.slice(start).trim());
+  if (connectives.length === 0) {
+    const atom = parseCondition(t, ctx);
+    return atom ? { kind: "atom", atoms: [atom] } : null;
+  }
+  const kinds = new Set(connectives);
+  if (kinds.size > 1) return null; // mixed chain: precedence left to a later stage
+  // Atoms parse INDIVIDUALLY: an unparseable atom (e.g. an out-of-bounds
+  // subscript at the exit depth of a search guard) becomes a null slot —
+  // its truth is unknown and noted — while the parseable atoms still
+  // constrain the path, so a provably-false sibling can still prune the
+  // alternative. Only an all-null compound degrades to null.
+  const atoms: (CondAtom | null)[] = parts.map((p) => parseCondition(p, ctx));
+  if (atoms.every((a) => a === null)) return null;
+  return { kind: connectives[0] === "OR" ? "or" : "and", atoms, texts: parts };
+}
+
+/**
+ * The disjoint alternatives a condition splits a path into when asserted
+ * with truth `taken`, each alternative a conjunction of (atom, truth)
+ * pairs. Negation is the constraint's own `taken` flag — no operator
+ * flipping. `OR` true forks (A | ¬A∧B | ¬A∧¬B∧C ...), mutually exclusive
+ * and jointly exhaustive; `OR` false is one alternative with every atom
+ * false; `AND` is the dual.
+ */
+function condAlternatives(
+  parsed: ParsedCond,
+  taken: boolean,
+): { a: CondAtom | null; t: boolean; text: string }[][] {
+  const { kind, atoms } = parsed;
+  const textOf = (i: number) => atoms[i]?.text ?? parsed.texts?.[i] ?? "?";
+  if (kind === "atom") return [[{ a: atoms[0]!, t: taken, text: textOf(0) }]];
+  const forkTruth = kind === "or" ? taken : !taken; // OR forks when true, AND when false
+  if (!forkTruth) {
+    return [atoms.map((a, i) => ({ a, t: kind === "and", text: textOf(i) }))];
+  }
+  return atoms.map((decisive, i) => [
+    ...atoms.slice(0, i).map((a, j) => ({ a, t: kind === "and", text: textOf(j) })),
+    { a: decisive, t: kind === "or", text: textOf(i) },
+  ]);
 }
 
 function execute(stmts: Statement[], state: PathState, ctx: ExecCtx, out: PathState[]): void {
@@ -976,22 +1060,49 @@ function execute(stmts: Statement[], state: PathState, ctx: ExecCtx, out: PathSt
         break;
       }
       case "if": {
-        const parsed = parseCondition(s.condition.text, exprCtx());
+        const parsed = parseConditionCompound(s.condition.text, exprCtx());
         const rest = stmts.slice(si + 1);
         for (const [branch, taken] of [
           [s.then, true],
           [s.else ?? [], false],
         ] as const) {
-          const forked = cloneState(state);
-          forked.conds.push({ text: s.condition.text, taken, diff: parsed?.diff ?? null, exact: parsed?.exact ?? null });
-          if (parsed) {
-            forked.constraints.push({ diff: parsed.diff, op: parsed.op, taken, text: s.condition.text, exact: parsed.exact });
-          } else {
+          if (!parsed) {
+            const forked = cloneState(state);
+            forked.conds.push({ text: s.condition.text, taken, diff: null, exact: null });
             forked.notes.push(`condition "${s.condition.text}" is not affine; path constraints incomplete`);
+            execute([...branch, ...rest], forked, ctx, out);
+            if (out.length > MAX_PATHS) {
+              throw new DiffExecError(`layer C: more than ${MAX_PATHS} paths; needs bounded exploration`);
+            }
+            continue;
           }
-          execute([...branch, ...rest], forked, ctx, out);
-          if (out.length > MAX_PATHS) {
-            throw new DiffExecError(`layer C: more than ${MAX_PATHS} paths; needs bounded exploration`);
+          // A compound condition splits the branch into disjoint alternatives
+          // (docs/search-enumeration.md); a lone atom is exactly one
+          // alternative with one constraint — today's behavior, byte for
+          // byte. Alternatives are NOT pruned here even when provably false:
+          // dead branches are enumerated and reported (the "+N dead" paths),
+          // never silently dropped.
+          for (const alt of condAlternatives(parsed, taken)) {
+            const forked = cloneState(state);
+            for (const { a, t, text } of alt) {
+              if (!a) {
+                forked.conds.push({ text, taken: t, diff: null, exact: null });
+                forked.notes.push(`condition atom "${text}" is not affine; path constraints incomplete`);
+                continue;
+              }
+              forked.conds.push({ text: a.text, taken: t, diff: a.diff, exact: a.exact });
+              forked.constraints.push({
+                diff: a.diff,
+                op: a.op,
+                taken: t,
+                text: parsed.kind === "atom" ? s.condition.text : `${a.text} (of: ${s.condition.text})`,
+                exact: a.exact,
+              });
+            }
+            execute([...branch, ...rest], forked, ctx, out);
+            if (out.length > MAX_PATHS) {
+              throw new DiffExecError(`layer C: more than ${MAX_PATHS} paths; needs bounded exploration`);
+            }
           }
         }
         return; // both forks continued with the rest of the statements
@@ -1118,12 +1229,12 @@ function unrollLoop(
   depth: number,
 ): void {
   // --- exit branch: TEST BEFORE, leaving after `depth` iterations ---
-  const exitState = cloneState(state);
-  pushLoopCond(s, timesVal, exitState, ctx, depth, true);
   // Eager pruning: a constant-false exit (e.g. `3 TIMES` at depth 1) would
-  // multiply enumerated-but-dead paths; drop it here, provably.
-  const exitDead = exitState.constraints.length > 0 && provablyFalse(exitState.constraints[exitState.constraints.length - 1]!);
-  if (!exitDead) {
+  // multiply enumerated-but-dead paths; drop it here, provably. A compound
+  // guard yields one exit state per disjoint alternative (a serial search's
+  // "matched at occurrence depth+1" fork), pruned the same way.
+  for (const { st: exitState, pushed } of loopCondStates(s, timesVal, state, ctx, depth, true)) {
+    if (pushed.some(provablyFalse)) continue;
     execute(rest, exitState, ctx, out);
     if (out.length > MAX_PATHS) {
       throw new DiffExecError(`layer C: more than ${MAX_PATHS} paths; lower maxLoopUnroll or split the module`);
@@ -1151,63 +1262,86 @@ function unrollLoop(
   }
 
   // --- iterate branch: condition says continue; run the body once ---
-  const iter = cloneState(state);
-  pushLoopCond(s, timesVal, iter, ctx, depth, false);
   // Constant-false continue (e.g. `3 TIMES` at depth 3) terminates the
-  // unroll exactly — no deeper dead forks.
-  if (iter.constraints.length > 0 && provablyFalse(iter.constraints[iter.constraints.length - 1]!)) {
-    return;
-  }
-  const bodyOut: PathState[] = [];
-  execute(loopBody(ctx, s), iter, ctx, bodyOut);
-  for (const bs of bodyOut) {
-    if (s.kind === "perform-varying") {
-      const next = parseExpression(`${s.varying.var} + ${s.varying.by.text}`, exprCtxFor(bs, ctx));
-      store(bs, ctx, s.varying.var, next, false);
+  // unroll exactly — no deeper dead forks. An OR guard continues on ONE
+  // alternative (every atom false); an AND guard's false forks.
+  for (const { st: iter, pushed } of loopCondStates(s, timesVal, state, ctx, depth, false)) {
+    if (pushed.some(provablyFalse)) continue;
+    const bodyOut: PathState[] = [];
+    execute(loopBody(ctx, s), iter, ctx, bodyOut);
+    for (const bs of bodyOut) {
+      if (s.kind === "perform-varying") {
+        const next = parseExpression(`${s.varying.var} + ${s.varying.by.text}`, exprCtxFor(bs, ctx));
+        store(bs, ctx, s.varying.var, next, false);
+      }
+      unrollLoop(s, timesVal, bs, rest, ctx, out, depth + 1);
     }
-    unrollLoop(s, timesVal, bs, rest, ctx, out, depth + 1);
   }
 }
 
-/** Push the loop's continue/exit decision for iteration `depth` as a
- *  constraint (TIMES: count = / > depth; UNTIL/VARYING: the condition in
- *  the current environment). */
-function pushLoopCond(
+/**
+ * The states a loop's continue/exit decision splits iteration `depth`
+ * into, each with its pushed constraints returned for the caller's
+ * pruning (TIMES: count = / > depth; UNTIL/VARYING: the condition in the
+ * current environment). A single-atom condition yields exactly one state
+ * with one constraint — today's behavior; a compound condition yields
+ * one state per disjoint alternative (docs/search-enumeration.md), which
+ * is what enumerates a serial search's match-at-k outcomes.
+ */
+function loopCondStates(
   s: LoopStmt,
   timesVal: SymVal | null,
-  st: PathState,
+  state: PathState,
   ctx: ExecCtx,
   depth: number,
   exit: boolean,
-): void {
+): { st: PathState; pushed: Constraint[] }[] {
   if (s.kind === "perform-times") {
+    const st = cloneState(state);
     const label = `${s.text}: iteration count ${exit ? "=" : ">"} ${depth}`;
     if (timesVal?.kind === "affine") {
       const depthConst = { affine: affineConst(rat(BigInt(depth), 1n)), rounds: [] as RoundTerm[] };
       const diff = affineCombine(timesVal.a, depthConst.affine, -1);
       const ex = exactOf(timesVal);
       const exact = ex ? exactCombine(ex, depthConst, -1) : null;
+      const con: Constraint = { diff, op: exit ? "=" : ">", taken: true, text: label, exact };
       st.conds.push({ text: label, taken: true, diff, exact });
-      st.constraints.push({ diff, op: exit ? "=" : ">", taken: true, text: label, exact });
-    } else {
-      st.conds.push({ text: label, taken: true, diff: null, exact: null });
-      st.notes.push(`TIMES count "${s.times.text}" is not analyzable; loop constraints incomplete`);
+      st.constraints.push(con);
+      return [{ st, pushed: [con] }];
     }
-  } else {
-    const parsed = parseCondition(s.condition.text, exprCtxFor(st, ctx));
-    st.conds.push({ text: s.condition.text, taken: exit, diff: parsed?.diff ?? null, exact: parsed?.exact ?? null });
-    if (parsed) {
-      st.constraints.push({
-        diff: parsed.diff,
-        op: parsed.op,
-        taken: exit,
-        text: `${s.condition.text} (${exit ? `exit after ${depth} iteration(s)` : `iteration ${depth + 1}`})`,
-        exact: parsed.exact,
-      });
-    } else {
-      st.notes.push(`loop condition "${s.condition.text}" is not affine; path constraints incomplete`);
-    }
+    st.conds.push({ text: label, taken: true, diff: null, exact: null });
+    st.notes.push(`TIMES count "${s.times.text}" is not analyzable; loop constraints incomplete`);
+    return [{ st, pushed: [] }];
   }
+  const parsed = parseConditionCompound(s.condition.text, exprCtxFor(state, ctx));
+  if (!parsed) {
+    const st = cloneState(state);
+    st.conds.push({ text: s.condition.text, taken: exit, diff: null, exact: null });
+    st.notes.push(`loop condition "${s.condition.text}" is not affine; path constraints incomplete`);
+    return [{ st, pushed: [] }];
+  }
+  return condAlternatives(parsed, exit).map((alt) => {
+    const st = cloneState(state);
+    const pushed: Constraint[] = [];
+    for (const { a, t, text } of alt) {
+      if (!a) {
+        st.conds.push({ text, taken: t, diff: null, exact: null });
+        st.notes.push(`loop condition atom "${text}" is not affine; path constraints incomplete`);
+        continue;
+      }
+      const con: Constraint = {
+        diff: a.diff,
+        op: a.op,
+        taken: t,
+        text: `${parsed.kind === "atom" ? s.condition.text : a.text} (${exit ? `exit after ${depth} iteration(s)` : `iteration ${depth + 1}`})`,
+        exact: a.exact,
+      };
+      st.conds.push({ text: a.text, taken: t, diff: a.diff, exact: a.exact });
+      st.constraints.push(con);
+      pushed.push(con);
+    }
+    return { st, pushed };
+  });
 }
 
 // ---------------------------------------------------------------------------

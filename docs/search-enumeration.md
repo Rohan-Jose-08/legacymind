@@ -1,5 +1,17 @@
 # Search enumeration — compound conditions split into paths
 
+**Status: implemented, and the measured result matches the hand
+prediction below exactly** — the probe enumerates 6/6 feasible outcome
+paths (5 matches + at-end), every witness passing against the real
+binary, and the match-equality branch VERIFIED at boundary −1/0/+1. One
+refinement was discovered during the build: at the exit depth the guard's
+subscript runs **out of bounds** (`W-CODE(6)` on a 5-table), so compound
+atoms parse *individually* — an unparseable atom becomes a noted null
+slot while its parseable siblings still constrain the path, letting the
+provably-false `¬(IX > 5)` prune the iterate branch and terminate the
+unroll exactly. Without that, the loop ran to the unroll cap and left a
+phantom truncation path.
+
 Design for the Layer C capability that finding 8 established as missing:
 reasoning about a serial table search, where the found index and the
 selected value are functions of the input. Stage 53 designed the SEARCH
