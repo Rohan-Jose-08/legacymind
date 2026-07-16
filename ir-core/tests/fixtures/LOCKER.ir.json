@@ -1,0 +1,550 @@
+{
+  "irVersion": "0.1.0",
+  "module": {
+    "programId": "LOCKER",
+    "dialect": "cobol85-fixed",
+    "source": {
+      "file": "examples/locker.cbl",
+      "sha256": "e0a0a5844c6539a05013df028dc3ea96e702fec3de0e1c1e6256129253e70c28"
+    }
+  },
+  "dataDivision": {
+    "items": [
+      {
+        "level": 1,
+        "name": "WS-ID-TEXT",
+        "path": "WS-ID-TEXT",
+        "picture": "X(4)",
+        "type": {
+          "raw": "X(4)",
+          "category": "alphanumeric",
+          "length": 4
+        },
+        "usage": "DISPLAY",
+        "span": {
+          "file": "examples/locker.cbl",
+          "startLine": 16,
+          "endLine": 16
+        },
+        "children": []
+      },
+      {
+        "level": 1,
+        "name": "WS-CENTS-TEXT",
+        "path": "WS-CENTS-TEXT",
+        "picture": "X(12)",
+        "type": {
+          "raw": "X(12)",
+          "category": "alphanumeric",
+          "length": 12
+        },
+        "usage": "DISPLAY",
+        "span": {
+          "file": "examples/locker.cbl",
+          "startLine": 17,
+          "endLine": 17
+        },
+        "children": []
+      },
+      {
+        "level": 1,
+        "name": "WS-REC",
+        "path": "WS-REC",
+        "usage": "DISPLAY",
+        "span": {
+          "file": "examples/locker.cbl",
+          "startLine": 18,
+          "endLine": 18
+        },
+        "children": [
+          {
+            "level": 5,
+            "name": "WS-MEM-ID",
+            "path": "WS-REC.WS-MEM-ID",
+            "picture": "9(4)",
+            "type": {
+              "raw": "9(4)",
+              "category": "numeric",
+              "digits": 4,
+              "scale": 0,
+              "signed": false
+            },
+            "usage": "DISPLAY",
+            "span": {
+              "file": "examples/locker.cbl",
+              "startLine": 19,
+              "endLine": 19
+            },
+            "children": []
+          },
+          {
+            "level": 5,
+            "name": "WS-BAL-CENTS",
+            "path": "WS-REC.WS-BAL-CENTS",
+            "picture": "9(6)",
+            "type": {
+              "raw": "9(6)",
+              "category": "numeric",
+              "digits": 6,
+              "scale": 0,
+              "signed": false
+            },
+            "usage": "DISPLAY",
+            "span": {
+              "file": "examples/locker.cbl",
+              "startLine": 20,
+              "endLine": 20
+            },
+            "children": []
+          }
+        ]
+      },
+      {
+        "level": 1,
+        "name": "WS-MONEY",
+        "path": "WS-MONEY",
+        "usage": "DISPLAY",
+        "span": {
+          "file": "examples/locker.cbl",
+          "startLine": 21,
+          "endLine": 21
+        },
+        "children": [
+          {
+            "level": 5,
+            "name": "WS-MEM-KEY",
+            "path": "WS-MONEY.WS-MEM-KEY",
+            "picture": "9(4)",
+            "type": {
+              "raw": "9(4)",
+              "category": "numeric",
+              "digits": 4,
+              "scale": 0,
+              "signed": false
+            },
+            "usage": "DISPLAY",
+            "span": {
+              "file": "examples/locker.cbl",
+              "startLine": 22,
+              "endLine": 22
+            },
+            "children": [],
+            "redefines": "WS-MEM-ID"
+          },
+          {
+            "level": 5,
+            "name": "WS-BAL-DOL",
+            "path": "WS-MONEY.WS-BAL-DOL",
+            "picture": "9(4)V99",
+            "type": {
+              "raw": "9(4)V99",
+              "category": "numeric",
+              "digits": 6,
+              "scale": 2,
+              "signed": false
+            },
+            "usage": "DISPLAY",
+            "span": {
+              "file": "examples/locker.cbl",
+              "startLine": 23,
+              "endLine": 23
+            },
+            "children": [],
+            "redefines": "WS-BAL-CENTS"
+          }
+        ]
+      },
+      {
+        "level": 1,
+        "name": "WS-FEE",
+        "path": "WS-FEE",
+        "picture": "9(4)V99",
+        "type": {
+          "raw": "9(4)V99",
+          "category": "numeric",
+          "digits": 6,
+          "scale": 2,
+          "signed": false
+        },
+        "usage": "DISPLAY",
+        "value": "ZERO",
+        "span": {
+          "file": "examples/locker.cbl",
+          "startLine": 24,
+          "endLine": 24
+        },
+        "children": []
+      },
+      {
+        "level": 1,
+        "name": "WS-TOTAL",
+        "path": "WS-TOTAL",
+        "picture": "9(5)V99",
+        "type": {
+          "raw": "9(5)V99",
+          "category": "numeric",
+          "digits": 7,
+          "scale": 2,
+          "signed": false
+        },
+        "usage": "DISPLAY",
+        "value": "ZERO",
+        "span": {
+          "file": "examples/locker.cbl",
+          "startLine": 25,
+          "endLine": 25
+        },
+        "children": []
+      },
+      {
+        "level": 1,
+        "name": "WS-TIER",
+        "path": "WS-TIER",
+        "picture": "X(4)",
+        "type": {
+          "raw": "X(4)",
+          "category": "alphanumeric",
+          "length": 4
+        },
+        "usage": "DISPLAY",
+        "span": {
+          "file": "examples/locker.cbl",
+          "startLine": 26,
+          "endLine": 26
+        },
+        "children": []
+      },
+      {
+        "level": 1,
+        "name": "WS-FEE-OUT",
+        "path": "WS-FEE-OUT",
+        "picture": "9(4).99",
+        "type": {
+          "raw": "9(4).99",
+          "category": "numeric-edited",
+          "digits": 6,
+          "scale": 2
+        },
+        "usage": "DISPLAY",
+        "span": {
+          "file": "examples/locker.cbl",
+          "startLine": 27,
+          "endLine": 27
+        },
+        "children": []
+      },
+      {
+        "level": 1,
+        "name": "WS-TOT-OUT",
+        "path": "WS-TOT-OUT",
+        "picture": "9(5).99",
+        "type": {
+          "raw": "9(5).99",
+          "category": "numeric-edited",
+          "digits": 7,
+          "scale": 2
+        },
+        "usage": "DISPLAY",
+        "span": {
+          "file": "examples/locker.cbl",
+          "startLine": 28,
+          "endLine": 28
+        },
+        "children": []
+      }
+    ]
+  },
+  "procedureDivision": {
+    "paragraphs": [
+      {
+        "name": "MAIN-PARA",
+        "span": {
+          "file": "examples/locker.cbl",
+          "startLine": 30,
+          "endLine": 48
+        },
+        "statements": [
+          {
+            "kind": "accept",
+            "target": "WS-ID-TEXT",
+            "text": "ACCEPT WS-ID-TEXT",
+            "span": {
+              "file": "examples/locker.cbl",
+              "startLine": 31,
+              "endLine": 31
+            }
+          },
+          {
+            "kind": "accept",
+            "target": "WS-CENTS-TEXT",
+            "text": "ACCEPT WS-CENTS-TEXT",
+            "span": {
+              "file": "examples/locker.cbl",
+              "startLine": 32,
+              "endLine": 32
+            }
+          },
+          {
+            "kind": "compute",
+            "target": "WS-MEM-ID",
+            "rounded": false,
+            "expression": {
+              "text": "FUNCTION NUMVAL(WS-ID-TEXT)",
+              "refs": [
+                "WS-ID-TEXT"
+              ]
+            },
+            "text": "COMPUTE WS-MEM-ID = FUNCTION NUMVAL(WS-ID-TEXT)",
+            "span": {
+              "file": "examples/locker.cbl",
+              "startLine": 33,
+              "endLine": 33
+            }
+          },
+          {
+            "kind": "compute",
+            "target": "WS-BAL-CENTS",
+            "rounded": false,
+            "expression": {
+              "text": "FUNCTION NUMVAL(WS-CENTS-TEXT)",
+              "refs": [
+                "WS-CENTS-TEXT"
+              ]
+            },
+            "text": "COMPUTE WS-BAL-CENTS = FUNCTION NUMVAL(WS-CENTS-TEXT)",
+            "span": {
+              "file": "examples/locker.cbl",
+              "startLine": 34,
+              "endLine": 34
+            }
+          },
+          {
+            "kind": "compute",
+            "target": "WS-FEE",
+            "rounded": true,
+            "expression": {
+              "text": "WS-BAL-DOL * 25 / 1000",
+              "refs": [
+                "WS-BAL-DOL"
+              ]
+            },
+            "text": "COMPUTE WS-FEE ROUNDED = WS-BAL-DOL * 25 / 1000",
+            "span": {
+              "file": "examples/locker.cbl",
+              "startLine": 35,
+              "endLine": 35
+            }
+          },
+          {
+            "kind": "compute",
+            "target": "WS-TOTAL",
+            "rounded": false,
+            "expression": {
+              "text": "WS-BAL-DOL + WS-FEE",
+              "refs": [
+                "WS-BAL-DOL",
+                "WS-FEE"
+              ]
+            },
+            "text": "COMPUTE WS-TOTAL = WS-BAL-DOL + WS-FEE",
+            "span": {
+              "file": "examples/locker.cbl",
+              "startLine": 36,
+              "endLine": 36
+            }
+          },
+          {
+            "kind": "if",
+            "condition": {
+              "text": "WS-BAL-DOL > 200",
+              "refs": [
+                "WS-BAL-DOL"
+              ]
+            },
+            "then": [
+              {
+                "kind": "move",
+                "from": {
+                  "text": "\"GOLD\"",
+                  "refs": []
+                },
+                "to": [
+                  "WS-TIER"
+                ],
+                "text": "MOVE \"GOLD\" TO WS-TIER",
+                "span": {
+                  "file": "examples/locker.cbl",
+                  "startLine": 38,
+                  "endLine": 38
+                }
+              }
+            ],
+            "text": "IF WS-BAL-DOL > 200",
+            "span": {
+              "file": "examples/locker.cbl",
+              "startLine": 37,
+              "endLine": 41
+            },
+            "else": [
+              {
+                "kind": "move",
+                "from": {
+                  "text": "\"STD \"",
+                  "refs": []
+                },
+                "to": [
+                  "WS-TIER"
+                ],
+                "text": "MOVE \"STD \" TO WS-TIER",
+                "span": {
+                  "file": "examples/locker.cbl",
+                  "startLine": 40,
+                  "endLine": 40
+                }
+              }
+            ]
+          },
+          {
+            "kind": "move",
+            "from": {
+              "text": "WS-FEE",
+              "refs": [
+                "WS-FEE"
+              ]
+            },
+            "to": [
+              "WS-FEE-OUT"
+            ],
+            "text": "MOVE WS-FEE TO WS-FEE-OUT",
+            "span": {
+              "file": "examples/locker.cbl",
+              "startLine": 42,
+              "endLine": 42
+            }
+          },
+          {
+            "kind": "move",
+            "from": {
+              "text": "WS-TOTAL",
+              "refs": [
+                "WS-TOTAL"
+              ]
+            },
+            "to": [
+              "WS-TOT-OUT"
+            ],
+            "text": "MOVE WS-TOTAL TO WS-TOT-OUT",
+            "span": {
+              "file": "examples/locker.cbl",
+              "startLine": 43,
+              "endLine": 43
+            }
+          },
+          {
+            "kind": "display",
+            "operands": [
+              {
+                "kind": "literal",
+                "value": "KEY="
+              },
+              {
+                "kind": "ref",
+                "name": "WS-MEM-KEY"
+              }
+            ],
+            "text": "DISPLAY \"KEY=\" WS-MEM-KEY",
+            "span": {
+              "file": "examples/locker.cbl",
+              "startLine": 44,
+              "endLine": 44
+            }
+          },
+          {
+            "kind": "display",
+            "operands": [
+              {
+                "kind": "literal",
+                "value": "FEE="
+              },
+              {
+                "kind": "ref",
+                "name": "WS-FEE-OUT"
+              }
+            ],
+            "text": "DISPLAY \"FEE=\" WS-FEE-OUT",
+            "span": {
+              "file": "examples/locker.cbl",
+              "startLine": 45,
+              "endLine": 45
+            }
+          },
+          {
+            "kind": "display",
+            "operands": [
+              {
+                "kind": "literal",
+                "value": "TOTAL="
+              },
+              {
+                "kind": "ref",
+                "name": "WS-TOT-OUT"
+              }
+            ],
+            "text": "DISPLAY \"TOTAL=\" WS-TOT-OUT",
+            "span": {
+              "file": "examples/locker.cbl",
+              "startLine": 46,
+              "endLine": 46
+            }
+          },
+          {
+            "kind": "display",
+            "operands": [
+              {
+                "kind": "literal",
+                "value": "TIER="
+              },
+              {
+                "kind": "ref",
+                "name": "WS-TIER"
+              }
+            ],
+            "text": "DISPLAY \"TIER=\" WS-TIER",
+            "span": {
+              "file": "examples/locker.cbl",
+              "startLine": 47,
+              "endLine": 47
+            }
+          },
+          {
+            "kind": "stop-run",
+            "text": "STOP RUN",
+            "span": {
+              "file": "examples/locker.cbl",
+              "startLine": 48,
+              "endLine": 48
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "controlFlow": {
+    "entry": "MAIN-PARA",
+    "nodes": [
+      {
+        "id": "MAIN-PARA",
+        "kind": "paragraph"
+      }
+    ],
+    "edges": []
+  },
+  "provenance": {
+    "parser": {
+      "name": "legacymind-parse-proleap",
+      "version": "0.1.0+proleap.d1bfe75bdd"
+    },
+    "generatedAt": "2026-07-15T14:32:22.534855Z",
+    "warnings": []
+  }
+}

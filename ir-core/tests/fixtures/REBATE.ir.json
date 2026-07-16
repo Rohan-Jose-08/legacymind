@@ -1,0 +1,537 @@
+{
+  "irVersion": "0.1.0",
+  "files": [
+    {
+      "name": "IN-FILE",
+      "assign": "in.dat",
+      "organization": "line-sequential",
+      "record": "IN-REC",
+      "mode": "input",
+      "recordWidth": 13,
+      "layout": [
+        {
+          "path": "IN-REC.R-ID",
+          "name": "R-ID",
+          "offset": 0,
+          "width": 4,
+          "decode": "num",
+          "digits": 4,
+          "scale": 0
+        },
+        {
+          "path": "IN-REC.R-AMOUNT",
+          "name": "R-AMOUNT",
+          "offset": 4,
+          "width": 7,
+          "decode": "num",
+          "digits": 7,
+          "scale": 2
+        },
+        {
+          "path": "IN-REC.FILLER-0",
+          "offset": 11,
+          "width": 2,
+          "decode": "filler"
+        }
+      ]
+    }
+  ],
+  "module": {
+    "programId": "REBATE",
+    "dialect": "cobol85-fixed",
+    "source": {
+      "file": "examples/rebate.cbl",
+      "sha256": "5704bda0a4fd87b80535fea01f50e1fde484154153bc43f4b481c6929672b332"
+    }
+  },
+  "dataDivision": {
+    "items": [
+      {
+        "level": 1,
+        "name": "IN-REC",
+        "path": "IN-REC",
+        "usage": "DISPLAY",
+        "span": {
+          "file": "examples/rebate.cbl",
+          "startLine": 20,
+          "endLine": 20
+        },
+        "children": [
+          {
+            "level": 5,
+            "name": "R-ID",
+            "path": "IN-REC.R-ID",
+            "picture": "9(4)",
+            "type": {
+              "raw": "9(4)",
+              "category": "numeric",
+              "digits": 4,
+              "scale": 0,
+              "signed": false
+            },
+            "usage": "DISPLAY",
+            "span": {
+              "file": "examples/rebate.cbl",
+              "startLine": 21,
+              "endLine": 21
+            },
+            "children": []
+          },
+          {
+            "level": 5,
+            "name": "R-AMOUNT",
+            "path": "IN-REC.R-AMOUNT",
+            "picture": "9(5)V99",
+            "type": {
+              "raw": "9(5)V99",
+              "category": "numeric",
+              "digits": 7,
+              "scale": 2,
+              "signed": false
+            },
+            "usage": "DISPLAY",
+            "span": {
+              "file": "examples/rebate.cbl",
+              "startLine": 22,
+              "endLine": 22
+            },
+            "children": []
+          },
+          {
+            "level": 5,
+            "name": "FILLER-0",
+            "path": "IN-REC.FILLER-0",
+            "filler": true,
+            "picture": "X(2)",
+            "type": {
+              "raw": "X(2)",
+              "category": "alphanumeric",
+              "length": 2
+            },
+            "usage": "DISPLAY",
+            "span": {
+              "file": "examples/rebate.cbl",
+              "startLine": 23,
+              "endLine": 23
+            },
+            "children": []
+          }
+        ]
+      },
+      {
+        "level": 1,
+        "name": "WS-EOF",
+        "path": "WS-EOF",
+        "picture": "9",
+        "type": {
+          "raw": "9",
+          "category": "numeric",
+          "digits": 1,
+          "scale": 0,
+          "signed": false
+        },
+        "usage": "DISPLAY",
+        "value": "ZERO",
+        "span": {
+          "file": "examples/rebate.cbl",
+          "startLine": 25,
+          "endLine": 25
+        },
+        "children": []
+      },
+      {
+        "level": 1,
+        "name": "WS-REBATE",
+        "path": "WS-REBATE",
+        "picture": "9(6)V99",
+        "type": {
+          "raw": "9(6)V99",
+          "category": "numeric",
+          "digits": 8,
+          "scale": 2,
+          "signed": false
+        },
+        "usage": "DISPLAY",
+        "value": "ZERO",
+        "span": {
+          "file": "examples/rebate.cbl",
+          "startLine": 26,
+          "endLine": 26
+        },
+        "children": []
+      },
+      {
+        "level": 1,
+        "name": "WS-QUAL",
+        "path": "WS-QUAL",
+        "picture": "9(4)",
+        "type": {
+          "raw": "9(4)",
+          "category": "numeric",
+          "digits": 4,
+          "scale": 0,
+          "signed": false
+        },
+        "usage": "DISPLAY",
+        "value": "ZERO",
+        "span": {
+          "file": "examples/rebate.cbl",
+          "startLine": 27,
+          "endLine": 27
+        },
+        "children": []
+      },
+      {
+        "level": 1,
+        "name": "WS-RECS",
+        "path": "WS-RECS",
+        "picture": "9(4)",
+        "type": {
+          "raw": "9(4)",
+          "category": "numeric",
+          "digits": 4,
+          "scale": 0,
+          "signed": false
+        },
+        "usage": "DISPLAY",
+        "value": "ZERO",
+        "span": {
+          "file": "examples/rebate.cbl",
+          "startLine": 28,
+          "endLine": 28
+        },
+        "children": []
+      },
+      {
+        "level": 1,
+        "name": "WS-ONE-REB",
+        "path": "WS-ONE-REB",
+        "picture": "9(4)V99",
+        "type": {
+          "raw": "9(4)V99",
+          "category": "numeric",
+          "digits": 6,
+          "scale": 2,
+          "signed": false
+        },
+        "usage": "DISPLAY",
+        "value": "ZERO",
+        "span": {
+          "file": "examples/rebate.cbl",
+          "startLine": 29,
+          "endLine": 29
+        },
+        "children": []
+      },
+      {
+        "level": 1,
+        "name": "WS-REB-OUT",
+        "path": "WS-REB-OUT",
+        "picture": "9(6).99",
+        "type": {
+          "raw": "9(6).99",
+          "category": "numeric-edited",
+          "digits": 8,
+          "scale": 2
+        },
+        "usage": "DISPLAY",
+        "span": {
+          "file": "examples/rebate.cbl",
+          "startLine": 30,
+          "endLine": 30
+        },
+        "children": []
+      }
+    ]
+  },
+  "procedureDivision": {
+    "paragraphs": [
+      {
+        "name": "MAIN-PARA",
+        "span": {
+          "file": "examples/rebate.cbl",
+          "startLine": 32,
+          "endLine": 40
+        },
+        "statements": [
+          {
+            "kind": "open",
+            "file": "IN-FILE",
+            "text": "OPEN INPUT IN-FILE",
+            "span": {
+              "file": "examples/rebate.cbl",
+              "startLine": 33,
+              "endLine": 33
+            }
+          },
+          {
+            "kind": "perform-until",
+            "target": "PROC-REC",
+            "condition": {
+              "text": "WS-EOF = 1",
+              "refs": [
+                "WS-EOF"
+              ]
+            },
+            "text": "PERFORM PROC-REC UNTIL WS-EOF = 1",
+            "span": {
+              "file": "examples/rebate.cbl",
+              "startLine": 34,
+              "endLine": 34
+            }
+          },
+          {
+            "kind": "close",
+            "file": "IN-FILE",
+            "text": "CLOSE IN-FILE",
+            "span": {
+              "file": "examples/rebate.cbl",
+              "startLine": 35,
+              "endLine": 35
+            }
+          },
+          {
+            "kind": "move",
+            "from": {
+              "text": "WS-REBATE",
+              "refs": [
+                "WS-REBATE"
+              ]
+            },
+            "to": [
+              "WS-REB-OUT"
+            ],
+            "text": "MOVE WS-REBATE TO WS-REB-OUT",
+            "span": {
+              "file": "examples/rebate.cbl",
+              "startLine": 36,
+              "endLine": 36
+            }
+          },
+          {
+            "kind": "display",
+            "operands": [
+              {
+                "kind": "literal",
+                "value": "REBATE="
+              },
+              {
+                "kind": "ref",
+                "name": "WS-REB-OUT"
+              }
+            ],
+            "text": "DISPLAY \"REBATE=\" WS-REB-OUT",
+            "span": {
+              "file": "examples/rebate.cbl",
+              "startLine": 37,
+              "endLine": 37
+            }
+          },
+          {
+            "kind": "display",
+            "operands": [
+              {
+                "kind": "literal",
+                "value": "QUAL="
+              },
+              {
+                "kind": "ref",
+                "name": "WS-QUAL"
+              }
+            ],
+            "text": "DISPLAY \"QUAL=\" WS-QUAL",
+            "span": {
+              "file": "examples/rebate.cbl",
+              "startLine": 38,
+              "endLine": 38
+            }
+          },
+          {
+            "kind": "display",
+            "operands": [
+              {
+                "kind": "literal",
+                "value": "RECS="
+              },
+              {
+                "kind": "ref",
+                "name": "WS-RECS"
+              }
+            ],
+            "text": "DISPLAY \"RECS=\" WS-RECS",
+            "span": {
+              "file": "examples/rebate.cbl",
+              "startLine": 39,
+              "endLine": 39
+            }
+          },
+          {
+            "kind": "stop-run",
+            "text": "STOP RUN",
+            "span": {
+              "file": "examples/rebate.cbl",
+              "startLine": 40,
+              "endLine": 40
+            }
+          }
+        ]
+      },
+      {
+        "name": "PROC-REC",
+        "span": {
+          "file": "examples/rebate.cbl",
+          "startLine": 41,
+          "endLine": 52
+        },
+        "statements": [
+          {
+            "kind": "read",
+            "file": "IN-FILE",
+            "record": "IN-REC",
+            "atEnd": [
+              {
+                "kind": "move",
+                "from": {
+                  "text": "1",
+                  "refs": []
+                },
+                "to": [
+                  "WS-EOF"
+                ],
+                "text": "MOVE 1 TO WS-EOF",
+                "span": {
+                  "file": "examples/rebate.cbl",
+                  "startLine": 44,
+                  "endLine": 44
+                }
+              }
+            ],
+            "notAtEnd": [
+              {
+                "kind": "compute",
+                "target": "WS-RECS",
+                "rounded": false,
+                "expression": {
+                  "text": "WS-RECS + 1",
+                  "refs": [
+                    "WS-RECS"
+                  ]
+                },
+                "text": "ADD 1 TO WS-RECS",
+                "span": {
+                  "file": "examples/rebate.cbl",
+                  "startLine": 46,
+                  "endLine": 46
+                }
+              },
+              {
+                "kind": "if",
+                "condition": {
+                  "text": "R-AMOUNT >= 100.00",
+                  "refs": [
+                    "R-AMOUNT"
+                  ]
+                },
+                "then": [
+                  {
+                    "kind": "compute",
+                    "target": "WS-ONE-REB",
+                    "rounded": true,
+                    "expression": {
+                      "text": "R-AMOUNT * 0.02",
+                      "refs": [
+                        "R-AMOUNT"
+                      ]
+                    },
+                    "text": "COMPUTE WS-ONE-REB ROUNDED = R-AMOUNT * 0.02",
+                    "span": {
+                      "file": "examples/rebate.cbl",
+                      "startLine": 48,
+                      "endLine": 48
+                    }
+                  },
+                  {
+                    "kind": "compute",
+                    "target": "WS-REBATE",
+                    "rounded": false,
+                    "expression": {
+                      "text": "WS-REBATE + WS-ONE-REB",
+                      "refs": [
+                        "WS-REBATE",
+                        "WS-ONE-REB"
+                      ]
+                    },
+                    "text": "ADD WS-ONE-REB TO WS-REBATE",
+                    "span": {
+                      "file": "examples/rebate.cbl",
+                      "startLine": 49,
+                      "endLine": 49
+                    }
+                  },
+                  {
+                    "kind": "compute",
+                    "target": "WS-QUAL",
+                    "rounded": false,
+                    "expression": {
+                      "text": "WS-QUAL + 1",
+                      "refs": [
+                        "WS-QUAL"
+                      ]
+                    },
+                    "text": "ADD 1 TO WS-QUAL",
+                    "span": {
+                      "file": "examples/rebate.cbl",
+                      "startLine": 50,
+                      "endLine": 50
+                    }
+                  }
+                ],
+                "text": "IF R-AMOUNT >= 100.00",
+                "span": {
+                  "file": "examples/rebate.cbl",
+                  "startLine": 47,
+                  "endLine": 51
+                }
+              }
+            ],
+            "text": "READ IN-FILE AT END MOVE 1 TO WS-EOF NOT AT END ADD 1 TO WS-RECS IF R-AMOUNT >= 100.00 COMPUTE WS-ONE-REB ROUNDED = R-AMOUNT * 0.02 ADD WS-ONE-REB TO WS-REBATE ADD 1 TO WS-QUAL END-IF END-READ",
+            "span": {
+              "file": "examples/rebate.cbl",
+              "startLine": 42,
+              "endLine": 52
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "controlFlow": {
+    "entry": "MAIN-PARA",
+    "nodes": [
+      {
+        "id": "MAIN-PARA",
+        "kind": "paragraph"
+      },
+      {
+        "id": "PROC-REC",
+        "kind": "paragraph"
+      }
+    ],
+    "edges": [
+      {
+        "from": "MAIN-PARA",
+        "to": "PROC-REC",
+        "kind": "perform",
+        "atLine": 34
+      }
+    ]
+  },
+  "provenance": {
+    "parser": {
+      "name": "legacymind-parse-proleap",
+      "version": "0.1.0+proleap.d1bfe75bdd"
+    },
+    "generatedAt": "2026-07-15T14:27:38.097454900Z",
+    "warnings": []
+  }
+}

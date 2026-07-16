@@ -1,0 +1,843 @@
+{
+  "irVersion": "0.1.0",
+  "module": {
+    "programId": "REORDER",
+    "dialect": "cobol85-fixed",
+    "source": {
+      "file": "benchmark/modules/reorder.cbl",
+      "sha256": "4499ac87303e127a23dd9a7528cee707996f20b0401f016b0505f810da833e86"
+    }
+  },
+  "dataDivision": {
+    "items": [
+      {
+        "level": 1,
+        "name": "WS-QTY-TEXT",
+        "path": "WS-QTY-TEXT",
+        "picture": "X(8)",
+        "type": {
+          "raw": "X(8)",
+          "category": "alphanumeric",
+          "length": 8
+        },
+        "usage": "DISPLAY",
+        "span": {
+          "file": "benchmark/modules/reorder.cbl",
+          "startLine": 17,
+          "endLine": 17
+        },
+        "children": []
+      },
+      {
+        "level": 1,
+        "name": "WS-QTY",
+        "path": "WS-QTY",
+        "picture": "9(5)V99",
+        "type": {
+          "raw": "9(5)V99",
+          "category": "numeric",
+          "digits": 7,
+          "scale": 2,
+          "signed": false
+        },
+        "usage": "DISPLAY",
+        "value": "ZERO",
+        "span": {
+          "file": "benchmark/modules/reorder.cbl",
+          "startLine": 18,
+          "endLine": 18
+        },
+        "children": []
+      },
+      {
+        "level": 1,
+        "name": "WS-PRICE",
+        "path": "WS-PRICE",
+        "picture": "9(3)V99",
+        "type": {
+          "raw": "9(3)V99",
+          "category": "numeric",
+          "digits": 5,
+          "scale": 2,
+          "signed": false
+        },
+        "usage": "DISPLAY",
+        "span": {
+          "file": "benchmark/modules/reorder.cbl",
+          "startLine": 19,
+          "endLine": 19
+        },
+        "children": [],
+        "occurs": 5
+      },
+      {
+        "level": 1,
+        "name": "WS-SUMP",
+        "path": "WS-SUMP",
+        "picture": "9(5)V99",
+        "type": {
+          "raw": "9(5)V99",
+          "category": "numeric",
+          "digits": 7,
+          "scale": 2,
+          "signed": false
+        },
+        "usage": "DISPLAY",
+        "value": "ZERO",
+        "span": {
+          "file": "benchmark/modules/reorder.cbl",
+          "startLine": 20,
+          "endLine": 20
+        },
+        "children": []
+      },
+      {
+        "level": 1,
+        "name": "WS-BASE",
+        "path": "WS-BASE",
+        "picture": "9(7)V99",
+        "type": {
+          "raw": "9(7)V99",
+          "category": "numeric",
+          "digits": 9,
+          "scale": 2,
+          "signed": false
+        },
+        "usage": "DISPLAY",
+        "value": "ZERO",
+        "span": {
+          "file": "benchmark/modules/reorder.cbl",
+          "startLine": 21,
+          "endLine": 21
+        },
+        "children": []
+      },
+      {
+        "level": 1,
+        "name": "WS-FEE",
+        "path": "WS-FEE",
+        "picture": "9(7)V99",
+        "type": {
+          "raw": "9(7)V99",
+          "category": "numeric",
+          "digits": 9,
+          "scale": 2,
+          "signed": false
+        },
+        "usage": "DISPLAY",
+        "value": "ZERO",
+        "span": {
+          "file": "benchmark/modules/reorder.cbl",
+          "startLine": 22,
+          "endLine": 22
+        },
+        "children": []
+      },
+      {
+        "level": 1,
+        "name": "WS-TOTAL",
+        "path": "WS-TOTAL",
+        "picture": "9(7)V99",
+        "type": {
+          "raw": "9(7)V99",
+          "category": "numeric",
+          "digits": 9,
+          "scale": 2,
+          "signed": false
+        },
+        "usage": "DISPLAY",
+        "value": "ZERO",
+        "span": {
+          "file": "benchmark/modules/reorder.cbl",
+          "startLine": 23,
+          "endLine": 23
+        },
+        "children": []
+      },
+      {
+        "level": 1,
+        "name": "WS-TIER",
+        "path": "WS-TIER",
+        "picture": "X(4)",
+        "type": {
+          "raw": "X(4)",
+          "category": "alphanumeric",
+          "length": 4
+        },
+        "usage": "DISPLAY",
+        "span": {
+          "file": "benchmark/modules/reorder.cbl",
+          "startLine": 24,
+          "endLine": 24
+        },
+        "children": []
+      },
+      {
+        "level": 1,
+        "name": "WS-SUMP-OUT",
+        "path": "WS-SUMP-OUT",
+        "picture": "9(5).99",
+        "type": {
+          "raw": "9(5).99",
+          "category": "numeric-edited",
+          "digits": 7,
+          "scale": 2
+        },
+        "usage": "DISPLAY",
+        "span": {
+          "file": "benchmark/modules/reorder.cbl",
+          "startLine": 25,
+          "endLine": 25
+        },
+        "children": []
+      },
+      {
+        "level": 1,
+        "name": "WS-PICK-OUT",
+        "path": "WS-PICK-OUT",
+        "picture": "9(3).99",
+        "type": {
+          "raw": "9(3).99",
+          "category": "numeric-edited",
+          "digits": 5,
+          "scale": 2
+        },
+        "usage": "DISPLAY",
+        "span": {
+          "file": "benchmark/modules/reorder.cbl",
+          "startLine": 26,
+          "endLine": 26
+        },
+        "children": []
+      },
+      {
+        "level": 1,
+        "name": "WS-BASE-OUT",
+        "path": "WS-BASE-OUT",
+        "picture": "9(7).99",
+        "type": {
+          "raw": "9(7).99",
+          "category": "numeric-edited",
+          "digits": 9,
+          "scale": 2
+        },
+        "usage": "DISPLAY",
+        "span": {
+          "file": "benchmark/modules/reorder.cbl",
+          "startLine": 27,
+          "endLine": 27
+        },
+        "children": []
+      },
+      {
+        "level": 1,
+        "name": "WS-FEE-OUT",
+        "path": "WS-FEE-OUT",
+        "picture": "9(7).99",
+        "type": {
+          "raw": "9(7).99",
+          "category": "numeric-edited",
+          "digits": 9,
+          "scale": 2
+        },
+        "usage": "DISPLAY",
+        "span": {
+          "file": "benchmark/modules/reorder.cbl",
+          "startLine": 28,
+          "endLine": 28
+        },
+        "children": []
+      },
+      {
+        "level": 1,
+        "name": "WS-TOT-OUT",
+        "path": "WS-TOT-OUT",
+        "picture": "9(7).99",
+        "type": {
+          "raw": "9(7).99",
+          "category": "numeric-edited",
+          "digits": 9,
+          "scale": 2
+        },
+        "usage": "DISPLAY",
+        "span": {
+          "file": "benchmark/modules/reorder.cbl",
+          "startLine": 29,
+          "endLine": 29
+        },
+        "children": []
+      },
+      {
+        "level": 77,
+        "name": "PX",
+        "path": "PX",
+        "picture": "9(4)",
+        "type": {
+          "raw": "9(4)",
+          "category": "numeric",
+          "digits": 4,
+          "scale": 0,
+          "signed": false
+        },
+        "usage": "DISPLAY",
+        "children": [],
+        "indexName": true
+      }
+    ]
+  },
+  "procedureDivision": {
+    "paragraphs": [
+      {
+        "name": "MAIN-PARA",
+        "span": {
+          "file": "benchmark/modules/reorder.cbl",
+          "startLine": 31,
+          "endLine": 61
+        },
+        "statements": [
+          {
+            "kind": "accept",
+            "target": "WS-QTY-TEXT",
+            "text": "ACCEPT WS-QTY-TEXT",
+            "span": {
+              "file": "benchmark/modules/reorder.cbl",
+              "startLine": 32,
+              "endLine": 32
+            }
+          },
+          {
+            "kind": "compute",
+            "target": "WS-QTY",
+            "rounded": false,
+            "expression": {
+              "text": "FUNCTION NUMVAL(WS-QTY-TEXT)",
+              "refs": [
+                "WS-QTY-TEXT"
+              ]
+            },
+            "text": "COMPUTE WS-QTY = FUNCTION NUMVAL(WS-QTY-TEXT)",
+            "span": {
+              "file": "benchmark/modules/reorder.cbl",
+              "startLine": 33,
+              "endLine": 33
+            }
+          },
+          {
+            "kind": "move",
+            "from": {
+              "text": "1.20",
+              "refs": []
+            },
+            "to": [
+              "WS-PRICE(1)"
+            ],
+            "text": "MOVE 1.20 TO WS-PRICE(1)",
+            "span": {
+              "file": "benchmark/modules/reorder.cbl",
+              "startLine": 34,
+              "endLine": 34
+            }
+          },
+          {
+            "kind": "move",
+            "from": {
+              "text": "1.55",
+              "refs": []
+            },
+            "to": [
+              "WS-PRICE(2)"
+            ],
+            "text": "MOVE 1.55 TO WS-PRICE(2)",
+            "span": {
+              "file": "benchmark/modules/reorder.cbl",
+              "startLine": 35,
+              "endLine": 35
+            }
+          },
+          {
+            "kind": "move",
+            "from": {
+              "text": "1.75",
+              "refs": []
+            },
+            "to": [
+              "WS-PRICE(3)"
+            ],
+            "text": "MOVE 1.75 TO WS-PRICE(3)",
+            "span": {
+              "file": "benchmark/modules/reorder.cbl",
+              "startLine": 36,
+              "endLine": 36
+            }
+          },
+          {
+            "kind": "move",
+            "from": {
+              "text": "2.00",
+              "refs": []
+            },
+            "to": [
+              "WS-PRICE(4)"
+            ],
+            "text": "MOVE 2.00 TO WS-PRICE(4)",
+            "span": {
+              "file": "benchmark/modules/reorder.cbl",
+              "startLine": 37,
+              "endLine": 37
+            }
+          },
+          {
+            "kind": "move",
+            "from": {
+              "text": "0.90",
+              "refs": []
+            },
+            "to": [
+              "WS-PRICE(5)"
+            ],
+            "text": "MOVE 0.90 TO WS-PRICE(5)",
+            "span": {
+              "file": "benchmark/modules/reorder.cbl",
+              "startLine": 38,
+              "endLine": 38
+            }
+          },
+          {
+            "kind": "perform-varying",
+            "target": "SUMP-PARA",
+            "varying": {
+              "var": "PX",
+              "from": {
+                "text": "1",
+                "refs": []
+              },
+              "by": {
+                "text": "1",
+                "refs": []
+              }
+            },
+            "condition": {
+              "text": "PX > 5",
+              "refs": [
+                "PX"
+              ]
+            },
+            "text": "PERFORM SUMP-PARA VARYING PX FROM 1 BY 1 UNTIL PX > 5",
+            "span": {
+              "file": "benchmark/modules/reorder.cbl",
+              "startLine": 39,
+              "endLine": 39
+            }
+          },
+          {
+            "kind": "move",
+            "from": {
+              "text": "1",
+              "refs": []
+            },
+            "to": [
+              "PX"
+            ],
+            "text": "SET PX TO 1",
+            "span": {
+              "file": "benchmark/modules/reorder.cbl",
+              "startLine": 40,
+              "endLine": 40
+            }
+          },
+          {
+            "kind": "compute",
+            "target": "PX",
+            "rounded": false,
+            "expression": {
+              "text": "PX + 2",
+              "refs": [
+                "PX"
+              ]
+            },
+            "text": "SET PX UP BY 2",
+            "span": {
+              "file": "benchmark/modules/reorder.cbl",
+              "startLine": 41,
+              "endLine": 41
+            }
+          },
+          {
+            "kind": "compute",
+            "target": "WS-BASE",
+            "rounded": true,
+            "expression": {
+              "text": "WS-QTY * WS-PRICE(PX)",
+              "refs": [
+                "WS-QTY",
+                "WS-PRICE"
+              ]
+            },
+            "text": "COMPUTE WS-BASE ROUNDED = WS-QTY * WS-PRICE(PX)",
+            "span": {
+              "file": "benchmark/modules/reorder.cbl",
+              "startLine": 42,
+              "endLine": 42
+            }
+          },
+          {
+            "kind": "compute",
+            "target": "WS-FEE",
+            "rounded": true,
+            "expression": {
+              "text": "WS-BASE * 5 / 100",
+              "refs": [
+                "WS-BASE"
+              ]
+            },
+            "text": "COMPUTE WS-FEE ROUNDED = WS-BASE * 5 / 100",
+            "span": {
+              "file": "benchmark/modules/reorder.cbl",
+              "startLine": 43,
+              "endLine": 43
+            }
+          },
+          {
+            "kind": "compute",
+            "target": "WS-TOTAL",
+            "rounded": false,
+            "expression": {
+              "text": "WS-BASE + WS-FEE",
+              "refs": [
+                "WS-BASE",
+                "WS-FEE"
+              ]
+            },
+            "text": "COMPUTE WS-TOTAL = WS-BASE + WS-FEE",
+            "span": {
+              "file": "benchmark/modules/reorder.cbl",
+              "startLine": 44,
+              "endLine": 44
+            }
+          },
+          {
+            "kind": "if",
+            "condition": {
+              "text": "WS-TOTAL > 500",
+              "refs": [
+                "WS-TOTAL"
+              ]
+            },
+            "then": [
+              {
+                "kind": "move",
+                "from": {
+                  "text": "\"BULK\"",
+                  "refs": []
+                },
+                "to": [
+                  "WS-TIER"
+                ],
+                "text": "MOVE \"BULK\" TO WS-TIER",
+                "span": {
+                  "file": "benchmark/modules/reorder.cbl",
+                  "startLine": 46,
+                  "endLine": 46
+                }
+              }
+            ],
+            "text": "IF WS-TOTAL > 500",
+            "span": {
+              "file": "benchmark/modules/reorder.cbl",
+              "startLine": 45,
+              "endLine": 49
+            },
+            "else": [
+              {
+                "kind": "move",
+                "from": {
+                  "text": "\"STD \"",
+                  "refs": []
+                },
+                "to": [
+                  "WS-TIER"
+                ],
+                "text": "MOVE \"STD \" TO WS-TIER",
+                "span": {
+                  "file": "benchmark/modules/reorder.cbl",
+                  "startLine": 48,
+                  "endLine": 48
+                }
+              }
+            ]
+          },
+          {
+            "kind": "move",
+            "from": {
+              "text": "WS-SUMP",
+              "refs": [
+                "WS-SUMP"
+              ]
+            },
+            "to": [
+              "WS-SUMP-OUT"
+            ],
+            "text": "MOVE WS-SUMP TO WS-SUMP-OUT",
+            "span": {
+              "file": "benchmark/modules/reorder.cbl",
+              "startLine": 50,
+              "endLine": 50
+            }
+          },
+          {
+            "kind": "move",
+            "from": {
+              "text": "WS-PRICE(PX)",
+              "refs": [
+                "WS-PRICE"
+              ]
+            },
+            "to": [
+              "WS-PICK-OUT"
+            ],
+            "text": "MOVE WS-PRICE(PX) TO WS-PICK-OUT",
+            "span": {
+              "file": "benchmark/modules/reorder.cbl",
+              "startLine": 51,
+              "endLine": 51
+            }
+          },
+          {
+            "kind": "move",
+            "from": {
+              "text": "WS-BASE",
+              "refs": [
+                "WS-BASE"
+              ]
+            },
+            "to": [
+              "WS-BASE-OUT"
+            ],
+            "text": "MOVE WS-BASE TO WS-BASE-OUT",
+            "span": {
+              "file": "benchmark/modules/reorder.cbl",
+              "startLine": 52,
+              "endLine": 52
+            }
+          },
+          {
+            "kind": "move",
+            "from": {
+              "text": "WS-FEE",
+              "refs": [
+                "WS-FEE"
+              ]
+            },
+            "to": [
+              "WS-FEE-OUT"
+            ],
+            "text": "MOVE WS-FEE TO WS-FEE-OUT",
+            "span": {
+              "file": "benchmark/modules/reorder.cbl",
+              "startLine": 53,
+              "endLine": 53
+            }
+          },
+          {
+            "kind": "move",
+            "from": {
+              "text": "WS-TOTAL",
+              "refs": [
+                "WS-TOTAL"
+              ]
+            },
+            "to": [
+              "WS-TOT-OUT"
+            ],
+            "text": "MOVE WS-TOTAL TO WS-TOT-OUT",
+            "span": {
+              "file": "benchmark/modules/reorder.cbl",
+              "startLine": 54,
+              "endLine": 54
+            }
+          },
+          {
+            "kind": "display",
+            "operands": [
+              {
+                "kind": "literal",
+                "value": "SUMP="
+              },
+              {
+                "kind": "ref",
+                "name": "WS-SUMP-OUT"
+              }
+            ],
+            "text": "DISPLAY \"SUMP=\" WS-SUMP-OUT",
+            "span": {
+              "file": "benchmark/modules/reorder.cbl",
+              "startLine": 55,
+              "endLine": 55
+            }
+          },
+          {
+            "kind": "display",
+            "operands": [
+              {
+                "kind": "literal",
+                "value": "PICK="
+              },
+              {
+                "kind": "ref",
+                "name": "WS-PICK-OUT"
+              }
+            ],
+            "text": "DISPLAY \"PICK=\" WS-PICK-OUT",
+            "span": {
+              "file": "benchmark/modules/reorder.cbl",
+              "startLine": 56,
+              "endLine": 56
+            }
+          },
+          {
+            "kind": "display",
+            "operands": [
+              {
+                "kind": "literal",
+                "value": "BASE="
+              },
+              {
+                "kind": "ref",
+                "name": "WS-BASE-OUT"
+              }
+            ],
+            "text": "DISPLAY \"BASE=\" WS-BASE-OUT",
+            "span": {
+              "file": "benchmark/modules/reorder.cbl",
+              "startLine": 57,
+              "endLine": 57
+            }
+          },
+          {
+            "kind": "display",
+            "operands": [
+              {
+                "kind": "literal",
+                "value": "FEE="
+              },
+              {
+                "kind": "ref",
+                "name": "WS-FEE-OUT"
+              }
+            ],
+            "text": "DISPLAY \"FEE=\" WS-FEE-OUT",
+            "span": {
+              "file": "benchmark/modules/reorder.cbl",
+              "startLine": 58,
+              "endLine": 58
+            }
+          },
+          {
+            "kind": "display",
+            "operands": [
+              {
+                "kind": "literal",
+                "value": "TOTAL="
+              },
+              {
+                "kind": "ref",
+                "name": "WS-TOT-OUT"
+              }
+            ],
+            "text": "DISPLAY \"TOTAL=\" WS-TOT-OUT",
+            "span": {
+              "file": "benchmark/modules/reorder.cbl",
+              "startLine": 59,
+              "endLine": 59
+            }
+          },
+          {
+            "kind": "display",
+            "operands": [
+              {
+                "kind": "literal",
+                "value": "TIER="
+              },
+              {
+                "kind": "ref",
+                "name": "WS-TIER"
+              }
+            ],
+            "text": "DISPLAY \"TIER=\" WS-TIER",
+            "span": {
+              "file": "benchmark/modules/reorder.cbl",
+              "startLine": 60,
+              "endLine": 60
+            }
+          },
+          {
+            "kind": "stop-run",
+            "text": "STOP RUN",
+            "span": {
+              "file": "benchmark/modules/reorder.cbl",
+              "startLine": 61,
+              "endLine": 61
+            }
+          }
+        ]
+      },
+      {
+        "name": "SUMP-PARA",
+        "span": {
+          "file": "benchmark/modules/reorder.cbl",
+          "startLine": 62,
+          "endLine": 63
+        },
+        "statements": [
+          {
+            "kind": "compute",
+            "target": "WS-SUMP",
+            "rounded": false,
+            "expression": {
+              "text": "WS-SUMP + WS-PRICE(PX)",
+              "refs": [
+                "WS-SUMP",
+                "WS-PRICE"
+              ]
+            },
+            "text": "ADD WS-PRICE(PX) TO WS-SUMP",
+            "span": {
+              "file": "benchmark/modules/reorder.cbl",
+              "startLine": 63,
+              "endLine": 63
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "controlFlow": {
+    "entry": "MAIN-PARA",
+    "nodes": [
+      {
+        "id": "MAIN-PARA",
+        "kind": "paragraph"
+      },
+      {
+        "id": "SUMP-PARA",
+        "kind": "paragraph"
+      }
+    ],
+    "edges": [
+      {
+        "from": "MAIN-PARA",
+        "to": "SUMP-PARA",
+        "kind": "perform",
+        "atLine": 39
+      }
+    ]
+  },
+  "provenance": {
+    "parser": {
+      "name": "legacymind-parse-proleap",
+      "version": "0.1.0+proleap.d1bfe75bdd"
+    },
+    "generatedAt": "2026-07-15T14:37:24.225297800Z",
+    "warnings": []
+  }
+}

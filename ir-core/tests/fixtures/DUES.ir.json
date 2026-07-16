@@ -1,0 +1,381 @@
+{
+  "irVersion": "0.1.0",
+  "module": {
+    "programId": "DUES",
+    "dialect": "cobol85-fixed",
+    "source": {
+      "file": "examples/dues.cbl",
+      "sha256": "975f2aab56c52f02da216e66a2e61265238fb0d7297c4bc2b3ea148e30bf1440"
+    }
+  },
+  "dataDivision": {
+    "items": [
+      {
+        "level": 1,
+        "name": "WS-AMT-TEXT",
+        "path": "WS-AMT-TEXT",
+        "picture": "X(8)",
+        "type": {
+          "raw": "X(8)",
+          "category": "alphanumeric",
+          "length": 8
+        },
+        "usage": "DISPLAY",
+        "span": {
+          "file": "examples/dues.cbl",
+          "startLine": 13,
+          "endLine": 13
+        },
+        "children": []
+      },
+      {
+        "level": 1,
+        "name": "WS-CENTS",
+        "path": "WS-CENTS",
+        "picture": "9(6)",
+        "type": {
+          "raw": "9(6)",
+          "category": "numeric",
+          "digits": 6,
+          "scale": 0,
+          "signed": false
+        },
+        "usage": "DISPLAY",
+        "value": "ZERO",
+        "span": {
+          "file": "examples/dues.cbl",
+          "startLine": 14,
+          "endLine": 14
+        },
+        "children": []
+      },
+      {
+        "level": 1,
+        "name": "WS-DOLLARS",
+        "path": "WS-DOLLARS",
+        "picture": "9(4)V99",
+        "type": {
+          "raw": "9(4)V99",
+          "category": "numeric",
+          "digits": 6,
+          "scale": 2,
+          "signed": false
+        },
+        "usage": "DISPLAY",
+        "span": {
+          "file": "examples/dues.cbl",
+          "startLine": 15,
+          "endLine": 15
+        },
+        "children": [],
+        "redefines": "WS-CENTS"
+      },
+      {
+        "level": 1,
+        "name": "WS-FEE",
+        "path": "WS-FEE",
+        "picture": "9(4)V99",
+        "type": {
+          "raw": "9(4)V99",
+          "category": "numeric",
+          "digits": 6,
+          "scale": 2,
+          "signed": false
+        },
+        "usage": "DISPLAY",
+        "value": "ZERO",
+        "span": {
+          "file": "examples/dues.cbl",
+          "startLine": 16,
+          "endLine": 16
+        },
+        "children": []
+      },
+      {
+        "level": 1,
+        "name": "WS-TIER",
+        "path": "WS-TIER",
+        "picture": "X(4)",
+        "type": {
+          "raw": "X(4)",
+          "category": "alphanumeric",
+          "length": 4
+        },
+        "usage": "DISPLAY",
+        "span": {
+          "file": "examples/dues.cbl",
+          "startLine": 17,
+          "endLine": 17
+        },
+        "children": []
+      },
+      {
+        "level": 1,
+        "name": "WS-DOL-OUT",
+        "path": "WS-DOL-OUT",
+        "picture": "9(4).99",
+        "type": {
+          "raw": "9(4).99",
+          "category": "numeric-edited",
+          "digits": 6,
+          "scale": 2
+        },
+        "usage": "DISPLAY",
+        "span": {
+          "file": "examples/dues.cbl",
+          "startLine": 18,
+          "endLine": 18
+        },
+        "children": []
+      },
+      {
+        "level": 1,
+        "name": "WS-FEE-OUT",
+        "path": "WS-FEE-OUT",
+        "picture": "9(4).99",
+        "type": {
+          "raw": "9(4).99",
+          "category": "numeric-edited",
+          "digits": 6,
+          "scale": 2
+        },
+        "usage": "DISPLAY",
+        "span": {
+          "file": "examples/dues.cbl",
+          "startLine": 19,
+          "endLine": 19
+        },
+        "children": []
+      }
+    ]
+  },
+  "procedureDivision": {
+    "paragraphs": [
+      {
+        "name": "MAIN-PARA",
+        "span": {
+          "file": "examples/dues.cbl",
+          "startLine": 21,
+          "endLine": 35
+        },
+        "statements": [
+          {
+            "kind": "accept",
+            "target": "WS-AMT-TEXT",
+            "text": "ACCEPT WS-AMT-TEXT",
+            "span": {
+              "file": "examples/dues.cbl",
+              "startLine": 22,
+              "endLine": 22
+            }
+          },
+          {
+            "kind": "compute",
+            "target": "WS-CENTS",
+            "rounded": false,
+            "expression": {
+              "text": "FUNCTION NUMVAL(WS-AMT-TEXT)",
+              "refs": [
+                "WS-AMT-TEXT"
+              ]
+            },
+            "text": "COMPUTE WS-CENTS = FUNCTION NUMVAL(WS-AMT-TEXT)",
+            "span": {
+              "file": "examples/dues.cbl",
+              "startLine": 23,
+              "endLine": 23
+            }
+          },
+          {
+            "kind": "compute",
+            "target": "WS-FEE",
+            "rounded": true,
+            "expression": {
+              "text": "WS-DOLLARS * 5 / 100",
+              "refs": [
+                "WS-DOLLARS"
+              ]
+            },
+            "text": "COMPUTE WS-FEE ROUNDED = WS-DOLLARS * 5 / 100",
+            "span": {
+              "file": "examples/dues.cbl",
+              "startLine": 24,
+              "endLine": 24
+            }
+          },
+          {
+            "kind": "if",
+            "condition": {
+              "text": "WS-DOLLARS > 100",
+              "refs": [
+                "WS-DOLLARS"
+              ]
+            },
+            "then": [
+              {
+                "kind": "move",
+                "from": {
+                  "text": "\"HIGH\"",
+                  "refs": []
+                },
+                "to": [
+                  "WS-TIER"
+                ],
+                "text": "MOVE \"HIGH\" TO WS-TIER",
+                "span": {
+                  "file": "examples/dues.cbl",
+                  "startLine": 26,
+                  "endLine": 26
+                }
+              }
+            ],
+            "text": "IF WS-DOLLARS > 100",
+            "span": {
+              "file": "examples/dues.cbl",
+              "startLine": 25,
+              "endLine": 29
+            },
+            "else": [
+              {
+                "kind": "move",
+                "from": {
+                  "text": "\"LOW \"",
+                  "refs": []
+                },
+                "to": [
+                  "WS-TIER"
+                ],
+                "text": "MOVE \"LOW \" TO WS-TIER",
+                "span": {
+                  "file": "examples/dues.cbl",
+                  "startLine": 28,
+                  "endLine": 28
+                }
+              }
+            ]
+          },
+          {
+            "kind": "move",
+            "from": {
+              "text": "WS-DOLLARS",
+              "refs": [
+                "WS-DOLLARS"
+              ]
+            },
+            "to": [
+              "WS-DOL-OUT"
+            ],
+            "text": "MOVE WS-DOLLARS TO WS-DOL-OUT",
+            "span": {
+              "file": "examples/dues.cbl",
+              "startLine": 30,
+              "endLine": 30
+            }
+          },
+          {
+            "kind": "move",
+            "from": {
+              "text": "WS-FEE",
+              "refs": [
+                "WS-FEE"
+              ]
+            },
+            "to": [
+              "WS-FEE-OUT"
+            ],
+            "text": "MOVE WS-FEE TO WS-FEE-OUT",
+            "span": {
+              "file": "examples/dues.cbl",
+              "startLine": 31,
+              "endLine": 31
+            }
+          },
+          {
+            "kind": "display",
+            "operands": [
+              {
+                "kind": "literal",
+                "value": "DOLLARS="
+              },
+              {
+                "kind": "ref",
+                "name": "WS-DOL-OUT"
+              }
+            ],
+            "text": "DISPLAY \"DOLLARS=\" WS-DOL-OUT",
+            "span": {
+              "file": "examples/dues.cbl",
+              "startLine": 32,
+              "endLine": 32
+            }
+          },
+          {
+            "kind": "display",
+            "operands": [
+              {
+                "kind": "literal",
+                "value": "FEE="
+              },
+              {
+                "kind": "ref",
+                "name": "WS-FEE-OUT"
+              }
+            ],
+            "text": "DISPLAY \"FEE=\" WS-FEE-OUT",
+            "span": {
+              "file": "examples/dues.cbl",
+              "startLine": 33,
+              "endLine": 33
+            }
+          },
+          {
+            "kind": "display",
+            "operands": [
+              {
+                "kind": "literal",
+                "value": "TIER="
+              },
+              {
+                "kind": "ref",
+                "name": "WS-TIER"
+              }
+            ],
+            "text": "DISPLAY \"TIER=\" WS-TIER",
+            "span": {
+              "file": "examples/dues.cbl",
+              "startLine": 34,
+              "endLine": 34
+            }
+          },
+          {
+            "kind": "stop-run",
+            "text": "STOP RUN",
+            "span": {
+              "file": "examples/dues.cbl",
+              "startLine": 35,
+              "endLine": 35
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "controlFlow": {
+    "entry": "MAIN-PARA",
+    "nodes": [
+      {
+        "id": "MAIN-PARA",
+        "kind": "paragraph"
+      }
+    ],
+    "edges": []
+  },
+  "provenance": {
+    "parser": {
+      "name": "legacymind-parse-proleap",
+      "version": "0.1.0+proleap.d1bfe75bdd"
+    },
+    "generatedAt": "2026-07-15T14:28:57.651195800Z",
+    "warnings": []
+  }
+}

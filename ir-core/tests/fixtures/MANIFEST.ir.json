@@ -1,0 +1,890 @@
+{
+  "irVersion": "0.1.0",
+  "module": {
+    "programId": "MANIFEST",
+    "dialect": "cobol85-fixed",
+    "source": {
+      "file": "benchmark/modules/manifest.cbl",
+      "sha256": "bc32c2c0af5e3505bef93bf3b4c6ba91a5a04f611ce0f31859b0f243986618f0"
+    }
+  },
+  "dataDivision": {
+    "items": [
+      {
+        "level": 1,
+        "name": "WS-Q1-TEXT",
+        "path": "WS-Q1-TEXT",
+        "picture": "X(8)",
+        "type": {
+          "raw": "X(8)",
+          "category": "alphanumeric",
+          "length": 8
+        },
+        "usage": "DISPLAY",
+        "span": {
+          "file": "benchmark/modules/manifest.cbl",
+          "startLine": 18,
+          "endLine": 18
+        },
+        "children": []
+      },
+      {
+        "level": 1,
+        "name": "WS-Q2-TEXT",
+        "path": "WS-Q2-TEXT",
+        "picture": "X(8)",
+        "type": {
+          "raw": "X(8)",
+          "category": "alphanumeric",
+          "length": 8
+        },
+        "usage": "DISPLAY",
+        "span": {
+          "file": "benchmark/modules/manifest.cbl",
+          "startLine": 19,
+          "endLine": 19
+        },
+        "children": []
+      },
+      {
+        "level": 1,
+        "name": "WS-Q3-TEXT",
+        "path": "WS-Q3-TEXT",
+        "picture": "X(8)",
+        "type": {
+          "raw": "X(8)",
+          "category": "alphanumeric",
+          "length": 8
+        },
+        "usage": "DISPLAY",
+        "span": {
+          "file": "benchmark/modules/manifest.cbl",
+          "startLine": 20,
+          "endLine": 20
+        },
+        "children": []
+      },
+      {
+        "level": 1,
+        "name": "W-ITEM-TAB",
+        "path": "W-ITEM-TAB",
+        "usage": "DISPLAY",
+        "span": {
+          "file": "benchmark/modules/manifest.cbl",
+          "startLine": 21,
+          "endLine": 21
+        },
+        "children": [
+          {
+            "level": 5,
+            "name": "W-ITEM",
+            "path": "W-ITEM-TAB.W-ITEM",
+            "usage": "DISPLAY",
+            "span": {
+              "file": "benchmark/modules/manifest.cbl",
+              "startLine": 22,
+              "endLine": 22
+            },
+            "children": [
+              {
+                "level": 10,
+                "name": "W-SKU",
+                "path": "W-ITEM-TAB.W-ITEM.W-SKU",
+                "picture": "X(4)",
+                "type": {
+                  "raw": "X(4)",
+                  "category": "alphanumeric",
+                  "length": 4
+                },
+                "usage": "DISPLAY",
+                "span": {
+                  "file": "benchmark/modules/manifest.cbl",
+                  "startLine": 23,
+                  "endLine": 23
+                },
+                "children": [],
+                "occurs": 3
+              },
+              {
+                "level": 10,
+                "name": "W-PRICE",
+                "path": "W-ITEM-TAB.W-ITEM.W-PRICE",
+                "picture": "9(3)V99",
+                "type": {
+                  "raw": "9(3)V99",
+                  "category": "numeric",
+                  "digits": 5,
+                  "scale": 2,
+                  "signed": false
+                },
+                "usage": "DISPLAY",
+                "span": {
+                  "file": "benchmark/modules/manifest.cbl",
+                  "startLine": 24,
+                  "endLine": 24
+                },
+                "children": [],
+                "occurs": 3
+              },
+              {
+                "level": 10,
+                "name": "W-QTY",
+                "path": "W-ITEM-TAB.W-ITEM.W-QTY",
+                "picture": "9(3)V9",
+                "type": {
+                  "raw": "9(3)V9",
+                  "category": "numeric",
+                  "digits": 4,
+                  "scale": 1,
+                  "signed": false
+                },
+                "usage": "DISPLAY",
+                "span": {
+                  "file": "benchmark/modules/manifest.cbl",
+                  "startLine": 25,
+                  "endLine": 25
+                },
+                "children": [],
+                "occurs": 3
+              },
+              {
+                "level": 10,
+                "name": "W-EXT",
+                "path": "W-ITEM-TAB.W-ITEM.W-EXT",
+                "picture": "9(6)V99",
+                "type": {
+                  "raw": "9(6)V99",
+                  "category": "numeric",
+                  "digits": 8,
+                  "scale": 2,
+                  "signed": false
+                },
+                "usage": "DISPLAY",
+                "span": {
+                  "file": "benchmark/modules/manifest.cbl",
+                  "startLine": 26,
+                  "endLine": 26
+                },
+                "children": [],
+                "occurs": 3
+              }
+            ],
+            "occursGroup": 3
+          }
+        ]
+      },
+      {
+        "level": 1,
+        "name": "I",
+        "path": "I",
+        "picture": "9",
+        "type": {
+          "raw": "9",
+          "category": "numeric",
+          "digits": 1,
+          "scale": 0,
+          "signed": false
+        },
+        "usage": "DISPLAY",
+        "value": "ZERO",
+        "span": {
+          "file": "benchmark/modules/manifest.cbl",
+          "startLine": 27,
+          "endLine": 27
+        },
+        "children": []
+      },
+      {
+        "level": 1,
+        "name": "W-TOTAL",
+        "path": "W-TOTAL",
+        "picture": "9(7)V99",
+        "type": {
+          "raw": "9(7)V99",
+          "category": "numeric",
+          "digits": 9,
+          "scale": 2,
+          "signed": false
+        },
+        "usage": "DISPLAY",
+        "value": "ZERO",
+        "span": {
+          "file": "benchmark/modules/manifest.cbl",
+          "startLine": 28,
+          "endLine": 28
+        },
+        "children": []
+      },
+      {
+        "level": 1,
+        "name": "W-TIER",
+        "path": "W-TIER",
+        "picture": "X(4)",
+        "type": {
+          "raw": "X(4)",
+          "category": "alphanumeric",
+          "length": 4
+        },
+        "usage": "DISPLAY",
+        "span": {
+          "file": "benchmark/modules/manifest.cbl",
+          "startLine": 29,
+          "endLine": 29
+        },
+        "children": []
+      },
+      {
+        "level": 1,
+        "name": "W-E1-OUT",
+        "path": "W-E1-OUT",
+        "picture": "9(6).99",
+        "type": {
+          "raw": "9(6).99",
+          "category": "numeric-edited",
+          "digits": 8,
+          "scale": 2
+        },
+        "usage": "DISPLAY",
+        "span": {
+          "file": "benchmark/modules/manifest.cbl",
+          "startLine": 30,
+          "endLine": 30
+        },
+        "children": []
+      },
+      {
+        "level": 1,
+        "name": "W-E2-OUT",
+        "path": "W-E2-OUT",
+        "picture": "9(6).99",
+        "type": {
+          "raw": "9(6).99",
+          "category": "numeric-edited",
+          "digits": 8,
+          "scale": 2
+        },
+        "usage": "DISPLAY",
+        "span": {
+          "file": "benchmark/modules/manifest.cbl",
+          "startLine": 31,
+          "endLine": 31
+        },
+        "children": []
+      },
+      {
+        "level": 1,
+        "name": "W-E3-OUT",
+        "path": "W-E3-OUT",
+        "picture": "9(6).99",
+        "type": {
+          "raw": "9(6).99",
+          "category": "numeric-edited",
+          "digits": 8,
+          "scale": 2
+        },
+        "usage": "DISPLAY",
+        "span": {
+          "file": "benchmark/modules/manifest.cbl",
+          "startLine": 32,
+          "endLine": 32
+        },
+        "children": []
+      },
+      {
+        "level": 1,
+        "name": "W-TOT-OUT",
+        "path": "W-TOT-OUT",
+        "picture": "9(7).99",
+        "type": {
+          "raw": "9(7).99",
+          "category": "numeric-edited",
+          "digits": 9,
+          "scale": 2
+        },
+        "usage": "DISPLAY",
+        "span": {
+          "file": "benchmark/modules/manifest.cbl",
+          "startLine": 33,
+          "endLine": 33
+        },
+        "children": []
+      }
+    ]
+  },
+  "procedureDivision": {
+    "paragraphs": [
+      {
+        "name": "MAIN-PARA",
+        "span": {
+          "file": "benchmark/modules/manifest.cbl",
+          "startLine": 35,
+          "endLine": 67
+        },
+        "statements": [
+          {
+            "kind": "accept",
+            "target": "WS-Q1-TEXT",
+            "text": "ACCEPT WS-Q1-TEXT",
+            "span": {
+              "file": "benchmark/modules/manifest.cbl",
+              "startLine": 36,
+              "endLine": 36
+            }
+          },
+          {
+            "kind": "accept",
+            "target": "WS-Q2-TEXT",
+            "text": "ACCEPT WS-Q2-TEXT",
+            "span": {
+              "file": "benchmark/modules/manifest.cbl",
+              "startLine": 37,
+              "endLine": 37
+            }
+          },
+          {
+            "kind": "accept",
+            "target": "WS-Q3-TEXT",
+            "text": "ACCEPT WS-Q3-TEXT",
+            "span": {
+              "file": "benchmark/modules/manifest.cbl",
+              "startLine": 38,
+              "endLine": 38
+            }
+          },
+          {
+            "kind": "move",
+            "from": {
+              "text": "\"PLNK\"",
+              "refs": []
+            },
+            "to": [
+              "W-SKU(1)"
+            ],
+            "text": "MOVE \"PLNK\" TO W-SKU(1)",
+            "span": {
+              "file": "benchmark/modules/manifest.cbl",
+              "startLine": 39,
+              "endLine": 39
+            }
+          },
+          {
+            "kind": "move",
+            "from": {
+              "text": "\"BOLT\"",
+              "refs": []
+            },
+            "to": [
+              "W-SKU(2)"
+            ],
+            "text": "MOVE \"BOLT\" TO W-SKU(2)",
+            "span": {
+              "file": "benchmark/modules/manifest.cbl",
+              "startLine": 40,
+              "endLine": 40
+            }
+          },
+          {
+            "kind": "move",
+            "from": {
+              "text": "\"GEAR\"",
+              "refs": []
+            },
+            "to": [
+              "W-SKU(3)"
+            ],
+            "text": "MOVE \"GEAR\" TO W-SKU(3)",
+            "span": {
+              "file": "benchmark/modules/manifest.cbl",
+              "startLine": 41,
+              "endLine": 41
+            }
+          },
+          {
+            "kind": "move",
+            "from": {
+              "text": "2.35",
+              "refs": []
+            },
+            "to": [
+              "W-PRICE(1)"
+            ],
+            "text": "MOVE 2.35 TO W-PRICE(1)",
+            "span": {
+              "file": "benchmark/modules/manifest.cbl",
+              "startLine": 42,
+              "endLine": 42
+            }
+          },
+          {
+            "kind": "move",
+            "from": {
+              "text": "1.15",
+              "refs": []
+            },
+            "to": [
+              "W-PRICE(2)"
+            ],
+            "text": "MOVE 1.15 TO W-PRICE(2)",
+            "span": {
+              "file": "benchmark/modules/manifest.cbl",
+              "startLine": 43,
+              "endLine": 43
+            }
+          },
+          {
+            "kind": "move",
+            "from": {
+              "text": "0.55",
+              "refs": []
+            },
+            "to": [
+              "W-PRICE(3)"
+            ],
+            "text": "MOVE 0.55 TO W-PRICE(3)",
+            "span": {
+              "file": "benchmark/modules/manifest.cbl",
+              "startLine": 44,
+              "endLine": 44
+            }
+          },
+          {
+            "kind": "compute",
+            "target": "W-QTY(1)",
+            "rounded": false,
+            "expression": {
+              "text": "FUNCTION NUMVAL(WS-Q1-TEXT)",
+              "refs": [
+                "WS-Q1-TEXT"
+              ]
+            },
+            "text": "COMPUTE W-QTY(1) = FUNCTION NUMVAL(WS-Q1-TEXT)",
+            "span": {
+              "file": "benchmark/modules/manifest.cbl",
+              "startLine": 45,
+              "endLine": 45
+            }
+          },
+          {
+            "kind": "compute",
+            "target": "W-QTY(2)",
+            "rounded": false,
+            "expression": {
+              "text": "FUNCTION NUMVAL(WS-Q2-TEXT)",
+              "refs": [
+                "WS-Q2-TEXT"
+              ]
+            },
+            "text": "COMPUTE W-QTY(2) = FUNCTION NUMVAL(WS-Q2-TEXT)",
+            "span": {
+              "file": "benchmark/modules/manifest.cbl",
+              "startLine": 46,
+              "endLine": 46
+            }
+          },
+          {
+            "kind": "compute",
+            "target": "W-QTY(3)",
+            "rounded": false,
+            "expression": {
+              "text": "FUNCTION NUMVAL(WS-Q3-TEXT)",
+              "refs": [
+                "WS-Q3-TEXT"
+              ]
+            },
+            "text": "COMPUTE W-QTY(3) = FUNCTION NUMVAL(WS-Q3-TEXT)",
+            "span": {
+              "file": "benchmark/modules/manifest.cbl",
+              "startLine": 47,
+              "endLine": 47
+            }
+          },
+          {
+            "kind": "perform-varying",
+            "target": "CALC-PARA",
+            "varying": {
+              "var": "I",
+              "from": {
+                "text": "1",
+                "refs": []
+              },
+              "by": {
+                "text": "1",
+                "refs": []
+              }
+            },
+            "condition": {
+              "text": "I > 3",
+              "refs": [
+                "I"
+              ]
+            },
+            "text": "PERFORM CALC-PARA VARYING I FROM 1 BY 1 UNTIL I > 3",
+            "span": {
+              "file": "benchmark/modules/manifest.cbl",
+              "startLine": 48,
+              "endLine": 48
+            }
+          },
+          {
+            "kind": "compute",
+            "target": "W-TOTAL",
+            "rounded": false,
+            "expression": {
+              "text": "W-EXT(1) + W-EXT(2) + W-EXT(3)",
+              "refs": [
+                "W-EXT"
+              ]
+            },
+            "text": "COMPUTE W-TOTAL = W-EXT(1) + W-EXT(2) + W-EXT(3)",
+            "span": {
+              "file": "benchmark/modules/manifest.cbl",
+              "startLine": 49,
+              "endLine": 49
+            }
+          },
+          {
+            "kind": "if",
+            "condition": {
+              "text": "W-TOTAL > 100",
+              "refs": [
+                "W-TOTAL"
+              ]
+            },
+            "then": [
+              {
+                "kind": "move",
+                "from": {
+                  "text": "\"BIG \"",
+                  "refs": []
+                },
+                "to": [
+                  "W-TIER"
+                ],
+                "text": "MOVE \"BIG \" TO W-TIER",
+                "span": {
+                  "file": "benchmark/modules/manifest.cbl",
+                  "startLine": 51,
+                  "endLine": 51
+                }
+              }
+            ],
+            "text": "IF W-TOTAL > 100",
+            "span": {
+              "file": "benchmark/modules/manifest.cbl",
+              "startLine": 50,
+              "endLine": 54
+            },
+            "else": [
+              {
+                "kind": "move",
+                "from": {
+                  "text": "\"STD \"",
+                  "refs": []
+                },
+                "to": [
+                  "W-TIER"
+                ],
+                "text": "MOVE \"STD \" TO W-TIER",
+                "span": {
+                  "file": "benchmark/modules/manifest.cbl",
+                  "startLine": 53,
+                  "endLine": 53
+                }
+              }
+            ]
+          },
+          {
+            "kind": "move",
+            "from": {
+              "text": "W-EXT(1)",
+              "refs": [
+                "W-EXT"
+              ]
+            },
+            "to": [
+              "W-E1-OUT"
+            ],
+            "text": "MOVE W-EXT(1) TO W-E1-OUT",
+            "span": {
+              "file": "benchmark/modules/manifest.cbl",
+              "startLine": 55,
+              "endLine": 55
+            }
+          },
+          {
+            "kind": "move",
+            "from": {
+              "text": "W-EXT(2)",
+              "refs": [
+                "W-EXT"
+              ]
+            },
+            "to": [
+              "W-E2-OUT"
+            ],
+            "text": "MOVE W-EXT(2) TO W-E2-OUT",
+            "span": {
+              "file": "benchmark/modules/manifest.cbl",
+              "startLine": 56,
+              "endLine": 56
+            }
+          },
+          {
+            "kind": "move",
+            "from": {
+              "text": "W-EXT(3)",
+              "refs": [
+                "W-EXT"
+              ]
+            },
+            "to": [
+              "W-E3-OUT"
+            ],
+            "text": "MOVE W-EXT(3) TO W-E3-OUT",
+            "span": {
+              "file": "benchmark/modules/manifest.cbl",
+              "startLine": 57,
+              "endLine": 57
+            }
+          },
+          {
+            "kind": "move",
+            "from": {
+              "text": "W-TOTAL",
+              "refs": [
+                "W-TOTAL"
+              ]
+            },
+            "to": [
+              "W-TOT-OUT"
+            ],
+            "text": "MOVE W-TOTAL TO W-TOT-OUT",
+            "span": {
+              "file": "benchmark/modules/manifest.cbl",
+              "startLine": 58,
+              "endLine": 58
+            }
+          },
+          {
+            "kind": "display",
+            "operands": [
+              {
+                "kind": "literal",
+                "value": "S1="
+              },
+              {
+                "kind": "ref",
+                "name": "W-SKU(1)"
+              }
+            ],
+            "text": "DISPLAY \"S1=\" W-SKU(1)",
+            "span": {
+              "file": "benchmark/modules/manifest.cbl",
+              "startLine": 59,
+              "endLine": 59
+            }
+          },
+          {
+            "kind": "display",
+            "operands": [
+              {
+                "kind": "literal",
+                "value": "S2="
+              },
+              {
+                "kind": "ref",
+                "name": "W-SKU(2)"
+              }
+            ],
+            "text": "DISPLAY \"S2=\" W-SKU(2)",
+            "span": {
+              "file": "benchmark/modules/manifest.cbl",
+              "startLine": 60,
+              "endLine": 60
+            }
+          },
+          {
+            "kind": "display",
+            "operands": [
+              {
+                "kind": "literal",
+                "value": "S3="
+              },
+              {
+                "kind": "ref",
+                "name": "W-SKU(3)"
+              }
+            ],
+            "text": "DISPLAY \"S3=\" W-SKU(3)",
+            "span": {
+              "file": "benchmark/modules/manifest.cbl",
+              "startLine": 61,
+              "endLine": 61
+            }
+          },
+          {
+            "kind": "display",
+            "operands": [
+              {
+                "kind": "literal",
+                "value": "E1="
+              },
+              {
+                "kind": "ref",
+                "name": "W-E1-OUT"
+              }
+            ],
+            "text": "DISPLAY \"E1=\" W-E1-OUT",
+            "span": {
+              "file": "benchmark/modules/manifest.cbl",
+              "startLine": 62,
+              "endLine": 62
+            }
+          },
+          {
+            "kind": "display",
+            "operands": [
+              {
+                "kind": "literal",
+                "value": "E2="
+              },
+              {
+                "kind": "ref",
+                "name": "W-E2-OUT"
+              }
+            ],
+            "text": "DISPLAY \"E2=\" W-E2-OUT",
+            "span": {
+              "file": "benchmark/modules/manifest.cbl",
+              "startLine": 63,
+              "endLine": 63
+            }
+          },
+          {
+            "kind": "display",
+            "operands": [
+              {
+                "kind": "literal",
+                "value": "E3="
+              },
+              {
+                "kind": "ref",
+                "name": "W-E3-OUT"
+              }
+            ],
+            "text": "DISPLAY \"E3=\" W-E3-OUT",
+            "span": {
+              "file": "benchmark/modules/manifest.cbl",
+              "startLine": 64,
+              "endLine": 64
+            }
+          },
+          {
+            "kind": "display",
+            "operands": [
+              {
+                "kind": "literal",
+                "value": "TOTAL="
+              },
+              {
+                "kind": "ref",
+                "name": "W-TOT-OUT"
+              }
+            ],
+            "text": "DISPLAY \"TOTAL=\" W-TOT-OUT",
+            "span": {
+              "file": "benchmark/modules/manifest.cbl",
+              "startLine": 65,
+              "endLine": 65
+            }
+          },
+          {
+            "kind": "display",
+            "operands": [
+              {
+                "kind": "literal",
+                "value": "TIER="
+              },
+              {
+                "kind": "ref",
+                "name": "W-TIER"
+              }
+            ],
+            "text": "DISPLAY \"TIER=\" W-TIER",
+            "span": {
+              "file": "benchmark/modules/manifest.cbl",
+              "startLine": 66,
+              "endLine": 66
+            }
+          },
+          {
+            "kind": "stop-run",
+            "text": "STOP RUN",
+            "span": {
+              "file": "benchmark/modules/manifest.cbl",
+              "startLine": 67,
+              "endLine": 67
+            }
+          }
+        ]
+      },
+      {
+        "name": "CALC-PARA",
+        "span": {
+          "file": "benchmark/modules/manifest.cbl",
+          "startLine": 68,
+          "endLine": 69
+        },
+        "statements": [
+          {
+            "kind": "compute",
+            "target": "W-EXT(I)",
+            "rounded": true,
+            "expression": {
+              "text": "W-QTY(I) * W-PRICE(I)",
+              "refs": [
+                "W-QTY",
+                "W-PRICE"
+              ]
+            },
+            "text": "COMPUTE W-EXT(I) ROUNDED = W-QTY(I) * W-PRICE(I)",
+            "span": {
+              "file": "benchmark/modules/manifest.cbl",
+              "startLine": 69,
+              "endLine": 69
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "controlFlow": {
+    "entry": "MAIN-PARA",
+    "nodes": [
+      {
+        "id": "MAIN-PARA",
+        "kind": "paragraph"
+      },
+      {
+        "id": "CALC-PARA",
+        "kind": "paragraph"
+      }
+    ],
+    "edges": [
+      {
+        "from": "MAIN-PARA",
+        "to": "CALC-PARA",
+        "kind": "perform",
+        "atLine": 48
+      }
+    ]
+  },
+  "provenance": {
+    "parser": {
+      "name": "legacymind-parse-proleap",
+      "version": "0.1.0+proleap.d1bfe75bdd"
+    },
+    "generatedAt": "2026-07-15T14:36:15.132535400Z",
+    "warnings": []
+  }
+}

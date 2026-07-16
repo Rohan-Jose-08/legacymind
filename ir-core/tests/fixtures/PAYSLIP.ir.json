@@ -1,0 +1,551 @@
+{
+  "irVersion": "0.1.0",
+  "files": [
+    {
+      "name": "SLIP-FILE",
+      "assign": "slip.dat",
+      "organization": "line-sequential",
+      "record": "SLIP-REC",
+      "mode": "output"
+    }
+  ],
+  "module": {
+    "programId": "PAYSLIP",
+    "dialect": "cobol85-fixed",
+    "source": {
+      "file": "benchmark/modules/payslip.cbl",
+      "sha256": "3ffd7a32444f6efce6af0319223f7d422d88cce158c4606c354c2612fa45836a"
+    }
+  },
+  "dataDivision": {
+    "items": [
+      {
+        "level": 1,
+        "name": "SLIP-REC",
+        "path": "SLIP-REC",
+        "usage": "DISPLAY",
+        "span": {
+          "file": "benchmark/modules/payslip.cbl",
+          "startLine": 22,
+          "endLine": 22
+        },
+        "children": [
+          {
+            "level": 5,
+            "name": "REC-KEY",
+            "path": "SLIP-REC.REC-KEY",
+            "picture": "X(4)",
+            "type": {
+              "raw": "X(4)",
+              "category": "alphanumeric",
+              "length": 4
+            },
+            "usage": "DISPLAY",
+            "span": {
+              "file": "benchmark/modules/payslip.cbl",
+              "startLine": 23,
+              "endLine": 23
+            },
+            "children": []
+          },
+          {
+            "level": 5,
+            "name": "REC-AMT",
+            "path": "SLIP-REC.REC-AMT",
+            "picture": "9(7).99",
+            "type": {
+              "raw": "9(7).99",
+              "category": "numeric-edited",
+              "digits": 9,
+              "scale": 2
+            },
+            "usage": "DISPLAY",
+            "span": {
+              "file": "benchmark/modules/payslip.cbl",
+              "startLine": 24,
+              "endLine": 24
+            },
+            "children": []
+          }
+        ]
+      },
+      {
+        "level": 1,
+        "name": "WS-EMP-ID",
+        "path": "WS-EMP-ID",
+        "picture": "X(8)",
+        "type": {
+          "raw": "X(8)",
+          "category": "alphanumeric",
+          "length": 8
+        },
+        "usage": "DISPLAY",
+        "span": {
+          "file": "benchmark/modules/payslip.cbl",
+          "startLine": 26,
+          "endLine": 26
+        },
+        "children": []
+      },
+      {
+        "level": 1,
+        "name": "WS-GROSS-TEXT",
+        "path": "WS-GROSS-TEXT",
+        "picture": "X(12)",
+        "type": {
+          "raw": "X(12)",
+          "category": "alphanumeric",
+          "length": 12
+        },
+        "usage": "DISPLAY",
+        "span": {
+          "file": "benchmark/modules/payslip.cbl",
+          "startLine": 27,
+          "endLine": 27
+        },
+        "children": []
+      },
+      {
+        "level": 1,
+        "name": "WS-GROSS",
+        "path": "WS-GROSS",
+        "picture": "9(7)V99",
+        "type": {
+          "raw": "9(7)V99",
+          "category": "numeric",
+          "digits": 9,
+          "scale": 2,
+          "signed": false
+        },
+        "usage": "DISPLAY",
+        "value": "ZERO",
+        "span": {
+          "file": "benchmark/modules/payslip.cbl",
+          "startLine": 28,
+          "endLine": 28
+        },
+        "children": []
+      },
+      {
+        "level": 1,
+        "name": "WS-TAX",
+        "path": "WS-TAX",
+        "picture": "9(7)V99",
+        "type": {
+          "raw": "9(7)V99",
+          "category": "numeric",
+          "digits": 9,
+          "scale": 2,
+          "signed": false
+        },
+        "usage": "DISPLAY",
+        "value": "ZERO",
+        "span": {
+          "file": "benchmark/modules/payslip.cbl",
+          "startLine": 29,
+          "endLine": 29
+        },
+        "children": []
+      },
+      {
+        "level": 1,
+        "name": "WS-NET",
+        "path": "WS-NET",
+        "picture": "9(7)V99",
+        "type": {
+          "raw": "9(7)V99",
+          "category": "numeric",
+          "digits": 9,
+          "scale": 2,
+          "signed": false
+        },
+        "usage": "DISPLAY",
+        "value": "ZERO",
+        "span": {
+          "file": "benchmark/modules/payslip.cbl",
+          "startLine": 30,
+          "endLine": 30
+        },
+        "children": []
+      },
+      {
+        "level": 1,
+        "name": "WS-ROWS",
+        "path": "WS-ROWS",
+        "picture": "9",
+        "type": {
+          "raw": "9",
+          "category": "numeric",
+          "digits": 1,
+          "scale": 0,
+          "signed": false
+        },
+        "usage": "DISPLAY",
+        "value": "ZERO",
+        "span": {
+          "file": "benchmark/modules/payslip.cbl",
+          "startLine": 31,
+          "endLine": 31
+        },
+        "children": []
+      }
+    ]
+  },
+  "procedureDivision": {
+    "paragraphs": [
+      {
+        "name": "MAIN-PARA",
+        "span": {
+          "file": "benchmark/modules/payslip.cbl",
+          "startLine": 33,
+          "endLine": 55
+        },
+        "statements": [
+          {
+            "kind": "accept",
+            "target": "WS-EMP-ID",
+            "text": "ACCEPT WS-EMP-ID",
+            "span": {
+              "file": "benchmark/modules/payslip.cbl",
+              "startLine": 34,
+              "endLine": 34
+            }
+          },
+          {
+            "kind": "accept",
+            "target": "WS-GROSS-TEXT",
+            "text": "ACCEPT WS-GROSS-TEXT",
+            "span": {
+              "file": "benchmark/modules/payslip.cbl",
+              "startLine": 35,
+              "endLine": 35
+            }
+          },
+          {
+            "kind": "compute",
+            "target": "WS-GROSS",
+            "rounded": false,
+            "expression": {
+              "text": "FUNCTION NUMVAL(WS-GROSS-TEXT)",
+              "refs": [
+                "WS-GROSS-TEXT"
+              ]
+            },
+            "text": "COMPUTE WS-GROSS = FUNCTION NUMVAL(WS-GROSS-TEXT)",
+            "span": {
+              "file": "benchmark/modules/payslip.cbl",
+              "startLine": 36,
+              "endLine": 36
+            }
+          },
+          {
+            "kind": "compute",
+            "target": "WS-TAX",
+            "rounded": true,
+            "expression": {
+              "text": "WS-GROSS * 11 / 100",
+              "refs": [
+                "WS-GROSS"
+              ]
+            },
+            "text": "COMPUTE WS-TAX ROUNDED = WS-GROSS * 11 / 100",
+            "span": {
+              "file": "benchmark/modules/payslip.cbl",
+              "startLine": 37,
+              "endLine": 37
+            }
+          },
+          {
+            "kind": "compute",
+            "target": "WS-NET",
+            "rounded": false,
+            "expression": {
+              "text": "WS-GROSS - WS-TAX",
+              "refs": [
+                "WS-GROSS",
+                "WS-TAX"
+              ]
+            },
+            "text": "COMPUTE WS-NET = WS-GROSS - WS-TAX",
+            "span": {
+              "file": "benchmark/modules/payslip.cbl",
+              "startLine": 38,
+              "endLine": 38
+            }
+          },
+          {
+            "kind": "open",
+            "file": "SLIP-FILE",
+            "text": "OPEN OUTPUT SLIP-FILE",
+            "span": {
+              "file": "benchmark/modules/payslip.cbl",
+              "startLine": 39,
+              "endLine": 39
+            }
+          },
+          {
+            "kind": "move",
+            "from": {
+              "text": "\"GRS=\"",
+              "refs": []
+            },
+            "to": [
+              "REC-KEY"
+            ],
+            "text": "MOVE \"GRS=\" TO REC-KEY",
+            "span": {
+              "file": "benchmark/modules/payslip.cbl",
+              "startLine": 40,
+              "endLine": 40
+            }
+          },
+          {
+            "kind": "move",
+            "from": {
+              "text": "WS-GROSS",
+              "refs": [
+                "WS-GROSS"
+              ]
+            },
+            "to": [
+              "REC-AMT"
+            ],
+            "text": "MOVE WS-GROSS TO REC-AMT",
+            "span": {
+              "file": "benchmark/modules/payslip.cbl",
+              "startLine": 41,
+              "endLine": 41
+            }
+          },
+          {
+            "kind": "write",
+            "record": "SLIP-REC",
+            "file": "SLIP-FILE",
+            "text": "WRITE SLIP-REC",
+            "span": {
+              "file": "benchmark/modules/payslip.cbl",
+              "startLine": 42,
+              "endLine": 42
+            }
+          },
+          {
+            "kind": "compute",
+            "target": "WS-ROWS",
+            "rounded": false,
+            "expression": {
+              "text": "WS-ROWS + 1",
+              "refs": [
+                "WS-ROWS"
+              ]
+            },
+            "text": "ADD 1 TO WS-ROWS",
+            "span": {
+              "file": "benchmark/modules/payslip.cbl",
+              "startLine": 43,
+              "endLine": 43
+            }
+          },
+          {
+            "kind": "move",
+            "from": {
+              "text": "\"TAX=\"",
+              "refs": []
+            },
+            "to": [
+              "REC-KEY"
+            ],
+            "text": "MOVE \"TAX=\" TO REC-KEY",
+            "span": {
+              "file": "benchmark/modules/payslip.cbl",
+              "startLine": 44,
+              "endLine": 44
+            }
+          },
+          {
+            "kind": "move",
+            "from": {
+              "text": "WS-TAX",
+              "refs": [
+                "WS-TAX"
+              ]
+            },
+            "to": [
+              "REC-AMT"
+            ],
+            "text": "MOVE WS-TAX TO REC-AMT",
+            "span": {
+              "file": "benchmark/modules/payslip.cbl",
+              "startLine": 45,
+              "endLine": 45
+            }
+          },
+          {
+            "kind": "write",
+            "record": "SLIP-REC",
+            "file": "SLIP-FILE",
+            "text": "WRITE SLIP-REC",
+            "span": {
+              "file": "benchmark/modules/payslip.cbl",
+              "startLine": 46,
+              "endLine": 46
+            }
+          },
+          {
+            "kind": "compute",
+            "target": "WS-ROWS",
+            "rounded": false,
+            "expression": {
+              "text": "WS-ROWS + 1",
+              "refs": [
+                "WS-ROWS"
+              ]
+            },
+            "text": "ADD 1 TO WS-ROWS",
+            "span": {
+              "file": "benchmark/modules/payslip.cbl",
+              "startLine": 47,
+              "endLine": 47
+            }
+          },
+          {
+            "kind": "move",
+            "from": {
+              "text": "\"NET=\"",
+              "refs": []
+            },
+            "to": [
+              "REC-KEY"
+            ],
+            "text": "MOVE \"NET=\" TO REC-KEY",
+            "span": {
+              "file": "benchmark/modules/payslip.cbl",
+              "startLine": 48,
+              "endLine": 48
+            }
+          },
+          {
+            "kind": "move",
+            "from": {
+              "text": "WS-NET",
+              "refs": [
+                "WS-NET"
+              ]
+            },
+            "to": [
+              "REC-AMT"
+            ],
+            "text": "MOVE WS-NET TO REC-AMT",
+            "span": {
+              "file": "benchmark/modules/payslip.cbl",
+              "startLine": 49,
+              "endLine": 49
+            }
+          },
+          {
+            "kind": "write",
+            "record": "SLIP-REC",
+            "file": "SLIP-FILE",
+            "text": "WRITE SLIP-REC",
+            "span": {
+              "file": "benchmark/modules/payslip.cbl",
+              "startLine": 50,
+              "endLine": 50
+            }
+          },
+          {
+            "kind": "compute",
+            "target": "WS-ROWS",
+            "rounded": false,
+            "expression": {
+              "text": "WS-ROWS + 1",
+              "refs": [
+                "WS-ROWS"
+              ]
+            },
+            "text": "ADD 1 TO WS-ROWS",
+            "span": {
+              "file": "benchmark/modules/payslip.cbl",
+              "startLine": 51,
+              "endLine": 51
+            }
+          },
+          {
+            "kind": "close",
+            "file": "SLIP-FILE",
+            "text": "CLOSE SLIP-FILE",
+            "span": {
+              "file": "benchmark/modules/payslip.cbl",
+              "startLine": 52,
+              "endLine": 52
+            }
+          },
+          {
+            "kind": "display",
+            "operands": [
+              {
+                "kind": "literal",
+                "value": "EMP_ID="
+              },
+              {
+                "kind": "ref",
+                "name": "WS-EMP-ID"
+              }
+            ],
+            "text": "DISPLAY \"EMP_ID=\" WS-EMP-ID",
+            "span": {
+              "file": "benchmark/modules/payslip.cbl",
+              "startLine": 53,
+              "endLine": 53
+            }
+          },
+          {
+            "kind": "display",
+            "operands": [
+              {
+                "kind": "literal",
+                "value": "ROWS="
+              },
+              {
+                "kind": "ref",
+                "name": "WS-ROWS"
+              }
+            ],
+            "text": "DISPLAY \"ROWS=\" WS-ROWS",
+            "span": {
+              "file": "benchmark/modules/payslip.cbl",
+              "startLine": 54,
+              "endLine": 54
+            }
+          },
+          {
+            "kind": "stop-run",
+            "text": "STOP RUN",
+            "span": {
+              "file": "benchmark/modules/payslip.cbl",
+              "startLine": 55,
+              "endLine": 55
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "controlFlow": {
+    "entry": "MAIN-PARA",
+    "nodes": [
+      {
+        "id": "MAIN-PARA",
+        "kind": "paragraph"
+      }
+    ],
+    "edges": []
+  },
+  "provenance": {
+    "parser": {
+      "name": "legacymind-parse-proleap",
+      "version": "0.1.0+proleap.d1bfe75bdd"
+    },
+    "generatedAt": "2026-07-15T14:23:42.316904100Z",
+    "warnings": []
+  }
+}
