@@ -27,6 +27,55 @@ Stack: Next.js 15 (App Router) + Tailwind 4 + WorkOS AuthKit
 `LEGACYMIND_DATA_DIR` (default `../out`) points at the pipeline's output
 directory; the dashboard lists every `certification*.json` it finds there.
 
+## Demo data
+
+`../out` accumulates first-run debris — early content-hash-only
+certificates and negative-test fixtures — that render as confusing
+"unsigned" rows. For a clean customer-facing snapshot, stage exactly the
+27 signed module certificates named in `benchmark/modules.json`:
+
+```
+node stage-demo-data.mjs          # writes ./demo-data (verifies every signature)
+LEGACYMIND_DATA_DIR=./demo-data npm run dev
+```
+
+The script copies certificates byte-for-byte (signatures intact) and
+fails loudly if any is unsigned, tampered, or signed by an untrusted key.
+`demo-data/` is gitignored; commit it only for a remote deploy that
+cannot reach `../out` (below).
+
+## Deploy
+
+The dashboard is the `dashboard/` subtree of the repo. On any Next.js
+host (Vercel is the least-friction path for App Router):
+
+1. Set the environment variables from `.env.example` in the host's
+   project settings — the WorkOS client ID, API key, cookie password, and
+   **production** redirect URI (`https://<domain>/callback`, registered
+   under Redirects in the WorkOS dashboard, replacing the localhost one).
+2. Make the trusted key reachable: either include
+   `keys/legacymind-dev-ed25519.pub.pem` in the deployment or set
+   `LEGACYMIND_TRUSTED_KEY` to its deployed path. Without it the
+   signature panel degrades to "no trusted key configured" — signatures
+   still verify for integrity but provenance is unchecked.
+3. Provide the data: a host that cannot see `../out` needs a committed
+   `demo-data/` (run the staging script, commit the directory, point
+   `LEGACYMIND_DATA_DIR` at it).
+
+Known limitation: certificates embed absolute report paths from the
+machine that produced them, so **evidence-download links resolve only on
+that machine**. The core dashboard — verdicts, per-layer status,
+signature verification, coverage, gaps, and cost — reads solely from the
+certificate JSON and is fully host-independent. Making download links
+portable requires the pipeline to sign data-dir-relative paths (a
+`certify` change plus a re-sign of every certificate), tracked as its own
+stage.
+
+Before exposing certificates beyond a private demo, re-sign with a
+non-demo key: the committed signing key is the deterministic DEMO key
+(see `keys/README.md`), and the dashboard pins the trusted public key, so
+a real keypair is a key-file swap plus `LEGACYMIND_TRUSTED_KEY`.
+
 ## Auth model
 
 - `middleware.ts` runs AuthKit in `middlewareAuth` mode: every route except

@@ -4,3 +4,6 @@ next-env.d.ts
 # secrets — never commit; see .env.example
 .env
 .env*.local
+# derived: regenerate with `node stage-demo-data.mjs` (commit only for a
+# remote deploy that has no access to ../out — see README)
+demo-data/
