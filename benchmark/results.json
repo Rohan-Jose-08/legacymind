@@ -1,7 +1,7 @@
 {
   "tool": "legacymind benchmark",
   "version": "0.1.0",
-  "generatedAt": "2026-07-17T09:19:35.710Z",
+  "generatedAt": "2026-07-17T10:17:39.546Z",
   "toolchain": {
     "parser": "proleap engine (ProLeap ANTLR4 COBOL85 grammar + reference-format preprocessor, JVM)",
     "legacy": "GnuCOBOL 3.1.2 (debian:bookworm-slim, sandboxed: --network none, --rm)",
@@ -15,7 +15,7 @@
       "programId": "PAYROLL",
       "source": "examples/payroll.cbl",
       "loc": 59,
-      "wallSeconds": 85.4,
+      "wallSeconds": 88.7,
       "steps": {
         "parse": true,
         "validateIr": true,
@@ -137,7 +137,7 @@
       "programId": "DISCOUNT",
       "source": "benchmark/modules/discount.cbl",
       "loc": 54,
-      "wallSeconds": 86.7,
+      "wallSeconds": 85.9,
       "steps": {
         "parse": true,
         "validateIr": true,
@@ -199,7 +199,7 @@
       "programId": "LEDGER",
       "source": "benchmark/modules/ledger.cbl",
       "loc": 72,
-      "wallSeconds": 92.5,
+      "wallSeconds": 95.1,
       "steps": {
         "parse": true,
         "validateIr": true,
@@ -261,7 +261,7 @@
       "programId": "COMPOUND",
       "source": "benchmark/modules/compound.cbl",
       "loc": 52,
-      "wallSeconds": 90.2,
+      "wallSeconds": 96.8,
       "steps": {
         "parse": true,
         "validateIr": true,
@@ -321,7 +321,7 @@
       "programId": "TAXCALC",
       "source": "benchmark/modules/taxcalc.cbl",
       "loc": 58,
-      "wallSeconds": 85.5,
+      "wallSeconds": 82.4,
       "steps": {
         "parse": true,
         "validateIr": true,
@@ -381,7 +381,7 @@
       "programId": "GRADE",
       "source": "benchmark/modules/grade.cbl",
       "loc": 47,
-      "wallSeconds": 84.3,
+      "wallSeconds": 87.3,
       "steps": {
         "parse": true,
         "validateIr": true,
@@ -444,7 +444,7 @@
       "programId": "COMMISSION",
       "source": "benchmark/modules/commission.cbl",
       "loc": 49,
-      "wallSeconds": 86.8,
+      "wallSeconds": 109.3,
       "steps": {
         "parse": true,
         "validateIr": true,
@@ -504,7 +504,7 @@
       "programId": "SENIOR",
       "source": "benchmark/modules/senior.cbl",
       "loc": 38,
-      "wallSeconds": 84.2,
+      "wallSeconds": 86.4,
       "steps": {
         "parse": true,
         "validateIr": true,
@@ -567,7 +567,7 @@
       "programId": "TIER",
       "source": "benchmark/modules/tier.cbl",
       "loc": 37,
-      "wallSeconds": 94.4,
+      "wallSeconds": 85.8,
       "steps": {
         "parse": true,
         "validateIr": true,
@@ -627,7 +627,7 @@
       "programId": "INVOICE",
       "source": "benchmark/modules/invoice.cbl",
       "loc": 41,
-      "wallSeconds": 85.9,
+      "wallSeconds": 82.1,
       "steps": {
         "parse": true,
         "validateIr": true,
@@ -687,7 +687,7 @@
       "programId": "SHIPPING",
       "source": "benchmark/modules/shipping.cbl",
       "loc": 55,
-      "wallSeconds": 89.1,
+      "wallSeconds": 88.2,
       "steps": {
         "parse": true,
         "validateIr": true,
@@ -747,7 +747,7 @@
       "programId": "TRANSFER",
       "source": "benchmark/modules/transfer.cbl",
       "loc": 52,
-      "wallSeconds": 89.1,
+      "wallSeconds": 80.5,
       "steps": {
         "parse": true,
         "validateIr": true,
@@ -807,7 +807,7 @@
       "programId": "RETAIL",
       "source": "benchmark/modules/retail.cbl",
       "loc": 45,
-      "wallSeconds": 92.8,
+      "wallSeconds": 82.9,
       "steps": {
         "parse": true,
         "validateIr": true,
@@ -867,7 +867,7 @@
       "programId": "PAYSLIP",
       "source": "benchmark/modules/payslip.cbl",
       "loc": 55,
-      "wallSeconds": 98.4,
+      "wallSeconds": 88.9,
       "steps": {
         "parse": true,
         "validateIr": true,
@@ -929,7 +929,7 @@
       "programId": "BONUS",
       "source": "benchmark/modules/bonus.cbl",
       "loc": 46,
-      "wallSeconds": 90.3,
+      "wallSeconds": 83,
       "steps": {
         "parse": true,
         "validateIr": true,
@@ -989,7 +989,7 @@
       "programId": "BATCHSUM",
       "source": "examples/batchsum.cbl",
       "loc": 44,
-      "wallSeconds": 85.5,
+      "wallSeconds": 84.4,
       "steps": {
         "parse": true,
         "validateIr": true,
@@ -1052,7 +1052,7 @@
       "programId": "REBATE",
       "source": "examples/rebate.cbl",
       "loc": 52,
-      "wallSeconds": 100.3,
+      "wallSeconds": 99.9,
       "steps": {
         "parse": true,
         "validateIr": true,
@@ -1116,7 +1116,7 @@
       "programId": "DUES",
       "source": "examples/dues.cbl",
       "loc": 35,
-      "wallSeconds": 87.6,
+      "wallSeconds": 86.6,
       "steps": {
         "parse": true,
         "validateIr": true,
@@ -1178,7 +1178,7 @@
       "programId": "TABSUM",
       "source": "examples/tabsum.cbl",
       "loc": 40,
-      "wallSeconds": 84.1,
+      "wallSeconds": 80.9,
       "steps": {
         "parse": true,
         "validateIr": true,
@@ -1240,7 +1240,7 @@
       "programId": "SETTLE",
       "source": "examples/settle.cbl",
       "loc": 41,
-      "wallSeconds": 81.2,
+      "wallSeconds": 84.1,
       "steps": {
         "parse": true,
         "validateIr": true,
@@ -1302,7 +1302,7 @@
       "programId": "LOCKER",
       "source": "examples/locker.cbl",
       "loc": 48,
-      "wallSeconds": 83.6,
+      "wallSeconds": 88.1,
       "steps": {
         "parse": true,
         "validateIr": true,
@@ -1362,7 +1362,7 @@
       "programId": "REMIT",
       "source": "benchmark/modules/remit.cbl",
       "loc": 59,
-      "wallSeconds": 98.6,
+      "wallSeconds": 96.1,
       "steps": {
         "parse": true,
         "validateIr": true,
@@ -1424,7 +1424,7 @@
       "programId": "TARIFF",
       "source": "benchmark/modules/tariff.cbl",
       "loc": 60,
-      "wallSeconds": 99.6,
+      "wallSeconds": 94.4,
       "steps": {
         "parse": true,
         "validateIr": true,
@@ -1486,7 +1486,7 @@
       "programId": "MANIFEST",
       "source": "benchmark/modules/manifest.cbl",
       "loc": 69,
-      "wallSeconds": 85,
+      "wallSeconds": 87.5,
       "steps": {
         "parse": true,
         "validateIr": true,
@@ -1548,7 +1548,7 @@
       "programId": "REORDER",
       "source": "benchmark/modules/reorder.cbl",
       "loc": 63,
-      "wallSeconds": 89.2,
+      "wallSeconds": 88.6,
       "steps": {
         "parse": true,
         "validateIr": true,

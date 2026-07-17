@@ -20,6 +20,7 @@ import { DiffExecError, runDiffExec } from "./verify/diffexec.js";
 import { runPropGen } from "./verify/propgen.js";
 import { runSymExec } from "./verify/symexec.js";
 import { runStaticFlow } from "./verify/staticflow.js";
+import { AssessError, runAssess } from "./assess.js";
 import { MigrateError, runMigrate } from "./transpile/transpile.js";
 import { ModelError } from "./model/client.js";
 import { CertifyError, runCertify, runReport } from "./certify.js";
@@ -31,6 +32,13 @@ const DEFAULT_MODEL = "claude-opus-4-8";
 const USAGE = `legacymind — autonomous legacy-code modernization with provable equivalence
 
 usage:
+  legacymind assess <codebase-dir> --out <dir> [--copybooks <dir>]
+                    [--format AUTO|FIXED|VARIABLE|TANDEM]
+      Assess every COBOL source under a directory: per-module verdicts
+      (VERIFIABLE today / BLOCKED with each file's enumerated constructs /
+      PARSE-FAILED), plus an unlock-ranked construct table. Writes
+      ASSESSMENT.md (customer-readable) and assessment.json.
+
   legacymind parse <source.cbl> --out <dir | file.json>
                    [--engine stub|proleap] [--format AUTO|FIXED|VARIABLE|TANDEM]
       Parse COBOL 85 into LegacyMind IR (ir/schema.json).
@@ -228,10 +236,33 @@ function cmdPlan(args: string[]): void {
   process.exit(runPlan(target, str(flags, "model") ?? DEFAULT_MODEL));
 }
 
+function cmdAssess(args: string[]): void {
+  const { positional, flags } = parseArgs(args);
+  const dir = positional[0];
+  const outDir = str(flags, "out");
+  if (!dir || !outDir) fail("assess: usage: assess <codebase-dir> --out <dir> [--copybooks <dir>]", 2);
+  try {
+    process.exit(
+      runAssess({
+        dir,
+        outDir,
+        copybooks: str(flags, "copybooks"),
+        format: str(flags, "format"),
+      }),
+    );
+  } catch (e) {
+    if (e instanceof AssessError) fail(`assess: ${e.message}`, 2);
+    throw e;
+  }
+}
+
 const [command, ...rest] = process.argv.slice(2);
 switch (command) {
   case "parse":
     cmdParse(rest);
+    break;
+  case "assess":
+    cmdAssess(rest);
     break;
   case "plan":
     cmdPlan(rest);

@@ -1,6 +1,6 @@
 {
   "tool": "legacymind parse-sweep",
-  "generatedAt": "2026-07-15T14:10:07.956Z",
+  "generatedAt": "2026-07-17T10:22:08.122Z",
   "corpus": "https://github.com/uwol/proleap-cobol-parser",
   "commit": "d1bfe75bdd6d480f70c74c6345bcc02610ac30d3",
   "total": 759,
@@ -464,10 +464,6 @@
         "count": 21
       },
       {
-        "reason": "preprocessor changed the line structure (COPY/REPLACE expansion?): span provenance cannot be mapped ",
-        "count": 21
-      },
-      {
         "reason": "GO TO READ-SHORT-REC-ERROR inside PERFORM-reachable paragraph READ-SHORT-REC is neither a structured",
         "count": 21
       },
@@ -489,6 +485,10 @@
       },
       {
         "reason": "FD SQ-FS2 without a matching LINE SEQUENTIAL SELECT",
+        "count": 19
+      },
+      {
+        "reason": "preprocessor changed the line structure (COPY/REPLACE expansion?): span provenance cannot be mapped ",
         "count": 19
       },
       {

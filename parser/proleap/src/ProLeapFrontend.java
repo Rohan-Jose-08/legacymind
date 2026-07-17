@@ -97,6 +97,10 @@ public class ProLeapFrontend {
 	// splits on whitespace.
 	static final Pattern TOKEN = Pattern.compile("\"[^\"]*\"|'[^']*'|\\S+");
 
+	/** Extra copybook directory (customer codebases keep copybooks apart
+	 *  from programs); the source file's own directory is always searched. */
+	static File copyBookDir = null;
+
 	public static void main(final String[] args) throws Exception {
 		String file = null;
 		String format = "AUTO";
@@ -108,6 +112,9 @@ public class ProLeapFrontend {
 				break;
 			case "--batch":
 				batch = true;
+				break;
+			case "--copybooks":
+				copyBookDir = new File(args[++i]).getAbsoluteFile();
 				break;
 			default:
 				file = args[i];
@@ -164,7 +171,12 @@ public class ProLeapFrontend {
 		for (final CobolSourceFormatEnum fmt : formats) {
 			final CobolParserParams params = new CobolParserParamsImpl();
 			params.setFormat(fmt);
-			params.setCopyBookDirectories(Arrays.asList(new File(file).getAbsoluteFile().getParentFile()));
+			final List<File> copyDirs = new ArrayList<>();
+			copyDirs.add(new File(file).getAbsoluteFile().getParentFile());
+			if (copyBookDir != null) {
+				copyDirs.add(copyBookDir);
+			}
+			params.setCopyBookDirectories(copyDirs);
 
 			String preprocessed;
 			Program program;
@@ -312,11 +324,76 @@ public class ProLeapFrontend {
 				for (int p = 1; p <= preCount; p++) {
 					lineMap[p] = nonContinuation.get(p - 1);
 				}
-			} else {
-				lineMap = null;
-				unsupported.add("preprocessor changed the line structure (COPY/REPLACE expansion?): "
-						+ "span provenance cannot be mapped to original lines yet");
+				return;
 			}
+			// COPY expansion: align the two sequences, tolerating insertions
+			// ONLY at original lines that are COPY statements — copied content
+			// is attributed to its COPY site (the correct provenance), and any
+			// UNEXPLAINED divergence keeps the honest reject below, never a
+			// guessed mapping.
+			final int[] aligned = alignThroughCopies(orig, nonContinuation);
+			if (aligned != null) {
+				lineMap = aligned;
+				return;
+			}
+			lineMap = null;
+			unsupported.add("preprocessor changed the line structure (COPY/REPLACE expansion?): "
+					+ "span provenance cannot be mapped to original lines yet");
+		}
+
+		/** Area-A/B content of a line for alignment: strip the sequence area
+		 *  (cols 1-6), the indicator column, and cols 73+, then trim right —
+		 *  the preprocessor's writer normalizes those regions. */
+		String alignKey(final String line) {
+			final int start = format == CobolSourceFormatEnum.TANDEM ? 0 : Math.min(7, line.length());
+			final int end = format == CobolSourceFormatEnum.TANDEM ? line.length() : Math.min(72, line.length());
+			return start >= end ? "" : line.substring(start, end).replaceAll("\\s+$", "");
+		}
+
+		/** True when the original line is a COPY statement (area B). */
+		boolean isCopyLine(final String line) {
+			return alignKey(line).matches("(?i)\\s*COPY\\s+\\S+.*");
+		}
+
+		int[] alignThroughCopies(final String[] orig, final List<Integer> nonContinuation) {
+			final String[] pre = preprocessed.split("\n", -1);
+			final int preCount = pre.length;
+			final int[] map = new int[preCount + 1];
+			int o = 0; // index into nonContinuation
+			for (int p = 1; p <= preCount; p++) {
+				final String pKey = alignKey(pre[p - 1]);
+				if (o < nonContinuation.size()
+						&& pKey.equals(alignKey(orig[nonContinuation.get(o) - 1]))) {
+					map[p] = nonContinuation.get(o);
+					o++;
+					continue;
+				}
+				// Mismatch: explained only when the pending original line is a
+				// COPY statement (this preprocessed line is copied content) —
+				// attribute it to the COPY site. When the NEXT original line
+				// matches, the copied region has ended: consume the COPY line.
+				if (o < nonContinuation.size() && isCopyLine(orig[nonContinuation.get(o) - 1])) {
+					if (o + 1 < nonContinuation.size()
+							&& pKey.equals(alignKey(orig[nonContinuation.get(o + 1) - 1]))) {
+						o++; // the COPY produced no further lines; this matches the line after it
+						map[p] = nonContinuation.get(o);
+						o++;
+					} else {
+						map[p] = nonContinuation.get(o); // copied content -> the COPY site
+					}
+					continue;
+				}
+				return null; // unexplained divergence: refuse, never guess
+			}
+			// Every original line after the last mapped one must be a COPY
+			// line or blank — otherwise output ended early unexplained.
+			for (int rest = o; rest < nonContinuation.size(); rest++) {
+				final String line = orig[nonContinuation.get(rest) - 1];
+				if (!isCopyLine(line) && !alignKey(line).isEmpty()) {
+					return null;
+				}
+			}
+			return map;
 		}
 
 		int mapLine(final int preLine) {
