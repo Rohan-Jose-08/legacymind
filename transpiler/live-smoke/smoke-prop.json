@@ -1,0 +1,19 @@
+{
+  "$comment": "Layer A generator config for the SMOKE live run: a live winner must survive 200 generated cases, not just the six selection cases (anti-overfit, as the repair-fixture README recommends for live generation).",
+  "legacy": {
+    "image": "legacymind/legacy-smoke",
+    "label": "COBOL 85 SMOKE (GnuCOBOL via harness image legacymind/legacy-smoke)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/smoke/migrate/candidate-a", "Smoke"],
+    "label": "Java 21 smoke (migrated candidate A)"
+  },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "generator": {
+    "ir": "../../out/ir/SMOKE.ir.json",
+    "stdinFields": ["WS-ACCT-ID", "WS-AMT"],
+    "count": 200,
+    "seed": 20260717
+  }
+}

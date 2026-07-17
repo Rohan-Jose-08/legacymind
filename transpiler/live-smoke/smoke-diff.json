@@ -1,0 +1,22 @@
+{
+  "$comment": "Layer B selection cases for SMOKE, the live-API smoke module, vs the real GnuCOBOL harness image. Ground-truthed by hand first: 0.50 is the 0.015 half-cent tie -> 0.02; 776.70 lands TOTAL exactly 800.00 (FREE); 776.71 crosses to 800.01 (HELD).",
+  "legacy": {
+    "image": "legacymind/legacy-smoke",
+    "label": "COBOL 85 SMOKE (GnuCOBOL via harness image legacymind/legacy-smoke)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/smoke/migrate/candidate-a", "Smoke"],
+    "label": "Java 21 smoke (migrated candidate A)"
+  },
+  "protocol": { "input": "stdin-lines", "output": "kv-lines" },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "cases": [
+    { "id": "typical", "stdin": ["ACCT0001", "100.00"] },
+    { "id": "half-cent-tie", "stdin": ["ACCT0002", "0.50"] },
+    { "id": "tier-exact-boundary", "stdin": ["ACCT0003", "776.70"] },
+    { "id": "tier-crossed", "stdin": ["ACCT0004", "776.71"] },
+    { "id": "zero", "stdin": ["ACCT0005", "0.00"] },
+    { "id": "max", "stdin": ["ACCT0006", "99999.99"] }
+  ]
+}
