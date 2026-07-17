@@ -1,0 +1,21 @@
+{
+  "$comment": "Layer B selection cases for the ESCROW repair-loop fixture (transpiler/repair-fixture/README.md). The committed cached candidates are deliberately broken (a: 2% rate instead of 3%, caught here; b: does not compile), so migrate --offline --max-repairs 1 exercises the repair loop deterministically.",
+  "legacy": {
+    "image": "legacymind/legacy-escrow",
+    "label": "COBOL 85 ESCROW (GnuCOBOL via harness image legacymind/legacy-escrow)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/escrow/migrate/candidate-a", "Escrow"],
+    "label": "Java 21 escrow (migrated candidate A)"
+  },
+  "protocol": { "input": "stdin-lines", "output": "kv-lines" },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "cases": [
+    { "id": "typical", "stdin": ["100.00"] },
+    { "id": "tier-boundary", "stdin": ["1000.00"] },
+    { "id": "just-over", "stdin": ["1000.01"] },
+    { "id": "half-cent", "stdin": ["0.50"] },
+    { "id": "zero", "stdin": ["0.00"] }
+  ]
+}

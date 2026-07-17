@@ -45,11 +45,15 @@ usage:
 
   legacymind migrate <ir.json> --diff-config <cfg.json> --out <dir>
                      [--prop-config <cfg.json>] [--model ${DEFAULT_MODEL}]
-                     [--cache transpiler/cache] [--offline]
+                     [--cache transpiler/cache] [--offline] [--max-repairs N]
       Emit two prompt-variant Java 21 candidates through the replay cache,
       compile each with javac, run verifier layer B on each, and select
       the first candidate that passes. With --prop-config, winning also
-      requires passing that config's layer A generated cases. Exit 1 when
+      requires passing that config's layer A generated cases. With
+      --max-repairs N, a failing round hands each candidate its verifier
+      evidence (compiler output or failing cases) back to the model for up
+      to N bounded repair rounds — every repair request cached and
+      replayable like any other call. Exit 1 when
       no candidate passes.
 
   legacymind verify --config <cfg.json> --out <report.json>
@@ -206,6 +210,7 @@ async function cmdMigrate(args: string[]): Promise<void> {
         cacheDir: str(flags, "cache") ?? "transpiler/cache",
         offline: flags.get("offline") === true,
         propConfigPath: str(flags, "prop-config"),
+        maxRepairs: str(flags, "max-repairs") ? Number.parseInt(str(flags, "max-repairs")!, 10) : 0,
       }),
     );
   } catch (e) {
