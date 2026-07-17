@@ -889,6 +889,11 @@ public class ProLeapFrontend {
 				reject(ctx, "data clause outside the IR subset (SIGN/JUSTIFIED/SYNC/BLANK/EXTERNAL/GLOBAL)");
 			}
 
+			// Every non-DISPLAY usage is rejected AT DECLARATION, not just at
+			// its consumers (records, REDEFINES, table shapes): a usage that
+			// dodged every consumer used to ride the IR silently, and Layer C
+			// proves against the IR's decimal model, so an unmeasured usage is
+			// a soundness exposure, not a formatting detail (docs/comp3.md).
 			String usage = "DISPLAY";
 			if (g.getUsageClause() != null) {
 				final UsageClause.UsageClauseType u = g.getUsageClause().getUsageClauseType();
@@ -896,17 +901,15 @@ public class ProLeapFrontend {
 				case DISPLAY:
 					usage = "DISPLAY";
 					break;
-				case COMP:
-					usage = "COMP";
-					break;
 				case COMP_3:
-					usage = "COMP-3";
-					break;
-				case BINARY:
-					usage = "BINARY";
-					break;
 				case PACKED_DECIMAL:
-					usage = "PACKED-DECIMAL";
+					usage = "COMP-3";
+					reject(ctx, "USAGE COMP-3 (packed decimal - designed in docs/comp3.md, build pending)");
+					break;
+				case COMP:
+				case BINARY:
+					usage = u == UsageClause.UsageClauseType.COMP ? "COMP" : "BINARY";
+					reject(ctx, "USAGE " + usage + " (binary - unmeasured semantics, outside the verified subset)");
 					break;
 				default:
 					reject(ctx, "USAGE " + u);

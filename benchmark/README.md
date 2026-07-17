@@ -523,6 +523,29 @@ in the order found. They are the sales pitch:
    The layers cross-check the *design*, not only the code — and "prefer
    refusing over mis-answering" held on a construct the symbolic engine
    cannot yet reason about.
+9. **An undesigned usage rode the IR silently — permissive declaration,
+   strict consumers (2026-07-17).** Probing the COMP-3 design stage
+   (docs/comp3.md) through the production frontend, a compute-only
+   `USAGE COMP-3` module parsed to `ok:true`: the declaration switch
+   mapped `COMP`/`COMP-3`/`BINARY`/`PACKED-DECIMAL` to usage *strings*,
+   and only the consumers gated on them (record slicing, REDEFINES
+   shape classification, table element shapes). A module that dodged
+   every consumer flowed through with the usage riding opaquely in the
+   IR — and `assess` would have called it VERIFIABLE with nothing
+   designed behind it. For COMP-3 the ground-truth probes show the IR's
+   decimal model happens to be exact, so no false certificate was
+   reachable; for binary `COMP` nothing had ever been measured — and
+   Layer C proves obligations against the IR's *decimal* model while
+   layers A/B only sample the binary, so any unmeasured divergence was
+   a certifiable false claim waiting for the right module. No wrong
+   claim was actually made: all 15 VERIFIABLE modules of the NIST
+   assessment and all 26 benchmark modules are COMP-free (checked, not
+   assumed). The declaration switch now rejects every non-DISPLAY usage
+   loudly at the point of declaration; the NIST blocker table gained
+   `USAGE COMP` (149 modules affected), `USAGE BINARY` (4), and
+   `USAGE COMP-3` (2) rows, and the verifiable set is unchanged — the
+   hole never flipped a corpus verdict, but a customer data division
+   full of packed amounts is exactly where it would have.
 
 ## Parser-coverage sweep
 
