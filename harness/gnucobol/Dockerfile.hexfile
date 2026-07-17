@@ -1,0 +1,43 @@
+# LegacyMind legacy-execution image for BINARY-RECORD file modules
+# (packed decimal / COMP-3 fields in the output record, docs/comp3.md).
+#
+# Same sandbox as the base image (no network, no mounts, no credentials).
+# The entrypoint wrapper defines the observable contract for binary file
+# modules: run the program (stdin passed through), then serialize the
+# output file to stdout as ONE `FILEHEX=<lowercase hex>` line AFTER the
+# program's own DISPLAY lines. Raw packed bytes cannot ride the KV
+# stream as text, but their hex can - and hex is compared as an exact
+# string (never numeric-tolerance: any packed field's sign nibble makes
+# the value non-numeric), so layers A/B verify the record encoding
+# byte-for-byte on every case. Both sides of every comparison honor the
+# same contract; no verifier needs file awareness. The file is removed
+# before each run so a crash before OPEN OUTPUT can never leak a
+# previous case's records into the stream. The FILEHEX= line is always
+# emitted (empty value when the file is absent) so the key set is
+# deterministic.
+
+FROM debian:bookworm-slim
+
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends gnucobol3 libfaketime \
+ && rm -rf /var/lib/apt/lists/*
+
+# Path of the COBOL source within the build context (repo root), and the
+# file name the program ASSIGNs its output to (relative to CWD = /tmp).
+ARG SOURCE=benchmark/modules/freight.cbl
+ARG OUTFILE=freight.dat
+COPY ${SOURCE} /opt/legacy/program.cbl
+
+RUN cobc -x -o /opt/legacy/program /opt/legacy/program.cbl \
+ && cobc --version | head -n 1 > /opt/legacy/cobc-version.txt
+
+RUN { echo '#!/bin/sh'; \
+      echo 'cd /tmp'; \
+      echo "rm -f ${OUTFILE}"; \
+      echo '/opt/legacy/program'; \
+      echo 'rc=$?'; \
+      echo "echo \"FILEHEX=\$(od -An -v -tx1 ${OUTFILE} 2>/dev/null | tr -dc 0-9a-f)\""; \
+      echo 'exit $rc'; } > /opt/legacy/run.sh \
+ && chmod +x /opt/legacy/run.sh
+
+ENTRYPOINT ["/opt/legacy/run.sh"]

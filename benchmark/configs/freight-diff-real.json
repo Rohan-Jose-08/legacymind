@@ -1,0 +1,23 @@
+{
+  "$comment": "Layer B selection cases for FREIGHT vs the real GnuCOBOL harness image (COMP-3 value subset + packed output record, docs/comp3.md). The legacy side runs the hex-serializing wrapper: DISPLAY keys (SHIP_ID/CHARGE/TIER) followed by FILEHEX= - the record file as one lowercase hex string, compared as an exact string, so the packed encoding is verified byte-for-byte. Candidate B encodes the signed charge with the unsigned F sign nibble: every DISPLAY key identical, one nibble wrong in FILEHEX on every case - the packed-sign migration bug only the byte-level contract catches. Cases cover a rate-exact charge, both half-cent ties, the BULK tier boundary from both sides, and zero and max weights (zero also pins the zero-sign-normalizes-to-C rule).",
+  "legacy": {
+    "image": "legacymind/legacy-freight",
+    "label": "COBOL 85 FREIGHT (GnuCOBOL via harness image legacymind/legacy-freight, hex-serializing wrapper)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/freight/migrate/candidate-a", "Freight"],
+    "label": "Java 21 freight (migrated candidate A)"
+  },
+  "protocol": { "input": "stdin-lines", "output": "kv-lines" },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "cases": [
+    { "id": "typical-exact", "stdin": ["SHIP0001", "200.0"] },
+    { "id": "half-cent-tie-up", "stdin": ["SHIP0002", "1.0"] },
+    { "id": "half-cent-tie-074", "stdin": ["SHIP0003", "3.0"] },
+    { "id": "tier-below", "stdin": ["SHIP0004", "612.2"] },
+    { "id": "tier-above", "stdin": ["SHIP0005", "612.3"] },
+    { "id": "zero-weight", "stdin": ["SHIP0006", "0.0"] },
+    { "id": "max-weight", "stdin": ["SHIP0007", "9999.9"] }
+  ]
+}

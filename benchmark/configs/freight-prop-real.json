@@ -1,0 +1,19 @@
+{
+  "$comment": "Layer A for FREIGHT vs the real GnuCOBOL harness image (COMP-3 value subset + packed output record). Generated weights span the PIC 9(4)V9 range; every generated case exercises the packed round trip - NUMVAL into a packed field, packed arithmetic with the ROUNDED half-cent boundary, the tier comparison, and the record's byte-exact FILEHEX serialization on both sides.",
+  "legacy": {
+    "image": "legacymind/legacy-freight",
+    "label": "COBOL 85 FREIGHT (GnuCOBOL via harness image legacymind/legacy-freight, hex-serializing wrapper)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/freight/migrate/candidate-a", "Freight"],
+    "label": "Java 21 freight (migrated candidate A)"
+  },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "generator": {
+    "ir": "../../out/ir/FREIGHT.ir.json",
+    "stdinFields": ["WS-SHIP-ID", "WS-WEIGHT"],
+    "count": 200,
+    "seed": 20260717
+  }
+}

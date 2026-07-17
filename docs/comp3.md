@@ -3,10 +3,30 @@
 Design for `USAGE COMP-3` / `PACKED-DECIMAL` support: the top real-world
 data-division blocker (customer records are full of packed amounts), and
 the first construct where the corpus is not merely scaffold-inflated but
-**silent** — it cannot rank this at all. This is a design-first stage:
+**silent** — it cannot rank this at all. This was a design-first stage:
 ground truth is measured and validated below, the sound subset is fixed,
-and one live hole found during probing is closed now; the engine build is
-the follow-on stage.
+and one live hole found during probing was closed immediately.
+
+**STATUS: BUILT.** The C3-1 value subset is live and the FREIGHT module
+(benchmark/modules/freight.cbl, the 27th) is certified gap-free: packed
+working-storage compute with fully verified layer C obligations
+(identical to the DISPLAY twin's — the IRs differ only in the usage
+attribute, which no layer reads, verified by exact IR diff), and a
+packed output record verified **byte-for-byte** through the
+hex-serializing wrapper (`harness/gnucobol/Dockerfile.hexfile`,
+`FILEHEX=` line, exact-string compare). The C3-2 *write* side needed no
+frontend byte modeling at all — output formatting lives in the candidate
+(as it always has for text records), and the byte-exact hex contract
+verifies the codec differentially. Additions found during the build:
+`ACCEPT` directly into a packed item is gated (console text-to-packed
+conversion is unmeasured; every certified module's input idiom is ACCEPT
+into `PIC X` + `NUMVAL`), and line-sequential byte-safety for packed
+records was probed explicitly (`examples/probes/comp3-lsq.cbl`: bytes
+below 0x20 including a record-final 0x0D, and a mid-record 0x20, all
+survive verbatim; a canonical packed byte can never be 0x0A because no
+digit nibble exceeds 9 and sign nibbles are C/D/F). Still gated, as
+designed: packed fields in *input* records (the stage-2b decoder), and
+everything in the residual list below.
 
 ## The corpus population, measured
 
@@ -170,15 +190,21 @@ frontend is the gate); record protocol — `decode: "packed"` slot kind
 plus encoder; Java runtime — packed codec, nothing else; Layers A, B, D
 — nothing; Layer C — nothing (verified during build, not assumed).
 
-**Build-stage de-risk plan:** before touching the engine, hand-write the
-target module (WS COMP-3 compute + a packed field in the output record)
-and its candidate Java, push both through parse → verify by hand, and
-confirm (a) Layer C realizes the same obligations as the DISPLAY twin,
-(b) the packed writer's bytes match the probe goldens, (c) candidate B's
-seeded defect is caught by the layer that should catch it. Then wire the
-frontend acceptance. Benchmark bar as always: 26/26 byte-identical, new
-module certified with the packed-input precondition disclosed in the
-certificate.
+**Build-stage de-risk plan (executed as written):** before touching the
+engine, hand-write the target module (WS COMP-3 compute + a packed field
+in the output record) and its candidate Java, push both through parse →
+verify by hand, and confirm (a) Layer C realizes the same obligations as
+the DISPLAY twin — confirmed by exact IR diff (5 differences, all the
+usage string) and a live layer C run (2/2 obligations verified, 0
+unrealized); (b) the packed writer's bytes match the probe goldens —
+confirmed, 7/7 cases byte-identical to the real binary through the hex
+contract; (c) candidate B's seeded defect is caught by the layer that
+should catch it — confirmed, layer B fails B on all 7 cases with exactly
+the sign nibble differing. Benchmark bar held: prior 26 byte-identical,
+FREIGHT certified gap-free. (The canonical-BCD input precondition
+belongs to packed *input* records, which remain gated; FREIGHT's
+certificate needs no disclosure because the module reads no packed
+bytes.)
 
 ## Probes
 

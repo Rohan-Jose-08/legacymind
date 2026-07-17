@@ -1,0 +1,19 @@
+{
+  "$comment": "Layer C for FREIGHT vs the real GnuCOBOL harness image (COMP-3 value subset). The obligations are exactly the DISPLAY twin's - the IRs differ only in the usage attribute, which no layer reads: the 24.5% charge's ROUNDED half-cent boundary is congruence-solved, and the BULK tier branch's boundary goes through the through-rounding path. The packed storage never enters the symbolic store (bytes surface only at the record boundary, covered byte-exactly by layers A/B through the FILEHEX contract).",
+  "legacy": {
+    "image": "legacymind/legacy-freight",
+    "label": "COBOL 85 FREIGHT (GnuCOBOL via harness image legacymind/legacy-freight, hex-serializing wrapper)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/freight/migrate/candidate-a", "Freight"],
+    "label": "Java 21 freight (migrated candidate A)"
+  },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "symbolic": {
+    "ir": "../../out/ir/FREIGHT.ir.json",
+    "stdinFields": ["WS-SHIP-ID", "WS-WEIGHT"],
+    "baseCase": ["SHIP0001", "200.0"],
+    "maxBoundarySolutions": 5
+  }
+}

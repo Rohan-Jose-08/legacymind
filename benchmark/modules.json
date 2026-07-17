@@ -318,5 +318,19 @@
     "staticConfig": "benchmark/configs/reorder-static.json",
     "migrateOut": "out/bench/reorder/migrate",
     "certCopy": "out/certification-reorder.json"
+  },
+  {
+    "id": "freight",
+    "programId": "FREIGHT",
+    "source": "benchmark/modules/freight.cbl",
+    "imageTag": "legacymind/legacy-freight",
+    "dockerfile": "harness/gnucobol/Dockerfile.hexfile",
+    "outFile": "freight.dat",
+    "diffConfig": "benchmark/configs/freight-diff-real.json",
+    "propConfig": "benchmark/configs/freight-prop-real.json",
+    "symConfig": "benchmark/configs/freight-sym-real.json",
+    "staticConfig": "benchmark/configs/freight-static.json",
+    "migrateOut": "out/bench/freight/migrate",
+    "certCopy": "out/certification-freight.json"
   }
 ]

@@ -424,6 +424,31 @@ off by one (picks the wrong occurrence), the index-arithmetic defect,
 caught by layer B on every non-zero quantity. Multi-dimensional tables
 and SEARCH are named residuals.
 
+The FREIGHT module brings `USAGE COMP-3` packed decimal into the subset
+(docs/comp3.md) — the top real-world data-division idiom, absent from
+the NIST corpus entirely. The measured ground truth is that COMP-3 value
+semantics are identical to DISPLAY usage (rounding, truncation, size
+error, DISPLAY formatting), so packed working-storage items are ordinary
+decimal variables in the IR and **every layer is untouched**: the
+FREIGHT IR differs from its DISPLAY twin's only in the usage attribute,
+which no layer reads. Packed bytes surface at one place — the output
+record — where a new harness wrapper (`Dockerfile.hexfile`) serializes
+the record file as a single `FILEHEX=` lowercase-hex line, so layers A/B
+compare the packed encoding **byte-for-byte** (hex is never
+numeric-parsed: a strictly stronger contract than the numeric-tolerance
+KV compare text records get). The candidate implements the packed codec
+explicitly, validated against the probe golden bytes. FREIGHT charges
+weight × 0.245 ROUNDED with a BULK tier over 150.00: the half-cent tie
+is congruence-solved and the tier boundary staircase-searched — both
+obligations fully verified, a gap-free certificate. Candidate B encodes
+the signed charge with the unsigned `F` sign nibble: every DISPLAY key
+identical, one nibble wrong in the file, caught by layer B on all 7
+cases — the packed-sign migration bug that only byte-level verification
+can see. `ACCEPT` directly into a packed item is gated (console
+conversion is unmeasured; the idiom is ACCEPT into `PIC X` + `NUMVAL`),
+and packed fields in *input* records remain enumerated residuals until
+the stage-2b decoder learns the codec.
+
 ## Running
 
 ```

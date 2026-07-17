@@ -1,6 +1,6 @@
 {
   "tool": "legacymind parse-sweep",
-  "generatedAt": "2026-07-17T10:22:08.122Z",
+  "generatedAt": "2026-07-17T14:59:57.287Z",
   "corpus": "https://github.com/uwol/proleap-cobol-parser",
   "commit": "d1bfe75bdd6d480f70c74c6345bcc02610ac30d3",
   "total": 759,
@@ -162,6 +162,10 @@
       {
         "reason": "GO TO FAIL-ROUTINE-WRITE inside PERFORM-reachable paragraph FAIL-ROUTINE is neither a structured ran",
         "count": 750
+      },
+      {
+        "reason": "USAGE COMP (binary - unmeasured semantics, outside the verified subset)",
+        "count": 720
       },
       {
         "reason": "READ of \"…\" which is not a lowered file",
@@ -805,6 +809,10 @@
       },
       {
         "reason": "GO TO GO--TEST-F2-1 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 8
+      },
+      {
+        "reason": "USAGE BINARY (binary - unmeasured semantics, outside the verified subset)",
         "count": 8
       },
       {

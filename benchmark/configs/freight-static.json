@@ -1,0 +1,7 @@
+{
+  "$comment": "Layer D for FREIGHT: static data-flow equivalence for the PROGRAM outputs (SHIP_ID, CHARGE, TIER). The FILEHEX record line is outside layer D - the candidate serializes it via the packed-codec helper and System.out, which the extractor deliberately does not treat as key derivation - and is covered dynamically by layers A/B on every case through the hex-serializing wrapper (candidate B's wrong sign nibble is layer B's catch, invisible to every DISPLAY key).",
+  "static": {
+    "ir": "../../out/ir/FREIGHT.ir.json",
+    "modernJava": "../../out/bench/freight/migrate/candidate-a/Freight.java"
+  }
+}

@@ -740,6 +740,10 @@ public class ProLeapFrontend {
 			// REDEFINES gate: R1a sound subset (numeric-over-numeric, equal
 			// digits, read-only redefining view).
 			gateRedefines(paragraphs);
+			// COMP-3 context gate: ACCEPT into a packed item is console
+			// conversion, which the comp3-* probes did not measure; the
+			// verified input idiom is ACCEPT into PIC X + FUNCTION NUMVAL.
+			gateAcceptUsage(paragraphs);
 
 			if (!unsupported.isEmpty()) {
 				return null;
@@ -889,11 +893,16 @@ public class ProLeapFrontend {
 				reject(ctx, "data clause outside the IR subset (SIGN/JUSTIFIED/SYNC/BLANK/EXTERNAL/GLOBAL)");
 			}
 
-			// Every non-DISPLAY usage is rejected AT DECLARATION, not just at
-			// its consumers (records, REDEFINES, table shapes): a usage that
+			// Unmeasured usages are rejected AT DECLARATION, not just at
+			// their consumers (records, REDEFINES, table shapes): a usage that
 			// dodged every consumer used to ride the IR silently, and Layer C
 			// proves against the IR's decimal model, so an unmeasured usage is
 			// a soundness exposure, not a formatting detail (docs/comp3.md).
+			// COMP-3 is accepted: its value semantics are measured identical
+			// to DISPLAY (the comp3-* probes), so the decimal model is exact;
+			// storage bytes surface only at the record boundary, where the
+			// candidate implements the packed codec and the hex-serializing
+			// wrapper verifies it byte-for-byte on every case.
 			String usage = "DISPLAY";
 			if (g.getUsageClause() != null) {
 				final UsageClause.UsageClauseType u = g.getUsageClause().getUsageClauseType();
@@ -904,7 +913,6 @@ public class ProLeapFrontend {
 				case COMP_3:
 				case PACKED_DECIMAL:
 					usage = "COMP-3";
-					reject(ctx, "USAGE COMP-3 (packed decimal - designed in docs/comp3.md, build pending)");
 					break;
 				case COMP:
 				case BINARY:
@@ -3017,6 +3025,49 @@ public class ProLeapFrontend {
 		 * target name is attached as the item's "redefines"; every other shape
 		 * is rejected with a specific reason.
 		 */
+		/**
+		 * Reject ACCEPT into a COMP-3 item. The measured COMP-3 parity
+		 * (docs/comp3.md) covers arithmetic, MOVE, comparison and DISPLAY;
+		 * ACCEPT is a console text-to-packed conversion the probes did not
+		 * measure, and the verified input idiom across every certified
+		 * module is ACCEPT into PIC X + FUNCTION NUMVAL.
+		 */
+		void gateAcceptUsage(final List<Object> paragraphs) {
+			final Map<String, Map<String, Object>> byName = new LinkedHashMap<>();
+			for (final Object[] pi : pendingItems) {
+				@SuppressWarnings("unchecked")
+				final Map<String, Object> it = (Map<String, Object>) pi[0];
+				byName.put((String) it.get("name"), it);
+			}
+			for (final Object po : paragraphs) {
+				gateAcceptUsageIn((List<?>) ((Map<?, ?>) po).get("statements"), byName);
+			}
+		}
+
+		void gateAcceptUsageIn(final List<?> stmts, final Map<String, Map<String, Object>> byName) {
+			if (stmts == null) {
+				return;
+			}
+			for (final Object so : stmts) {
+				final Map<?, ?> s = (Map<?, ?>) so;
+				final String kind = (String) s.get("kind");
+				if ("accept".equals(kind)) {
+					final Map<String, Object> item = byName.get(s.get("target"));
+					if (item != null && "COMP-3".equals(item.get("usage"))) {
+						unsupported.add("ACCEPT into COMP-3 item " + s.get("target")
+								+ " (console-to-packed conversion is unmeasured; use ACCEPT into PIC X + NUMVAL) (line "
+								+ ((Map<?, ?>) s.get("span")).get("startLine") + ")");
+					}
+				} else if ("if".equals(kind)) {
+					gateAcceptUsageIn((List<?>) s.get("then"), byName);
+					gateAcceptUsageIn((List<?>) s.get("else"), byName);
+				} else if ("read".equals(kind)) {
+					gateAcceptUsageIn((List<?>) s.get("atEnd"), byName);
+					gateAcceptUsageIn((List<?>) s.get("notAtEnd"), byName);
+				}
+			}
+		}
+
 		void gateRedefines(final List<Object> paragraphs) {
 			if (pendingRedefines.isEmpty()) {
 				return;
