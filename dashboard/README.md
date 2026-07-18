@@ -53,11 +53,14 @@ host (Vercel is the least-friction path for App Router):
    project settings — the WorkOS client ID, API key, cookie password, and
    **production** redirect URI (`https://<domain>/callback`, registered
    under Redirects in the WorkOS dashboard, replacing the localhost one).
-2. Make the trusted key reachable: either include
-   `keys/legacymind-dev-ed25519.pub.pem` in the deployment or set
-   `LEGACYMIND_TRUSTED_KEY` to its deployed path. Without it the
-   signature panel degrades to "no trusted key configured" — signatures
-   still verify for integrity but provenance is unchecked.
+2. Make the trusted key reachable. `../keys` is outside the deployed
+   subtree, so a copy of the public key is vendored here as
+   `trusted-key.pub.pem`; set `LEGACYMIND_TRUSTED_KEY=./trusted-key.pub.pem`.
+   Use forward slashes — on a Linux host a backslash is a literal filename
+   character, and the signature panel silently degrades to "no trusted key
+   configured" (signatures still verify for integrity; only provenance is
+   unchecked). `trusted-key.pub.pem` is the DEMO key (id `9b70a354`) —
+   replace it with your real public key before any non-demo exposure.
 3. Provide the data: a host that cannot see `../out` needs a committed
    `demo-data/` (run the staging script, commit the directory, point
    `LEGACYMIND_DATA_DIR` at it).
