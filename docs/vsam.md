@@ -1,5 +1,15 @@
 # VSAM / INDEXED files — the sequential batch read
 
+**STATUS: V1 BUILT.** The subset below is lowered and `LEDGERX`
+(benchmark/modules/ledgerx.cbl, the 28th module) is certified with three
+disclosed gaps. Measured real-code effect on AWS CardDemo: the
+`READ ... INTO` blocker is **gone for 10 of the 14 blocked modules**, and
+4 modules now surface the more precise `READ ... KEY/INVALID KEY`
+(the named V2 residual) that the old SELECT-level rejection masked.
+**Verifiable stayed 0/31** — as this document predicted: the median
+blocked module still carries ~26 blockers, so removing one theme moves
+the wall without flipping a module. Build notes at the end.
+
 Design for `ORGANIZATION IS INDEXED` files: the **largest single blocker
 cluster in real COBOL** (docs/real-code-assessment.md — `OPEN`/`CLOSE`/
 `READ INTO` of a non-lowered file affect ~15 of the 20 blocked real
@@ -210,6 +220,44 @@ unsorted case — the defect this module exists to catch.
 4. Gates: benchmark 28/28 with the prior 27 byte-identical; re-run
    `assess` on CardDemo and record the blocker-table delta (the honest
    measure of whether this stage bought real-code reach).
+
+## What the build actually cost (notes from doing it)
+
+Four things the design did not anticipate, all found by running the
+pipeline rather than by reasoning:
+
+1. **`READ ... INTO` is a group move, and stage 2b forbids referencing
+   the record as a group.** The first desugar emitted `MOVE ACCT-REC TO
+   HOLD-REC` and was rejected by the existing invariant — correctly. It
+   is decomposed **leaf-by-leaf** instead, exactly as group REDEFINES
+   (RG) and O3-flat tables are, requiring one-to-one aligned PICTUREs and
+   rejecting loudly otherwise.
+2. **`FILE STATUS` lowers as ordinary moves.** The status assignments
+   (`00` on a successful read, `10` at end — measured) are injected into
+   the READ's own arms, so the real `IF status = '00'` idiom becomes a
+   plain comparison and **no verifier changed**.
+3. **The symbolic engine's loop shape is specific.** An alphanumeric EOF
+   flag (`MOVE "Y"`, `UNTIL WS-EOF = "Y"`) left Layer C unable to relate
+   the AT END arm to the loop exit — it reported "READ after AT END on
+   the same path". A **numeric** flag (`MOVE 1`, `UNTIL WS-EOF = 1`),
+   which is what the existing record-protocol modules use, fixed it.
+   Path count is also the binding constraint here: the record bound is 3
+   (at 4 the exploration exceeds 64 paths).
+4. **Layer D reads the output expression, not the variable.** Formatting
+   helpers (`pic9v99(total, 7)`) made the extractor analyse the helper
+   and lose the flow ("call not analyzed: toString"); emitting
+   `total.setScale(2).toPlainString()` directly — the shape the other
+   modules use, and adequate because the KV compare is numeric-tolerant —
+   verified 6/6 keys.
+
+A fifth is a harness rule worth stating: **loader diagnostics must go to
+`SYSERR`**. The loader's duplicate-key message initially went to stdout
+and polluted the KV stream that both sides are compared on.
+
+Duplicate keys are also a real modelling obligation, not a curiosity: the
+generator can emit the same key twice, the file rejects the second
+(status 22), and **the first occurrence survives** — so the modern side
+de-duplicates by key keeping the first, and the certified candidate does.
 
 ## Probes
 

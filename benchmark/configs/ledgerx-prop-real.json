@@ -1,0 +1,19 @@
+{
+  "$comment": "Layer A for LEDGERX vs the real GnuCOBOL harness image (VSAM V1). The records generator draws a per-case record count and fills each 12-byte record from the input file's fixed-width layout - AC-ID from its X(5) domain, AC-BAL from its 9(5)V99 range. Generated keys are effectively random, so most generated cases are UNSORTED: candidate B's seed-order iteration diverges on FIRST/LAST across the run, and the generator's shrinking reduces a failure to the smallest unsorted pair. Duplicate generated keys are possible; the loader reports a nonzero status for the dropped duplicate and both sides then see the same surviving record set.",
+  "legacy": {
+    "image": "legacymind/legacy-ledgerx",
+    "label": "COBOL 85 LEDGERX (GnuCOBOL via harness image legacymind/legacy-ledgerx, indexed seed+loader wrapper)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/ledgerx/migrate/candidate-a", "Ledgerx"],
+    "label": "Java 21 ledgerx (migrated candidate A)"
+  },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "generator": {
+    "ir": "../../out/ir/LEDGERX.ir.json",
+    "records": { "min": 0, "max": 12 },
+    "count": 200,
+    "seed": 20260802
+  }
+}

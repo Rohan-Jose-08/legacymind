@@ -449,6 +449,29 @@ conversion is unmeasured; the idiom is ACCEPT into `PIC X` + `NUMVAL`),
 and packed fields in *input* records remain enumerated residuals until
 the stage-2b decoder learns the codec.
 
+The LEDGERX module brings **INDEXED (VSAM) files** into the subset
+(docs/vsam.md) — the largest single blocker cluster in real COBOL. The
+shape is the CBACT01C batch report measured in AWS CardDemo: `OPEN
+INPUT`, a `PERFORM`-driven `READ ... INTO` loop with `AT END`, `CLOSE`,
+over a file declared `ORGANIZATION IS INDEXED ACCESS MODE IS SEQUENTIAL`
+with a `RECORD KEY` and `FILE STATUS`. What makes it a *verification*
+problem rather than a parsing one is **order**: an indexed file is read
+in RECORD KEY order, never the order it was loaded (measured — written
+`03/01/02`, read back `01/02/03`). Since an INDEXED file is a binary BDB
+artifact the Java side cannot read, the observable contract is the
+logical record set: a seed of record images on stdin, which a harness
+loader (never under verification) materialises into the real file before
+the module runs, while the modern side must model the key ordering
+itself. `FIRST=`/`LAST=` put that ordering on the KV stream, so
+candidate B — which walks the records in seed order — is caught on every
+unsorted case while COUNT/TOTAL/FEE stay identical, because
+order-independent sums cannot see the defect. The 1.5% ROUNDED fee and
+the GOLD tier boundary verify symbolically; the loop-bound and
+constant-decision disclosures are the documented classes. Keyed reads
+(`READ ... KEY` / `INVALID KEY`), `START`, `REWRITE`, `DELETE`, writing
+indexed files, `ALTERNATE RECORD KEY`, and non-literal `ASSIGN` (a JCL
+ddname) are enumerated residuals.
+
 ## Running
 
 ```

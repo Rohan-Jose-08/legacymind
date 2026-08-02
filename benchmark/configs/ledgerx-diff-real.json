@@ -1,0 +1,25 @@
+{
+  "$comment": "Layer B selection cases for LEDGERX vs the real GnuCOBOL harness image (VSAM V1: INDEXED input, ACCESS SEQUENTIAL, docs/vsam.md). The legacy side runs the indexed wrapper: the stdin seed becomes seed.txt, a harness loader materialises the INDEXED file with ACCESS DYNAMIC, then the module reads it - in RECORD KEY order, never seed order. FIRST=/LAST= put that ordering on the KV stream, so candidate B (which iterates the seed in the order given) is caught on every UNSORTED case while COUNT/TOTAL/FEE stay identical - order-independent sums cannot catch it. The sorted-seed case is the deliberate control: candidate B passes it, which is exactly why one case is never enough. Cases also cover both half-cent fee ties (total 1.00 -> 0.015 -> 0.02; 3.00 -> 0.045 -> 0.05), the GOLD tier boundary from both sides (5000.00 STD / 5000.01 GOLD), an empty file (COUNT 0, FIRST/LAST spaces), and the PIC capacity maximum.",
+  "legacy": {
+    "image": "legacymind/legacy-ledgerx",
+    "label": "COBOL 85 LEDGERX (GnuCOBOL via harness image legacymind/legacy-ledgerx, indexed seed+loader wrapper)"
+  },
+  "modern": {
+    "argv": ["java", "-cp", "../../out/bench/ledgerx/migrate/candidate-a", "Ledgerx"],
+    "label": "Java 21 ledgerx (migrated candidate A)"
+  },
+  "protocol": { "input": "stdin-lines", "output": "kv-lines" },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "cases": [
+    { "id": "unsorted-typical", "stdin": ["B00020030050", "A00010120025", "C00030009900"] },
+    { "id": "sorted-seed-control", "stdin": ["A00010010000", "B00020020000"] },
+    { "id": "reverse-sorted", "stdin": ["Z00090005000", "M00050002500", "A00010001000"] },
+    { "id": "single-fee-tie", "stdin": ["A00010000100"] },
+    { "id": "fee-tie-3", "stdin": ["A00010000300"] },
+    { "id": "empty-file", "stdin": [] },
+    { "id": "tier-exact-5000", "stdin": ["A00010250000", "B00020250000"] },
+    { "id": "tier-over-5000", "stdin": ["A00010250000", "B00020250001"] },
+    { "id": "max-balance", "stdin": ["A00019999999"] }
+  ]
+}

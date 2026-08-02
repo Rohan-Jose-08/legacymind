@@ -1,0 +1,7 @@
+{
+  "$comment": "Layer D for LEDGERX: static data-flow equivalence for the program outputs (COUNT, TOTAL, FEE, FIRST, LAST, TIER). The INDEXED file's key ordering is a dynamic property of the record set, so FIRST/LAST are covered by layers A/B on every case (candidate B's seed-order iteration is layer B's catch); layer D checks each key is derived from the record fields on both sides rather than fabricated.",
+  "static": {
+    "ir": "../../out/ir/LEDGERX.ir.json",
+    "modernJava": "../../out/bench/ledgerx/migrate/candidate-a/Ledgerx.java"
+  }
+}

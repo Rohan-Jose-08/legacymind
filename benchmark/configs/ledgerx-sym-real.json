@@ -1,0 +1,32 @@
+{
+  "$comment": "Layer C for LEDGERX vs the real GnuCOBOL harness image (VSAM V1, docs/vsam.md). The record protocol is the stage-2b one unchanged: a seed line IS the record image (AC-ID X(5), AC-BAL 9(5)V99), so record k binds its numeric field to input variable k and the READ inside the PERFORM UNTIL loop forks the record count through the unroller. What INDEXED adds is ordering, which is a property of the record set rather than an arithmetic obligation - so the obligations here are the 1.5% fee's ROUNDED half-cent boundary and the GOLD tier branch over the accumulated total, while FIRST/LAST ordering is carried dynamically by layers A and B on every case.",
+  "legacy": {
+    "image": "legacymind/legacy-ledgerx",
+    "label": "COBOL 85 LEDGERX (GnuCOBOL via harness image legacymind/legacy-ledgerx, indexed seed+loader wrapper)"
+  },
+  "modern": {
+    "argv": [
+      "java",
+      "-cp",
+      "../../out/bench/ledgerx/migrate/candidate-a",
+      "Ledgerx"
+    ],
+    "label": "Java 21 ledgerx (migrated candidate A)"
+  },
+  "numericTolerance": 0.0001,
+  "timeoutMs": 30000,
+  "symbolic": {
+    "ir": "../../out/ir/LEDGERX.ir.json",
+    "records": {
+      "max": 3
+    },
+    "baseCase": [
+      "A00010120025",
+      "B00020030050"
+    ],
+    "annotations": [
+      "WS-TOTAL",
+      "WS-FEE"
+    ]
+  }
+}

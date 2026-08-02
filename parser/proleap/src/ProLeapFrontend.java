@@ -256,6 +256,12 @@ public class ProLeapFrontend {
 		final Set<String> duplicatedLeaves = new LinkedHashSet<>();
 		/** File I/O stage 1: SELECT name -> assign literal (quotes stripped). */
 		final Map<String, String> selectedFiles = new LinkedHashMap<>();
+		/** File name -> organization: "line-sequential" or "indexed" (docs/vsam.md). */
+		final Map<String, String> fileOrganization = new LinkedHashMap<>();
+		/** VSAM V1: indexed file name -> its RECORD KEY field name (uppercased). */
+		final Map<String, String> fileRecordKey = new LinkedHashMap<>();
+		/** VSAM V1: file name -> its FILE STATUS variable name, when declared. */
+		final Map<String, String> fileStatusVar = new LinkedHashMap<>();
 		/** Pending FD links: {fdName, recordItemMap} — record names finalize later. */
 		final List<Object[]> pendingFds = new ArrayList<>();
 		/** Final record name -> file name (built after finalizeNames). */
@@ -507,13 +513,150 @@ public class ProLeapFrontend {
 				final String orgText = e.getOrganizationClause() != null
 						? textOf(e.getOrganizationClause().getCtx())
 						: "";
-				if (!orgText.contains("LINE SEQUENTIAL")) {
+				if (orgText.contains("LINE SEQUENTIAL")) {
+					fileOrganization.put(name, "line-sequential");
+				} else if (orgText.contains("INDEXED")) {
+					// VSAM V1 (docs/vsam.md): the sequential batch read. Access
+					// mode must be SEQUENTIAL (RANDOM/DYNAMIC need the keyed-read
+					// model), and a RECORD KEY is mandatory. Iteration order is
+					// the index, not insertion - measured against GnuCOBOL.
+					if (!lowerIndexedSelect(e, ctx, name)) {
+						continue;
+					}
+					fileOrganization.put(name, "indexed");
+				} else {
 					reject(ctx, "SELECT " + name
-							+ " with organization other than LINE SEQUENTIAL (file I/O stage 1)");
+							+ " with organization other than LINE SEQUENTIAL or INDEXED (file I/O stage 1 / VSAM V1)");
 					continue;
 				}
 				selectedFiles.put(name, assignText.substring(1, assignText.length() - 1));
 			}
+		}
+
+		/** Final (post-finalizeNames) item name -> its item map. */
+		Map<String, Map<String, Object>> finalItemsByName() {
+			final Map<String, Map<String, Object>> byName = new LinkedHashMap<>();
+			for (final Object[] pi : pendingItems) {
+				@SuppressWarnings("unchecked")
+				final Map<String, Object> it = (Map<String, Object>) pi[0];
+				byName.put((String) it.get("name"), it);
+			}
+			return byName;
+		}
+
+		/**
+		 * Desugar `READ f INTO x` into per-leaf moves (docs/vsam.md). COBOL's
+		 * READ INTO is a group move of the record area, and the stage-2b model
+		 * deliberately does not represent the raw record line - only its
+		 * fields. So the move is decomposed leaf-by-leaf, exactly as group
+		 * REDEFINES (RG) and O3-flat group tables are: sound when the layouts
+		 * align one-to-one, rejected loudly when they do not.
+		 */
+		List<Object> readIntoMoves(final Map<String, Object> recItem, final String intoTarget,
+				final ParserRuleContext ctx) {
+			final Map<String, Object> tgt = finalItemsByName().get(intoTarget);
+			if (tgt == null) {
+				reject(ctx, "READ ... INTO \"" + intoTarget + "\" which is not a declared data item");
+				return null;
+			}
+			final List<?> rch = recItem != null ? (List<?>) recItem.get("children") : null;
+			final List<?> tch = (List<?>) tgt.get("children");
+			if (rch == null || rch.isEmpty() || tch == null || tch.isEmpty()) {
+				reject(ctx, "READ ... INTO \"" + intoTarget
+						+ "\": VSAM V1 decomposes a group record into a group target leaf-by-leaf");
+				return null;
+			}
+			if (rch.size() != tch.size()) {
+				reject(ctx, "READ ... INTO \"" + intoTarget + "\" has " + tch.size()
+						+ " leaves but the record has " + rch.size() + " (V1 requires one-to-one alignment)");
+				return null;
+			}
+			final List<Object> moves = new ArrayList<>();
+			for (int i = 0; i < rch.size(); i++) {
+				@SuppressWarnings("unchecked")
+				final Map<String, Object> rl = (Map<String, Object>) rch.get(i);
+				@SuppressWarnings("unchecked")
+				final Map<String, Object> tl = (Map<String, Object>) tch.get(i);
+				final String rp = (String) rl.get("picture");
+				final String tp = (String) tl.get("picture");
+				if (rp == null || tp == null || !rp.equals(tp)) {
+					reject(ctx, "READ ... INTO leaf pair \"" + rl.get("name") + "\"/\"" + tl.get("name")
+							+ "\" have different PICTUREs (" + rp + " vs " + tp
+							+ "); V1 requires an identical layout");
+					return null;
+				}
+				if (rl.get("occurs") != null || tl.get("occurs") != null) {
+					reject(ctx, "READ ... INTO leaf pair \"" + rl.get("name") + "\"/\"" + tl.get("name")
+							+ "\" carries OCCURS (outside VSAM V1)");
+					return null;
+				}
+				moves.add(moveStmt((String) rl.get("name"), (String) tl.get("name"),
+						"MOVE " + rl.get("name") + " TO " + tl.get("name") + " (desugared READ INTO)", ctx));
+			}
+			return moves;
+		}
+
+		/**
+		 * Build a synthetic `move` statement (the desugar primitive used by
+		 * READ INTO and the FILE STATUS assignments). `fromText` is either a
+		 * data name or a quoted literal; its refs are computed the same way an
+		 * ordinary MOVE's are, so every layer treats it as one.
+		 */
+		Map<String, Object> moveStmt(final String fromText, final String target, final String text,
+				final ParserRuleContext ctx) {
+			final Map<String, Object> mv = new LinkedHashMap<>();
+			mv.put("kind", "move");
+			final Map<String, Object> from = new LinkedHashMap<>();
+			from.put("text", fromText);
+			from.put("refs", refsIn(fromText));
+			mv.put("from", from);
+			mv.put("to", new ArrayList<>(List.of(target)));
+			mv.put("text", text);
+			mv.put("span", span(ctx));
+			return mv;
+		}
+
+		/**
+		 * VSAM V1 (docs/vsam.md): validate and capture the INDEXED clauses of
+		 * one SELECT. Returns false (having enumerated a reason) when the
+		 * entry is outside the subset. Ground truth for every rule here is
+		 * measured in examples/probes/vsam-*.cbl against GnuCOBOL 3.1.2.
+		 */
+		boolean lowerIndexedSelect(
+				final io.proleap.cobol.asg.metamodel.environment.inputoutput.filecontrol.FileControlEntry e,
+				final ParserRuleContext ctx, final String name) {
+			if (e.getAccessModeClause() != null) {
+				final io.proleap.cobol.asg.metamodel.environment.inputoutput.filecontrol.AccessModeClause.Mode am =
+						e.getAccessModeClause().getMode();
+				if (am != io.proleap.cobol.asg.metamodel.environment.inputoutput.filecontrol.AccessModeClause.Mode.SEQUENTIAL) {
+					reject(ctx, "SELECT " + name + " ACCESS MODE " + am
+							+ " (VSAM V1 lowers ACCESS SEQUENTIAL; keyed reads are a named residual)");
+					return false;
+				}
+			}
+			if (e.getAlternateRecordKeyClause() != null) {
+				reject(ctx, "SELECT " + name + " with ALTERNATE RECORD KEY (outside VSAM V1)");
+				return false;
+			}
+			if (e.getRecordKeyClause() == null || e.getRecordKeyClause().getRecordKeyCall() == null
+					|| e.getRecordKeyClause().getRecordKeyCall().getName() == null) {
+				reject(ctx, "SELECT " + name + " INDEXED without a resolvable RECORD KEY");
+				return false;
+			}
+			fileRecordKey.put(name, e.getRecordKeyClause().getRecordKeyCall().getName().toUpperCase());
+			if (e.getFileStatusClause() != null) {
+				final io.proleap.cobol.asg.metamodel.call.Call st = e.getFileStatusClause().getDataCall();
+				if (e.getFileStatusClause().getDataCall2() != null) {
+					reject(ctx, "SELECT " + name + " with a two-item FILE STATUS (outside VSAM V1)");
+					return false;
+				}
+				if (st == null || st.getName() == null) {
+					reject(ctx, "SELECT " + name + " with an unresolvable FILE STATUS item");
+					return false;
+				}
+				fileStatusVar.put(name, st.getName().toUpperCase());
+			}
+			return true;
 		}
 
 		Map<String, Object> lower() {
@@ -557,7 +700,7 @@ public class ProLeapFrontend {
 						final ParserRuleContext fctx = ((io.proleap.cobol.asg.metamodel.ASGElement) fd).getCtx();
 						final String fdName = fd.getName() != null ? fd.getName().toUpperCase() : null;
 						if (fdName == null || !selectedFiles.containsKey(fdName)) {
-							reject(fctx, "FD " + fdName + " without a matching LINE SEQUENTIAL SELECT");
+							reject(fctx, "FD " + fdName + " without a matching lowered SELECT");
 							continue;
 						}
 						final List<io.proleap.cobol.asg.metamodel.data.datadescription.DataDescriptionEntry> recs = fd
@@ -624,8 +767,18 @@ public class ProLeapFrontend {
 				final Map<String, Object> f = new LinkedHashMap<>();
 				f.put("name", fdName);
 				f.put("assign", selectedFiles.get(fdName));
-				f.put("organization", "line-sequential");
+				f.put("organization", fileOrganization.getOrDefault(fdName, "line-sequential"));
 				f.put("record", recName);
+				// VSAM V1: the RECORD KEY is what makes iteration order the
+				// index rather than insertion - the modern side must sort by it
+				// (docs/vsam.md). FILE STATUS, when declared, is an ordinary
+				// WORKING-STORAGE PIC XX the READ/OPEN/CLOSE lowering assigns.
+				if (fileRecordKey.containsKey(fdName)) {
+					f.put("recordKey", fileRecordKey.get(fdName));
+				}
+				if (fileStatusVar.containsKey(fdName)) {
+					f.put("fileStatus", fileStatusVar.get(fdName));
+				}
 				// "mode" is set by the OPEN statement's lowering; validated by
 				// gateFiles() once the whole procedure division is lowered.
 				files.add(f);
@@ -1499,6 +1652,15 @@ public class ProLeapFrontend {
 						reject(ctx, "file " + f + " opened in conflicting modes (" + prior + " and " + open[1] + ")");
 						return;
 					}
+					// VSAM V1 is a READ subset: writing an indexed file carries
+					// the ordering semantics measured in docs/vsam.md (status 21
+					// on an out-of-sequence WRITE, with the record silently
+					// dropped), which is its own design question.
+					if ("output".equals(open[1]) && "indexed".equals(fileOrganization.get(f))) {
+						reject(ctx, "OPEN OUTPUT of indexed file " + f
+								+ " (VSAM V1 lowers the read path; writing indexed files is a named residual)");
+						return;
+					}
 					entry.put("mode", open[1]);
 					final Map<String, Object> m = new LinkedHashMap<>();
 					m.put("kind", "open");
@@ -1506,6 +1668,15 @@ public class ProLeapFrontend {
 					m.put("text", textOf(ctx));
 					m.put("span", span(ctx));
 					out.add(m);
+					// FILE STATUS after a successful OPEN is 00. A missing file
+					// would be 35, which the verified envelope excludes: the
+					// harness materialises the file before the module runs, and
+					// an absent one is outside the claim (see docs/vsam.md).
+					final String openStatus = fileStatusVar.get(f);
+					if (openStatus != null) {
+						out.add(moveStmt("\"00\"", openStatus,
+								"MOVE \"00\" TO " + openStatus + " (OPEN file status)", ctx));
+					}
 				}
 				return;
 			}
@@ -1515,12 +1686,8 @@ public class ProLeapFrontend {
 				// input file; structural placement is checked by gateFiles().
 				final io.proleap.cobol.asg.metamodel.procedure.read.ReadStatement r =
 						(io.proleap.cobol.asg.metamodel.procedure.read.ReadStatement) s;
-				if (r.getInto() != null) {
-					reject(ctx, "READ ... INTO (outside file I/O stage 2a)");
-					return;
-				}
 				if (r.getKey() != null || r.getInvalidKeyPhrase() != null || r.getNotInvalidKeyPhrase() != null) {
-					reject(ctx, "READ ... KEY/INVALID KEY (indexed reads are outside the subset)");
+					reject(ctx, "READ ... KEY/INVALID KEY (keyed indexed reads are a named VSAM residual)");
 					return;
 				}
 				final String f = r.getFileCall() != null && r.getFileCall().getName() != null
@@ -1531,14 +1698,61 @@ public class ProLeapFrontend {
 					reject(ctx, "READ of \"" + f + "\" which is not a lowered file");
 					return;
 				}
+				final boolean indexed = "indexed".equals(fileOrganization.get(f));
+				if (r.isNextRecord()) {
+					reject(ctx, "READ ... NEXT RECORD (unmeasured under ACCESS SEQUENTIAL; a named VSAM residual)");
+					return;
+				}
+				// READ ... INTO is READ followed by a move of the record area
+				// into the target - measured directly (examples/probes/
+				// vsam-status.cbl: both the target and the record area hold the
+				// record afterwards). The move only happens when a record was
+				// read, so it desugars into the NOT AT END arm.
+				String intoTarget = null;
+				if (r.getInto() != null) {
+					if (!indexed) {
+						reject(ctx, "READ ... INTO (outside file I/O stage 2a)");
+						return;
+					}
+					if (r.getInto().getIntoCall() == null || r.getInto().getIntoCall().getName() == null) {
+						reject(ctx, "READ ... INTO an unresolvable target");
+						return;
+					}
+					intoTarget = resolveQualified(r.getInto().getIntoCall().getName().toUpperCase(), ctx);
+					if (intoTarget == null) {
+						return;
+					}
+				}
 				final Map<String, Object> m = new LinkedHashMap<>();
 				m.put("kind", "read");
 				m.put("file", f);
 				m.put("record", entry.get("record"));
-				m.put("atEnd", r.getAtEnd() != null ? lowerStatements(r.getAtEnd().getStatements()) : new ArrayList<>());
-				m.put("notAtEnd", r.getNotAtEndPhrase() != null
+				final List<Object> atEndArm = r.getAtEnd() != null
+						? lowerStatements(r.getAtEnd().getStatements())
+						: new ArrayList<>();
+				final List<Object> notAtEndArm = r.getNotAtEndPhrase() != null
 						? lowerStatements(r.getNotAtEndPhrase().getStatements())
-						: new ArrayList<>());
+						: new ArrayList<>();
+				if (intoTarget != null) {
+					final List<Object> intoMoves = readIntoMoves(fileRecordItems.get(f), intoTarget, ctx);
+					if (intoMoves == null) {
+						return; // readIntoMoves enumerated the reason
+					}
+					notAtEndArm.addAll(0, intoMoves);
+				}
+				// FILE STATUS: measured 00 on a successful read, 10 past the
+				// last record. Injecting the assignments as ordinary moves lets
+				// the real `IF status = '00'` idiom lower as a plain comparison
+				// with no new verifier machinery.
+				final String statusVar = fileStatusVar.get(f);
+				if (statusVar != null) {
+					notAtEndArm.add(0, moveStmt("\"00\"", statusVar,
+							"MOVE \"00\" TO " + statusVar + " (READ file status)", ctx));
+					atEndArm.add(0, moveStmt("\"10\"", statusVar,
+							"MOVE \"10\" TO " + statusVar + " (READ at end file status)", ctx));
+				}
+				m.put("atEnd", atEndArm);
+				m.put("notAtEnd", notAtEndArm);
 				m.put("text", textOf(ctx));
 				m.put("span", span(ctx));
 				out.add(m);
@@ -1611,6 +1825,11 @@ public class ProLeapFrontend {
 					m.put("text", textOf(ctx));
 					m.put("span", span(ctx));
 					out.add(m);
+					final String closeStatus = fileStatusVar.get(f);
+					if (closeStatus != null) {
+						out.add(moveStmt("\"00\"", closeStatus,
+								"MOVE \"00\" TO " + closeStatus + " (CLOSE file status)", ctx));
+					}
 				}
 				return;
 			}

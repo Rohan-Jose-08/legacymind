@@ -332,5 +332,20 @@
     "staticConfig": "benchmark/configs/freight-static.json",
     "migrateOut": "out/bench/freight/migrate",
     "certCopy": "out/certification-freight.json"
+  },
+  {
+    "id": "ledgerx",
+    "programId": "LEDGERX",
+    "source": "benchmark/modules/ledgerx.cbl",
+    "imageTag": "legacymind/legacy-ledgerx",
+    "dockerfile": "harness/gnucobol/Dockerfile.indexed",
+    "loader": "harness/gnucobol/ledgerx-loader.cbl",
+    "ixFile": "acct.dat",
+    "diffConfig": "benchmark/configs/ledgerx-diff-real.json",
+    "propConfig": "benchmark/configs/ledgerx-prop-real.json",
+    "symConfig": "benchmark/configs/ledgerx-sym-real.json",
+    "staticConfig": "benchmark/configs/ledgerx-static.json",
+    "migrateOut": "out/bench/ledgerx/migrate",
+    "certCopy": "out/certification-ledgerx.json"
   }
 ]

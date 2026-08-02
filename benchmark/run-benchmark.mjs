@@ -85,6 +85,10 @@ for (const m of modules) {
         "--build-arg", `SOURCE=${m.source}`,
         ...(m.outFile ? ["--build-arg", `OUTFILE=${m.outFile}`] : []),
         ...(m.inFile ? ["--build-arg", `INFILE=${m.inFile}`] : []),
+        // VSAM modules (docs/vsam.md): a harness loader materialises the
+        // INDEXED file from the stdin seed before the module runs.
+        ...(m.loader ? ["--build-arg", `LOADER=${m.loader}`] : []),
+        ...(m.ixFile ? ["--build-arg", `IXFILE=${m.ixFile}`] : []),
         "-t", m.imageTag, "."],
       `harness image ${m.imageTag}`,
     );

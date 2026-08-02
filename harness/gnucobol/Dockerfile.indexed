@@ -1,0 +1,55 @@
+# LegacyMind legacy-execution image for INDEXED (VSAM) INPUT modules
+# (docs/vsam.md).
+#
+# Same sandbox as the base image (no network, no mounts, no credentials).
+#
+# An INDEXED file is a binary artifact (GnuCOBOL's indexed handler here is
+# BDB), so unlike a text input file it cannot simply be piped in - and the
+# modern side cannot read it at all. The observable contract is therefore
+# the LOGICAL RECORD SET, supplied identically to both sides as a text
+# seed on stdin:
+#
+#   stdin seed --> seed.txt --> LOADER (ACCESS DYNAMIC) --> <IXFILE>
+#                                                             |
+#                                        module under test ---+ reads it,
+#                                                               in KEY order
+#
+# The loader is harness infrastructure and is NEVER under verification: it
+# exists only to materialise the file, exactly as the file-serializing
+# wrapper exists only to observe one. The modern side receives the same
+# seed and must model the index's key ordering itself (sort by key) - which
+# is precisely what a real VSAM migration has to do.
+#
+# The seed is deliberately allowed to be unsorted; the loader uses ACCESS
+# DYNAMIC because an out-of-order WRITE under ACCESS SEQUENTIAL returns
+# status 21 and silently drops the record (measured, examples/probes/).
+# Both files are removed before each run so a crash cannot leak a previous
+# case's records into the next (persistent-container mode reuses /tmp).
+
+FROM debian:bookworm-slim
+
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends gnucobol3 libfaketime \
+ && rm -rf /var/lib/apt/lists/*
+
+# Path of the module source and its harness loader within the build
+# context (repo root), and the indexed file name they agree on.
+ARG SOURCE=benchmark/modules/ledgerx.cbl
+ARG LOADER=harness/gnucobol/ledgerx-loader.cbl
+ARG IXFILE=acct.dat
+COPY ${SOURCE} /opt/legacy/program.cbl
+COPY ${LOADER} /opt/legacy/loader.cbl
+
+RUN cobc -x -o /opt/legacy/program /opt/legacy/program.cbl \
+ && cobc -x -o /opt/legacy/loader /opt/legacy/loader.cbl \
+ && cobc --version | head -n 1 > /opt/legacy/cobc-version.txt
+
+RUN { echo '#!/bin/sh'; \
+      echo 'cd /tmp'; \
+      echo "rm -f seed.txt ${IXFILE}"; \
+      echo 'cat > seed.txt'; \
+      echo '/opt/legacy/loader || exit $?'; \
+      echo '/opt/legacy/program'; } > /opt/legacy/run.sh \
+ && chmod +x /opt/legacy/run.sh
+
+ENTRYPOINT ["/opt/legacy/run.sh"]
