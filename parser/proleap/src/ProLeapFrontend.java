@@ -525,6 +525,21 @@ public class ProLeapFrontend {
 			unsupported.add(what + " (line " + mapLine(ctx.getStart().getLine()) + ")");
 		}
 
+		/**
+		 * A name for the synthetic mainline paragraph that no source text can
+		 * collide with: real procedure names come from COBOL words, which
+		 * cannot contain a space.
+		 */
+		String synthesizeMainlineName() {
+			String name = "MAINLINE PARAGRAPH";
+			int n = 2;
+			while (paragraphNames.contains(name)) {
+				name = "MAINLINE PARAGRAPH " + n++;
+			}
+			paragraphNames.add(name);
+			return name;
+		}
+
 		/** Register a procedure name (paragraph or section) — one flat namespace. */
 		void registerProcName(final String name, final ParserRuleContext ctx) {
 			if (!PROC_NAME_RE.matcher(name).matches()) {
@@ -921,19 +936,44 @@ public class ProLeapFrontend {
 				// division's own scope, not in any Paragraph — without this
 				// check they would vanish from the IR silently (caught by the
 				// corpus sweep: MERGE/PERFORM-UNTIL files ranked IR-complete).
-				for (final Statement stray : pd.getStatements()) {
-					reject(stray.getCtx(), "statement before the first paragraph header");
-				}
-				// ...and enumerate what those stray statements themselves
-				// contain, for the same reason: the placement rejection must
-				// not mask the constructs inside. Analysis only - the result is
-				// discarded and the rejection above keeps the module blocked.
+				// Statements before the first paragraph header are the program's
+				// MAINLINE - the dominant real shape (8 of the analysable AWS
+				// CardDemo modules write their whole top level this way, with
+				// the paragraphs below it as subroutines). They sit in the
+				// division's own scope rather than in any Paragraph, so they
+				// become a synthetic entry paragraph, placed first, which the
+				// control-flow entry then names.
+				//
+				// SOUNDNESS GUARD: in COBOL the mainline falls THROUGH into the
+				// first paragraph unless it terminates. Modelling it as its own
+				// paragraph is only faithful when it ends in STOP RUN or
+				// GOBACK, so anything else is rejected rather than approximated.
+				List<Object> mainlineStmts = null;
 				if (!pd.getStatements().isEmpty()) {
-					lowerStatements(pd.getStatements());
+					mainlineStmts = lowerStatements(pd.getStatements());
+					final String lastKind = mainlineStmts.isEmpty() ? null
+							: (String) ((Map<?, ?>) mainlineStmts.get(mainlineStmts.size() - 1)).get("kind");
+					if (!"stop-run".equals(lastKind) && !"goback".equals(lastKind)) {
+						reject(pd.getStatements().get(0).getCtx(),
+								"statements before the first paragraph header do not end in STOP RUN or GOBACK"
+										+ " (they would fall through into the first paragraph)");
+						mainlineStmts = null;
+					}
 				}
 				if (pd.getSections().isEmpty()) {
 					for (final Paragraph p : pd.getParagraphs()) {
 						registerProcName(p.getParagraphName().getName().toUpperCase(), p.getCtx());
+					}
+					// The mainline goes FIRST: it is the entry, and the
+					// paragraphs below it are its subroutines. Its name is
+					// synthesised so it cannot collide with a real one, and
+					// nothing can PERFORM it (no source text names it).
+					if (mainlineStmts != null) {
+						final Map<String, Object> mainPara = new LinkedHashMap<>();
+						mainPara.put("name", synthesizeMainlineName());
+						mainPara.put("span", span(pd.getCtx()));
+						mainPara.put("statements", mainlineStmts);
+						paragraphs.add(mainPara);
 					}
 					for (final Paragraph p : pd.getParagraphs()) {
 						paragraphs.add(lowerParagraph(p));
