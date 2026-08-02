@@ -207,9 +207,18 @@ against it.
 
 Stated plainly, so there is no ambiguity in an audit:
 
-- **Dialect.** Equivalence is established against **GnuCOBOL 3.1.2**
-  (named in the run's toolchain record). It is behavioural equivalence
-  with respect to that reference compiler's semantics.
+- **Dialect, *and its options*.** Equivalence is established against
+  **GnuCOBOL 3.1.2** (named in the run's toolchain record), compiled with
+  its **default options** — which for binary fields means
+  *decimal-truncating* `COMP`. This matters more than it sounds: some
+  COBOL semantics are a property of the compiler flags, not of the
+  source. A `PIC S9(4) COMP` field computing `9999 + 1` yields `0` under
+  the default, and `10000` under `-std=ibm`; under
+  `-fno-binary-truncate` it *displays* `0000` while *comparing* as
+  greater than 9999. If your production build uses different truncation
+  settings, a certificate covering `COMP` fields does not transfer to it
+  (docs/binary-comp.md). Verifying against a customer's own compile
+  options is a scoped, not-yet-built capability.
 - **The verified subset.** Equivalence covers the COBOL constructs the
   source actually uses *and* that fall inside the verified subset. If a
   source used a construct outside the subset, it would not have been

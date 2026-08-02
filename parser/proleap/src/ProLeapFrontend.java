@@ -1087,8 +1087,18 @@ public class ProLeapFrontend {
 					break;
 				case COMP:
 				case BINARY:
-					usage = u == UsageClause.UsageClauseType.COMP ? "COMP" : "BINARY";
-					reject(ctx, "USAGE " + usage + " (binary - unmeasured semantics, outside the verified subset)");
+					// Binary COMP/BINARY are the same thing, and under the
+					// pinned toolchain's default dialect their VALUE semantics
+					// are identical to DISPLAY: arithmetic truncates to the
+					// PICTURE's decimal digits, not to binary capacity
+					// (measured, examples/probes/comp-binary.cbl). So the IR's
+					// decimal model is exact and no layer changes.
+					//
+					// This holds for the DIALECT WE PIN. Under -std=ibm or
+					// -fno-binary-truncate the same source behaves differently
+					// (docs/binary-comp.md), so the certificate must disclose
+					// the truncation semantics it was established under.
+					usage = "COMP";
 					break;
 				default:
 					reject(ctx, "USAGE " + u);
@@ -3290,9 +3300,10 @@ public class ProLeapFrontend {
 				final String kind = (String) s.get("kind");
 				if ("accept".equals(kind)) {
 					final Map<String, Object> item = byName.get(s.get("target"));
-					if (item != null && "COMP-3".equals(item.get("usage"))) {
-						unsupported.add("ACCEPT into COMP-3 item " + s.get("target")
-								+ " (console-to-packed conversion is unmeasured; use ACCEPT into PIC X + NUMVAL) (line "
+					final Object u = item == null ? null : item.get("usage");
+					if ("COMP-3".equals(u) || "COMP".equals(u)) {
+						unsupported.add("ACCEPT into " + u + " item " + s.get("target")
+								+ " (console-to-binary/packed conversion is unmeasured; use ACCEPT into PIC X + NUMVAL) (line "
 								+ ((Map<?, ?>) s.get("span")).get("startLine") + ")");
 					}
 				} else if ("if".equals(kind)) {
