@@ -1,6 +1,6 @@
 {
   "tool": "legacymind parse-sweep",
-  "generatedAt": "2026-08-02T12:48:52.748Z",
+  "generatedAt": "2026-08-02T16:22:21.480Z",
   "corpus": "https://github.com/uwol/proleap-cobol-parser",
   "commit": "d1bfe75bdd6d480f70c74c6345bcc02610ac30d3",
   "total": 759,
@@ -57,8 +57,8 @@
   "proleap": {
     "frontendAccepted": 737,
     "frontendRate": 0.9710144927536232,
-    "irComplete": 15,
-    "irRate": 0.019762845849802372,
+    "irComplete": 17,
+    "irRate": 0.022397891963109356,
     "formats": {
       "FIXED": 547,
       "TANDEM": 187,
@@ -164,10 +164,6 @@
         "count": 750
       },
       {
-        "reason": "USAGE COMP (binary - unmeasured semantics, outside the verified subset)",
-        "count": 720
-      },
-      {
         "reason": "READ of \"…\" which is not a lowered file",
         "count": 614
       },
@@ -192,10 +188,6 @@
         "count": 336
       },
       {
-        "reason": "PERFORM target \"…\" is not a paragraph in this program",
-        "count": 306
-      },
-      {
         "reason": "PROCEDURE DIVISION has no paragraphs",
         "count": 253
       },
@@ -206,10 +198,6 @@
       {
         "reason": "OCCURS group \"…\" leaf \"…\" is a group, not elementary unsigned numeric or alphanumeric DISPLAY (O3-fl",
         "count": 220
-      },
-      {
-        "reason": "procedure name \"…\" is not representable in the IR",
-        "count": 201
       },
       {
         "reason": "START statement",
@@ -318,10 +306,6 @@
       {
         "reason": "data name \"…\" is not representable in the IR",
         "count": 42
-      },
-      {
-        "reason": "CONTINUE statement",
-        "count": 40
       },
       {
         "reason": "SORT statement",
@@ -545,10 +529,6 @@
       },
       {
         "reason": "RECEIVE statement",
-        "count": 15
-      },
-      {
-        "reason": "GO TO target \"…\" is not representable in the IR",
         "count": 15
       },
       {
@@ -825,10 +805,6 @@
       },
       {
         "reason": "GO TO GO--TEST-F2-1 is a backward or self jump; only strictly forward top-level jumps are supported",
-        "count": 8
-      },
-      {
-        "reason": "USAGE BINARY (binary - unmeasured semantics, outside the verified subset)",
         "count": 8
       },
       {
@@ -1616,6 +1592,10 @@
         "count": 3
       },
       {
+        "reason": "GO TO PARA-32 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 3
+      },
+      {
         "reason": "GO TO CLOSE-1 is a backward or self jump; only strictly forward top-level jumps are supported",
         "count": 3
       },
@@ -2096,14 +2076,6 @@
         "count": 2
       },
       {
-        "reason": "PERFORM REL-WRITE-FOR-TEST-3 THRU 3-EXIT is a backward or non-contiguous range",
-        "count": 2
-      },
-      {
-        "reason": "PERFORM REL-WRITE-FOR-TEST-6 THRU 6-EXIT is a backward or non-contiguous range",
-        "count": 2
-      },
-      {
         "reason": "GO TO TEST-25 is a backward or self jump; only strictly forward top-level jumps are supported",
         "count": 2
       },
@@ -2185,10 +2157,6 @@
       },
       {
         "reason": "GO TO PARA-7B is a backward or self jump; only strictly forward top-level jumps are supported",
-        "count": 2
-      },
-      {
-        "reason": "GO TO PARA-32 is a backward or self jump; only strictly forward top-level jumps are supported",
         "count": 2
       },
       {
@@ -3960,7 +3928,7 @@
         "count": 1
       },
       {
-        "reason": "PERFORM REL-WRITE-FOR-TEST-1 THRU 1-EXIT is a backward or non-contiguous range",
+        "reason": "GO TO 1-EXIT inside PERFORM-reachable paragraph REL-WRITE-FOR-TEST-1 is neither a structured range e",
         "count": 1
       },
       {
@@ -3968,7 +3936,15 @@
         "count": 1
       },
       {
+        "reason": "GO TO 3-EXIT inside PERFORM-reachable paragraph REL-WRITE-FOR-TEST-3 is neither a structured range e",
+        "count": 1
+      },
+      {
         "reason": "GO TO REL-TEST-5 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO 6-EXIT inside PERFORM-reachable paragraph REL-WRITE-FOR-TEST-6 is neither a structured range e",
         "count": 1
       },
       {
@@ -3996,7 +3972,7 @@
         "count": 1
       },
       {
-        "reason": "PERFORM WRITE-FOR-TEST-8 THRU 8-EXIT is a backward or non-contiguous range",
+        "reason": "GO TO 8-EXIT inside PERFORM-reachable paragraph WRITE-FOR-TEST-8 is neither a structured range early",
         "count": 1
       },
       {
@@ -4380,6 +4356,138 @@
         "count": 1
       },
       {
+        "reason": "GO TO PARA-30C inside PERFORM-reachable paragraph PARA-30 is neither a structured range early-exit n",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PARA-31C inside PERFORM-reachable paragraph PARA-31 is neither a structured range early-exit n",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PARA-32C inside PERFORM-reachable paragraph PARA-32 is neither a structured range early-exit n",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PARA-33C inside PERFORM-reachable paragraph PARA-33 is neither a structured range early-exit n",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PARA-34C inside PERFORM-reachable paragraph PARA-34 is neither a structured range early-exit n",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PARA-35C inside PERFORM-reachable paragraph PARA-35 is neither a structured range early-exit n",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PARA-36C inside PERFORM-reachable paragraph PARA-36 is neither a structured range early-exit n",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PARA-37C inside PERFORM-reachable paragraph PARA-37 is neither a structured range early-exit n",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PARA-38C inside PERFORM-reachable paragraph PARA-38 is neither a structured range early-exit n",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PARA-39C inside PERFORM-reachable paragraph PARA-39 is neither a structured range early-exit n",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PARA-40C inside PERFORM-reachable paragraph PARA-40 is neither a structured range early-exit n",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PARA-41C inside PERFORM-reachable paragraph PARA-41 is neither a structured range early-exit n",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PARA-42C inside PERFORM-reachable paragraph PARA-42 is neither a structured range early-exit n",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PARA-43C inside PERFORM-reachable paragraph PARA-43 is neither a structured range early-exit n",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PARA-44C inside PERFORM-reachable paragraph PARA-44 is neither a structured range early-exit n",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PARA-45C inside PERFORM-reachable paragraph PARA-45 is neither a structured range early-exit n",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PARA-46C inside PERFORM-reachable paragraph PARA-46 is neither a structured range early-exit n",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PARA-47C inside PERFORM-reachable paragraph PARA-47 is neither a structured range early-exit n",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PARA-48C inside PERFORM-reachable paragraph PARA-48 is neither a structured range early-exit n",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PARA-49C inside PERFORM-reachable paragraph PARA-49 is neither a structured range early-exit n",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PARA-50A inside PERFORM-reachable paragraph PARA-50 is neither a structured range early-exit n",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PARA-51A inside PERFORM-reachable paragraph PARA-51 is neither a structured range early-exit n",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PARA-52A inside PERFORM-reachable paragraph PARA-52 is neither a structured range early-exit n",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PARA-53A inside PERFORM-reachable paragraph PARA-53 is neither a structured range early-exit n",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PARA-54A inside PERFORM-reachable paragraph PARA-54 is neither a structured range early-exit n",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PARA-55A inside PERFORM-reachable paragraph PARA-55 is neither a structured range early-exit n",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PARA-56A inside PERFORM-reachable paragraph PARA-56 is neither a structured range early-exit n",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PARA-57A inside PERFORM-reachable paragraph PARA-57 is neither a structured range early-exit n",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PARA-58A inside PERFORM-reachable paragraph PARA-58 is neither a structured range early-exit n",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PARA-59A inside PERFORM-reachable paragraph PARA-59 is neither a structured range early-exit n",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PARA-60A inside PERFORM-reachable paragraph PARA-60 is neither a structured range early-exit n",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PARA-99A inside PERFORM-reachable paragraph PARA-99 is neither a structured range early-exit n",
+        "count": 1
+      },
+      {
+        "reason": "GO TO PARA-99C inside PERFORM-reachable paragraph PARA-99A is neither a structured range early-exit ",
+        "count": 1
+      },
+      {
         "reason": "PERFORM P4501 THRU P0003 is a backward or non-contiguous range",
         "count": 1
       },
@@ -4400,6 +4508,10 @@
         "count": 1
       },
       {
+        "reason": "PERFORM PARA-32 THRU PARA-33 is a backward or non-contiguous range",
+        "count": 1
+      },
+      {
         "reason": "GO TO PARA-54 is a backward or self jump; only strictly forward top-level jumps are supported",
         "count": 1
       },
@@ -4408,15 +4520,11 @@
         "count": 1
       },
       {
-        "reason": "GO TO PARA-32A inside PERFORM-reachable paragraph PARA-32 is neither a structured range early-exit n",
-        "count": 1
-      },
-      {
-        "reason": "GO TO PARA-32 inside PERFORM-reachable paragraph PARA-32B is neither a structured range early-exit n",
-        "count": 1
-      },
-      {
         "reason": "GO TO PARA-32C is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 1
+      },
+      {
+        "reason": "GO TO 36 is a backward or self jump; only strictly forward top-level jumps are supported",
         "count": 1
       },
       {
@@ -5473,6 +5581,8 @@
       }
     ],
     "irCompleteFiles": [
+      "src/test/resources/gov/nist/IF401M.CBL",
+      "src/test/resources/gov/nist/IF403M.CBL",
       "src/test/resources/gov/nist/NC110M.CBL",
       "src/test/resources/gov/nist/SG302M.CBL",
       "src/test/resources/gov/nist/SG303M.CBL",

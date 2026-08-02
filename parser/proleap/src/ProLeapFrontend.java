@@ -92,6 +92,15 @@ public class ProLeapFrontend {
 
 	static final Pattern IDENT = Pattern.compile("[A-Z][A-Z0-9-]*");
 	static final Pattern ID_ONLY = Pattern.compile("^[A-Z][A-Z0-9-]*$");
+	/**
+	 * Procedure names (paragraphs, sections, GO TO / PERFORM targets) may
+	 * start with a DIGIT: the numbered-paragraph convention (0000-MAIN,
+	 * 1000-READ-NEXT) is how most real COBOL is written — 403 of the 653
+	 * paragraph labels in AWS CardDemo, 62%. Unlike data names these never
+	 * become Java identifiers; they are IR strings used as PERFORM/GO TO
+	 * targets and control-flow node ids, so a leading digit costs nothing.
+	 */
+	static final Pattern PROC_NAME_RE = Pattern.compile("^[A-Z0-9][A-Z0-9-]*$");
 	static final Pattern PROGRAM_ID_RE = Pattern.compile("^[A-Z0-9][A-Z0-9-]*$");
 	// Stub-parity tokenizer: quoted strings stay whole, everything else
 	// splits on whitespace.
@@ -465,7 +474,7 @@ public class ProLeapFrontend {
 
 		/** Register a procedure name (paragraph or section) — one flat namespace. */
 		void registerProcName(final String name, final ParserRuleContext ctx) {
-			if (!ID_ONLY.matcher(name).matches()) {
+			if (!PROC_NAME_RE.matcher(name).matches()) {
 				reject(ctx, "procedure name \"" + name + "\" is not representable in the IR");
 				return;
 			}
@@ -915,6 +924,9 @@ public class ProLeapFrontend {
 			// conversion, which the comp3-* probes did not measure; the
 			// verified input idiom is ACCEPT into PIC X + FUNCTION NUMVAL.
 			gateAcceptUsage(paragraphs);
+			// Intrinsic-function gate: conditions and expressions are carried
+			// as text, so an unmodelled FUNCTION would ride through opaquely.
+			gateIntrinsics(paragraphs);
 
 			if (!unsupported.isEmpty()) {
 				return null;
@@ -1472,6 +1484,15 @@ public class ProLeapFrontend {
 			case DIVIDE:
 				lowerDivide((io.proleap.cobol.asg.metamodel.procedure.divide.DivideStatement) s, out);
 				return;
+			case CONTINUE:
+				// CONTINUE is "no operation" (ISO 14.9.4) and is used in real
+				// code to fill an otherwise-empty IF arm. Measured against
+				// GnuCOBOL: a program with CONTINUE and the same program with
+				// every CONTINUE deleted produce identical output
+				// (examples/probes/continue.cbl). So it lowers to nothing at
+				// all - not even an IR statement - and an arm containing only
+				// CONTINUE becomes an empty arm, which is what it means.
+				return;
 			case EXIT: {
 				// EXIT alone is a no-op paragraph terminator; EXIT PROGRAM is a
 				// CALL return and stays outside the subset.
@@ -1524,7 +1545,7 @@ public class ProLeapFrontend {
 					return;
 				}
 				final String target = proc.getName().toUpperCase();
-				if (!ID_ONLY.matcher(target).matches()) {
+				if (!PROC_NAME_RE.matcher(target).matches()) {
 					reject(ctx, "GO TO target \"" + target + "\" is not representable in the IR");
 					return;
 				}
@@ -3272,6 +3293,74 @@ public class ProLeapFrontend {
 		 * target name is attached as the item's "redefines"; every other shape
 		 * is rejected with a specific reason.
 		 */
+		/**
+		 * Intrinsic functions the subset has actually measured. NUMVAL is the
+		 * text-to-numeric conversion every certified module uses, and its
+		 * truncating store was ground-truthed against GnuCOBOL (finding 2).
+		 */
+		static final Set<String> ALLOWED_INTRINSICS = new LinkedHashSet<>(List.of("NUMVAL"));
+
+		/** FUNCTION &lt;name&gt; anywhere in a statement's text. */
+		static final Pattern INTRINSIC_RE = Pattern.compile("\\bFUNCTION\\s+([A-Z][A-Z0-9-]*)");
+
+		/**
+		 * Reject any intrinsic function outside the measured set. Conditions
+		 * and expressions are carried in the IR as TEXT, so an unmodelled
+		 * FUNCTION rides through opaquely: `IF FUNCTION ACOS (1.0) = ...`
+		 * lowers to a condition string with no refs, which every layer then
+		 * treats as depending on nothing. Layers A/B would still execute the
+		 * real binary, but the IR would be quietly wrong about the program,
+		 * and FUNCTION RANDOM is not even deterministic. Same shape as
+		 * finding 9: permissive acceptance with strictness only at consumers.
+		 */
+		void gateIntrinsics(final List<Object> paragraphs) {
+			for (final Object po : paragraphs) {
+				gateIntrinsicsIn((List<?>) ((Map<?, ?>) po).get("statements"));
+			}
+		}
+
+		void gateIntrinsicsIn(final List<?> stmts) {
+			if (stmts == null) {
+				return;
+			}
+			for (final Object so : stmts) {
+				final Map<?, ?> s = (Map<?, ?>) so;
+				final List<String> texts = new ArrayList<>();
+				final Object t = s.get("text");
+				if (t instanceof String) {
+					texts.add((String) t);
+				}
+				for (final String key : List.of("condition", "expression", "from")) {
+					final Object sub = s.get(key);
+					if (sub instanceof Map && ((Map<?, ?>) sub).get("text") instanceof String) {
+						texts.add((String) ((Map<?, ?>) sub).get("text"));
+					}
+				}
+				// One report per distinct intrinsic per statement: the same name
+				// usually appears in both the statement text and its condition.
+				final Set<String> seen = new LinkedHashSet<>();
+				for (final String text : texts) {
+					final java.util.regex.Matcher m = INTRINSIC_RE.matcher(text.toUpperCase());
+					while (m.find()) {
+						final String fn = m.group(1);
+						if (!ALLOWED_INTRINSICS.contains(fn)) {
+							seen.add(fn);
+						}
+					}
+				}
+				final Object span = s.get("span");
+				final String where = span instanceof Map
+						? " (line " + ((Map<?, ?>) span).get("startLine") + ")"
+						: "";
+				for (final String fn : seen) {
+					unsupported.add("FUNCTION " + fn + " (intrinsic outside the measured subset)" + where);
+				}
+				for (final String arm : List.of("then", "else", "atEnd", "notAtEnd")) {
+					gateIntrinsicsIn((List<?>) s.get(arm));
+				}
+			}
+		}
+
 		/**
 		 * Reject ACCEPT into a COMP-3 item. The measured COMP-3 parity
 		 * (docs/comp3.md) covers arithmetic, MOVE, comparison and DISPLAY;
