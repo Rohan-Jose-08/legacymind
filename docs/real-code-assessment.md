@@ -1,5 +1,32 @@
 # Real-code assessment — what `assess` says about code we did not write
 
+> **Numbers updated 2026-08-02 (after the external-services stage).** The
+> tables below are the ORIGINAL 2026-08-01 measurement and are kept for the
+> record; several stages have moved them since. Current figures, measured
+> on the same corpora with the same command:
+>
+> | | original | now |
+> |---|---|---|
+> | CardDemo VERIFIABLE | 0/31 | **0/31** |
+> | CardDemo median blockers (of 14 blocked) | 26 | **16.5** |
+> | nearest genuine candidate | 4 | **3** |
+> | NIST/ProLeap VERIFIABLE | 15/759 | **16/759** |
+>
+> Two things need saying plainly rather than being absorbed into a
+> headline. First, **VERIFIABLE on real code is still zero** — every stage
+> so far has moved the wall, not breached it, and the marketing line in
+> "What this means" is unchanged. Second, the **NIST 15 → 16** is *not*
+> attributable to the external-services stage: `gov/nist/SM301M.CBL`
+> becomes verifiable with that stage's frontend change reverted, so it was
+> unlocked by one of the five earlier stages that were never NIST-swept
+> (its content is a single `COPY`, which points at the COPY-provenance
+> stage). The baseline was stale, not the instrument.
+>
+> Three CardDemo modules — `CBACT02C`, `CBACT03C`, `CBCUS01C` — now sit at
+> **3 blockers with an identical set**: reference modification, `REDEFINES`
+> group-over-elementary, and the stage-2a `READ`-loop shape. They are one
+> shared three-item list away from being certifiable together.
+
 > **Corrected 2026-08-02.** The first version of this document reported
 > blocker counts that were **too low**: a structural rejection
 > ("PROCEDURE DIVISION has no paragraphs", "statement before the first

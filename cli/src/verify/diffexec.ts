@@ -6,8 +6,11 @@
  * same list of input cases, diffs their outputs field-by-field, and
  * writes a machine-readable report. Any divergence beyond the configured
  * numeric tolerance is a FAIL with the full counterexample preserved.
- * Any crash, timeout, or nonzero exit is an ERROR. The overall verdict
- * is PASS only when every case passes — no hidden failures.
+ * A crash or timeout is an ERROR, and so is a nonzero exit — UNLESS the
+ * module declares `abnormalTermination`, in which case the exit status is
+ * a compared observable rather than a precondition (see that field, and
+ * docs/external-services.md). The overall verdict is PASS only when every
+ * case passes — no hidden failures.
  *
  * Execution contract (protocol "stdin-lines" / "kv-lines"):
  *   - input: the case's stdin lines, newline-joined, piped to stdin
@@ -118,6 +121,24 @@ export interface DiffConfig {
   generator?: GeneratorConfig;
   /** Symbolic-execution settings (layer C). */
   symbolic?: SymbolicConfig;
+  /**
+   * Declares that abnormal termination is part of this module's SPECIFIED
+   * behaviour, i.e. its IR contains a `terminate-abnormal` statement
+   * (docs/external-services.md). Written in the config by hand, like every
+   * other field here, and then CHECKED against the IR by loadConfig — the
+   * declaration is never taken on trust.
+   *
+   * Without it, any nonzero exit is an ERROR, which conflates "the program
+   * terminated abnormally, as written" with "the harness malfunctioned" and
+   * makes such a module unverifiable in principle. With it, the exit status
+   * becomes a COMPARED OBSERVABLE: the two sides must agree on it, and a
+   * matched nonzero exit is a legitimate outcome whose stdout is then diffed
+   * as usual.
+   *
+   * Deliberately opt-in per module, so the bar for every module that does
+   * NOT abend is bit-for-bit what it was before.
+   */
+  abnormalTermination?: boolean;
 }
 
 export interface RunResult {
@@ -130,7 +151,12 @@ export interface RunResult {
 
 export interface FieldDiff {
   field: string;
-  kind: "numeric-divergence" | "string-divergence" | "missing-in-legacy" | "missing-in-modern";
+  kind:
+    | "numeric-divergence"
+    | "string-divergence"
+    | "missing-in-legacy"
+    | "missing-in-modern"
+    | "exit-status-divergence";
   legacy?: string;
   modern?: string;
   absDelta?: number;
@@ -190,7 +216,58 @@ export function loadConfig(configPath: string): DiffConfig {
     if (seen.has(cs.id)) throw new DiffExecError(`config: duplicate case id "${cs.id}"`);
     seen.add(cs.id);
   }
+  if (c.abnormalTermination !== undefined) {
+    if (typeof c.abnormalTermination !== "boolean") {
+      throw new DiffExecError('config: "abnormalTermination" must be a boolean');
+    }
+    // The declaration RELAXES the bar (a nonzero exit stops being an error),
+    // so it may not be taken on trust: it has to be justified by the module's
+    // own IR. Otherwise a config could quietly excuse a module that crashes.
+    if (c.abnormalTermination) {
+      const irPath = c.generator?.ir ?? c.symbolic?.ir;
+      if (!irPath) {
+        throw new DiffExecError(
+          'config: "abnormalTermination" needs a "generator.ir" or "symbolic.ir" reference so the ' +
+            "declaration can be checked against the IR",
+        );
+      }
+      const resolved = resolve(dirname(resolve(configPath)), irPath);
+      let ir: unknown;
+      try {
+        ir = JSON.parse(readFileSync(resolved, "utf8"));
+      } catch (e) {
+        throw new DiffExecError(`config: cannot read IR ${resolved} to check "abnormalTermination": ${(e as Error).message}`);
+      }
+      if (!irHasTerminateAbnormal(ir)) {
+        throw new DiffExecError(
+          `config: "abnormalTermination" is declared but ${irPath} contains no terminate-abnormal ` +
+            "statement — the module does not abend, so the relaxed exit-status rule is unjustified",
+        );
+      }
+    }
+  }
   return c;
+}
+
+/** Nested statement-list keys, mirroring ir-core's NESTED. */
+const NESTED_ARMS = ["then", "else", "atEnd", "notAtEnd"] as const;
+
+/** True if any statement anywhere in the IR is a `terminate-abnormal`. */
+function irHasTerminateAbnormal(ir: unknown): boolean {
+  const scan = (stmts: unknown): boolean => {
+    if (!Array.isArray(stmts)) return false;
+    for (const s of stmts) {
+      if (!s || typeof s !== "object") continue;
+      const st = s as Record<string, unknown>;
+      if (st.kind === "terminate-abnormal") return true;
+      for (const arm of NESTED_ARMS) if (scan(st[arm])) return true;
+    }
+    return false;
+  };
+  const paras = (ir as { procedureDivision?: { paragraphs?: { statements?: unknown }[] } })?.procedureDivision
+    ?.paragraphs;
+  if (!Array.isArray(paras)) return false;
+  return paras.some((p) => scan(p?.statements));
 }
 
 // --- persistent containers ------------------------------------------------------
@@ -409,18 +486,57 @@ export function runCase(
   let diffs: FieldDiff[] = [];
   let compared = 0;
 
-  const legacyBad = legacyRun.error !== undefined || legacyRun.exitCode !== 0;
-  const modernBad = modernRun.error !== undefined || modernRun.exitCode !== 0;
-  if (legacyBad || modernBad) {
-    status = "ERROR";
-    if (legacyRun.error) notes.push(`legacy: ${legacyRun.error}`);
-    if (modernRun.error) notes.push(`modern: ${modernRun.error}`);
-    if (!legacyRun.error && legacyRun.exitCode !== 0) notes.push(`legacy: exit code ${legacyRun.exitCode}`);
-    if (!modernRun.error && modernRun.exitCode !== 0) notes.push(`modern: exit code ${modernRun.exitCode}`);
-  } else {
+  // A spawn failure or timeout is the HARNESS breaking and is always an
+  // ERROR. A nonzero exit is a property of the program under test, so it is
+  // only an error when the module never claimed to terminate abnormally.
+  const harnessBroke = legacyRun.error !== undefined || modernRun.error !== undefined;
+  const abnormalDeclared = config.abnormalTermination === true;
+  const sameExit = legacyRun.exitCode === modernRun.exitCode;
+  // A null exit status means the process was killed by a signal rather than
+  // exiting — that is the harness or the OS intervening, never a specified
+  // abend, so it must not be matchable. Both sides must have really exited.
+  const bothExited = typeof legacyRun.exitCode === "number" && typeof modernRun.exitCode === "number";
+  const bothNonZero = bothExited && legacyRun.exitCode !== 0 && modernRun.exitCode !== 0;
+
+  const compareStdout = (): void => {
     const legacyFields = parseKv(legacyRun.stdout, "legacy", notes);
     const modernFields = parseKv(modernRun.stdout, "modern", notes);
     ({ diffs, compared } = compareFields(legacyFields, modernFields, tolerance));
+  };
+
+  if (harnessBroke) {
+    status = "ERROR";
+    if (legacyRun.error) notes.push(`legacy: ${legacyRun.error}`);
+    if (modernRun.error) notes.push(`modern: ${modernRun.error}`);
+  } else if (abnormalDeclared && bothExited && !sameExit) {
+    // Termination status as an observable: one side ended the run and the
+    // other did not, which is a behavioural divergence with a counterexample
+    // — not a harness fault. Reported as a FAIL so it lands in the diff list.
+    status = "FAIL";
+    diffs = [
+      {
+        field: "<exit status>",
+        kind: "exit-status-divergence",
+        legacy: String(legacyRun.exitCode),
+        modern: String(modernRun.exitCode),
+      },
+    ];
+    compared = 1;
+  } else if (abnormalDeclared && sameExit && bothNonZero) {
+    // Both terminated abnormally, identically. That is a legitimate outcome
+    // for this module, so the case is judged on its output like any other —
+    // and the note keeps it visible in a PASS report, because a pass that
+    // quietly involved an abend would be a hidden failure.
+    notes.push(`both sides terminated abnormally with exit code ${legacyRun.exitCode} (declared)`);
+    compareStdout();
+    compared += 1; // the matched exit status is itself a compared observable
+    status = diffs.length === 0 ? "PASS" : "FAIL";
+  } else if (legacyRun.exitCode !== 0 || modernRun.exitCode !== 0) {
+    status = "ERROR";
+    if (legacyRun.exitCode !== 0) notes.push(`legacy: exit code ${legacyRun.exitCode}`);
+    if (modernRun.exitCode !== 0) notes.push(`modern: exit code ${modernRun.exitCode}`);
+  } else {
+    compareStdout();
     status = diffs.length === 0 ? "PASS" : "FAIL";
   }
 
@@ -500,7 +616,7 @@ export function printCaseResults(results: CaseResult[]): void {
         console.log(
           `        ${d.field}: legacy=${d.legacy} modern=${d.modern} |delta|=${d.absDelta} > tolerance=${d.tolerance}`,
         );
-      } else if (d.kind === "string-divergence") {
+      } else if (d.kind === "string-divergence" || d.kind === "exit-status-divergence") {
         console.log(`        ${d.field}: legacy=${JSON.stringify(d.legacy)} modern=${JSON.stringify(d.modern)}`);
       } else {
         console.log(`        ${d.field}: ${d.kind}`);

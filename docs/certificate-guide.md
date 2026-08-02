@@ -207,6 +207,23 @@ against it.
 
 Stated plainly, so there is no ambiguity in an audit:
 
+- **External services.** Read the `externalServices` block. Real batch
+  COBOL calls vendor code — IBM Language Environment services, assembler
+  routines — whose implementation nobody outside the vendor has. A
+  certificate may name such a service **only when it never returns**
+  (today that is `CEE3ABD`, the LE abend service): a call that terminates
+  the program has no post-call state, so the unknown implementation
+  cannot affect anything downstream. What is covered is that the program
+  *reaches* the call under the same conditions in both implementations,
+  has produced identical output beforehand, and runs nothing afterwards.
+  What is **not** covered is the service's own behaviour and its
+  argument values — under the certified toolchain the arguments have no
+  observable effect, whereas on z/OS they are visible as the abend code,
+  so a modern implementation could pass with a different one. Each such
+  service also appears in `gaps`. `checked: false` means no IR was
+  supplied and the certificate makes **no statement either way**
+  (docs/external-services.md).
+
 - **Dialect, *and its options*.** Read the certificate's `toolchain`
   block: it names the compiler, its version, and **the exact options the
   evidence was produced with**, captured from the harness image itself

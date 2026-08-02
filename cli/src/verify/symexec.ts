@@ -574,7 +574,7 @@ export function topLevelChain(paras: Map<string, Paragraph>, entry: string): Sta
         out.push(...paraChain(t));
         return out;
       }
-      if (s.kind === "stop-run" || s.kind === "goback") {
+      if (s.kind === "stop-run" || s.kind === "goback" || s.kind === "terminate-abnormal") {
         out.push(s); // statements after an unconditional program end are dead
         return out;
       }
@@ -769,10 +769,10 @@ function loopBody(ctx: ExecCtx, s: LoopStmt): Statement[] {
   return body;
 }
 
-/** True if a stop-run/goback appears in `stmts` or nested IF/READ branches. */
+/** True if a program-ending statement appears in `stmts` or nested IF/READ branches. */
 function containsStop(stmts: Statement[]): boolean {
   for (const s of stmts) {
-    if (s.kind === "stop-run" || s.kind === "goback") return true;
+    if (s.kind === "stop-run" || s.kind === "goback" || s.kind === "terminate-abnormal") return true;
     if (s.kind === "if" && (containsStop(s.then) || containsStop(s.else ?? []))) return true;
     if (s.kind === "read" && (containsStop(s.atEnd) || containsStop(s.notAtEnd))) return true;
   }
@@ -1174,6 +1174,15 @@ function execute(stmts: Statement[], state: PathState, ctx: ExecCtx, out: PathSt
       case "goback":
         // Program end: this path is complete here — statements after it (the
         // rest of an IF fork, or fall-through paragraphs) never run on it.
+        out.push(state);
+        return;
+      case "terminate-abnormal":
+        // Also a program end, and for path ENUMERATION that is all it is:
+        // nothing after it runs. What distinguishes it from stop-run — the
+        // process terminates in failure — is not a property of the symbolic
+        // path but of the run, so it is compared where every other observable
+        // is compared, in runCase (docs/external-services.md).
+        state.notes.push(`path terminates abnormally via external service ${s.service}`);
         out.push(state);
         return;
       case "perform":

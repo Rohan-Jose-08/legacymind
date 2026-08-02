@@ -288,6 +288,7 @@ switch (command) {
           outPath: out,
           signingKeyPath: str(flags, "signing-key"),
           toolchainPath: str(flags, "toolchain"),
+          irPath: str(flags, "ir"),
         }),
       );
     } catch (e) {

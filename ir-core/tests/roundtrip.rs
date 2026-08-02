@@ -109,3 +109,64 @@ fn rejects_unknown_statement_kind() {
         "unexpected error: {err}"
     );
 }
+
+// --- external services (docs/external-services.md) -------------------------
+//
+// The allowlist is a soundness gate, not a convenience: the IR is the
+// artifact the certificate is signed over, so an IR naming a service that
+// RETURNS must not validate even if it was hand-written or produced by a
+// different frontend.
+
+/// Replace the first statement of the first paragraph with `stmt` and
+/// return the resulting document as JSON text.
+fn with_first_statement(stmt: Value) -> String {
+    let (_, json) = fixtures().into_iter().next().expect("a fixture");
+    let mut doc: Value = serde_json::from_str(&json).expect("as value");
+    doc["procedureDivision"]["paragraphs"][0]["statements"][0] = stmt;
+    doc.to_string()
+}
+
+fn terminate_abnormal(service: &str, args: Value) -> Value {
+    serde_json::json!({
+        "kind": "terminate-abnormal",
+        "service": service,
+        "args": args,
+        "text": format!("CALL '{service}'"),
+        "span": { "file": "x.cbl", "startLine": 1, "endLine": 1 }
+    })
+}
+
+#[test]
+fn accepts_allowlisted_non_returning_service() {
+    let json = with_first_statement(terminate_abnormal(
+        "CEE3ABD",
+        serde_json::json!(["ABCODE", "TIMING"]),
+    ));
+    let ir = ir_core::parse(&json).expect("parse");
+    ir_core::validate(&ir).expect("an allowlisted service must validate");
+}
+
+#[test]
+fn rejects_service_outside_the_allowlist() {
+    // CEEDAYS is the archetype of the rejected case: it RETURNS a converted
+    // date into a linkage field, so its unknown result feeds later logic.
+    let json = with_first_statement(terminate_abnormal("CEEDAYS", serde_json::json!([])));
+    let ir = ir_core::parse(&json).expect("parse");
+    let errs = ir_core::validate(&ir).expect_err("a returning service must be rejected");
+    assert!(
+        errs.iter().any(|e| e.contains("CEEDAYS")),
+        "expected CEEDAYS to be named in the errors: {errs:?}"
+    );
+}
+
+#[test]
+fn rejects_terminate_abnormal_without_args() {
+    let mut stmt = terminate_abnormal("CEE3ABD", serde_json::json!([]));
+    stmt.as_object_mut().unwrap().remove("args");
+    let ir = ir_core::parse(&with_first_statement(stmt)).expect("parse");
+    let errs = ir_core::validate(&ir).expect_err("a missing args array must be rejected");
+    assert!(
+        errs.iter().any(|e| e.contains("args")),
+        "expected the args array to be named: {errs:?}"
+    );
+}

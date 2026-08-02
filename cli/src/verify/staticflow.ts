@@ -258,6 +258,14 @@ export function extractLegacyFlows(ir: ModuleIR): { outputs: Map<string, FlowRec
             pendingKey = null;
           }
         }
+      } else if (s.kind === "terminate-abnormal") {
+        // Deliberately flow-neutral, and the reason is a disclosed gap rather
+        // than an omission: under the certified toolchain the service produces
+        // NO observable output, so its USING arguments reach no output field
+        // and layer D has nothing to derive. On z/OS those same arguments are
+        // observable as the abend code — which is exactly the environment
+        // divergence the certificate's externalServices block declares
+        // (docs/external-services.md).
       }
     }
   };

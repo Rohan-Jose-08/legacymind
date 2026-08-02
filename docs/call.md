@@ -1,5 +1,16 @@
 # CALL and LINKAGE — the subprogram boundary
 
+> **Partly superseded 2026-08-02 by `docs/external-services.md`.** The
+> recommendation below — do not build the general subprogram `CALL` next —
+> still stands. But this document's treatment of vendor targets was too
+> coarse: it put `CEE3ABD` in the same bucket as `CEEDAYS`, `MVSWAIT` and
+> `CBSTM03B` and called them all "permanently outside any equivalence
+> claim". `CEE3ABD` **never returns**, so it has no post-call state and no
+> unknown result to propagate; it is verifiable, and it was the sole
+> `CALL` target in **nine** real CardDemo modules. Those nine no longer
+> list `CALL` as a blocker. The claim that survives is about services that
+> RETURN, which is every other target measured here.
+
 Design for static `CALL` of a COBOL subprogram with `LINKAGE SECTION` /
 `PROCEDURE DIVISION USING`. `CALL` affects 14 of the 20 blocked real
 modules (docs/real-code-assessment.md), second only to the file cluster.

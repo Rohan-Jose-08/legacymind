@@ -307,6 +307,19 @@
         },
         {
           "type": "object",
+          "description": "CALL of an allowlisted external service that NEVER RETURNS (docs/external-services.md). Terminal like stop-run, but the process result is failure. Only admissible because there is no post-call state to get wrong; any service that returns is rejected. `args` are the USING item names, verified as ordinary storage.",
+          "required": ["kind", "service", "args", "text", "span"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "const": "terminate-abnormal" },
+            "service": { "type": "string" },
+            "args": { "type": "array", "items": { "type": "string" } },
+            "text": { "type": "string" },
+            "span": { "$ref": "#/$defs/span" }
+          }
+        },
+        {
+          "type": "object",
           "description": "EXIT: a no-op paragraph terminator (flow-neutral for every verifier layer). Only representable because PERFORM THRU is not — an EXIT paragraph cannot be a THRU endpoint here.",
           "required": ["kind", "text", "span"],
           "additionalProperties": false,

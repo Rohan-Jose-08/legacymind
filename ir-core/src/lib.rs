@@ -147,8 +147,17 @@ pub enum StmtKind {
     PerformVarying,
     Read,
     StopRun,
+    /// CALL of an allowlisted non-returning external service
+    /// (docs/external-services.md). Terminal, like StopRun, but the
+    /// process result is failure.
+    TerminateAbnormal,
     Write,
 }
+
+/// External services the IR may model. Admission rule: a service belongs
+/// here only if it NEVER RETURNS, because then it has no post-call state
+/// to get wrong. Anything that returns is rejected at the frontend.
+const NON_RETURNING_SERVICES: [&str; 1] = ["CEE3ABD"];
 
 /// One statement: a validated kind plus its kind-specific body, which
 /// round-trips losslessly while the body's typing is a later increment.
@@ -228,6 +237,27 @@ fn validate_item(item: &DataItem, errs: &mut Vec<String>) {
 /// caught — the flattened body keeps them as `Value`, so the enum alone
 /// would not see them.
 fn validate_stmt(st: &Statement, where_: &str, errs: &mut Vec<String>) {
+    // The allowlist is re-checked here, not only at the frontend: the IR is
+    // the artifact the certificate is signed over, so a hand-edited or
+    // third-party IR naming an unmodeled service must not validate.
+    if st.kind == StmtKind::TerminateAbnormal {
+        match st.body.get("service").and_then(Value::as_str) {
+            Some(s) if NON_RETURNING_SERVICES.contains(&s) => {}
+            Some(s) => errs.push(format!(
+                "{}: {:?} is not an allowlisted non-returning external service {:?}",
+                where_, s, NON_RETURNING_SERVICES
+            )),
+            None => errs.push(format!("{}: terminate-abnormal has no service name", where_)),
+        }
+        match st.body.get("args") {
+            Some(a) if a.is_array() => {
+                if let Some(bad) = a.as_array().unwrap().iter().find(|v| !v.is_string()) {
+                    errs.push(format!("{}: terminate-abnormal arg {} is not a name", where_, bad));
+                }
+            }
+            _ => errs.push(format!("{}: terminate-abnormal has no args array", where_)),
+        }
+    }
     for key in NESTED {
         let Some(arm) = st.body.get(key) else { continue };
         let Some(list) = arm.as_array() else {

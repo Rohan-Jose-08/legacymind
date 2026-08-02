@@ -72,6 +72,13 @@ export type Statement =
   | { kind: "accept"; target: string; text: string; span: Span }
   | { kind: "stop-run"; text: string; span: Span }
   | { kind: "goback"; text: string; span: Span }
+  /**
+   * CALL of an allowlisted non-returning external service (proleap engine
+   * only; docs/external-services.md). Terminal like stop-run, but the
+   * process result is failure — the only external CALL shape that can be
+   * modelled, because a call that never returns has no post-call state.
+   */
+  | { kind: "terminate-abnormal"; service: string; args: string[]; text: string; span: Span }
   /** EXIT: no-op paragraph terminator (proleap engine only; flow-neutral in every layer). */
   | { kind: "exit"; text: string; span: Span }
   /**

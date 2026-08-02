@@ -67,6 +67,15 @@ export function runCertify(opts: {
    * certificate says so and gains a gap (docs/binary-comp.md).
    */
   toolchainPath?: string;
+  /**
+   * The module's IR. Read only to disclose EXTERNAL SERVICES — calls to a
+   * vendor implementation we never see, admissible only when they never
+   * return (docs/external-services.md). Such a call terminates the program,
+   * so the equivalence claim covers reaching it and stopping there, and NOT
+   * the service's own behaviour or its arguments. Omitted, the certificate
+   * says the check could not be made rather than implying it passed.
+   */
+  irPath?: string;
 }): number {
   const selection = readJson(opts.selectionPath, "selection.json");
   if (!selection.winner) {
@@ -199,6 +208,47 @@ export function runCertify(opts: {
     );
   }
 
+  // --- external services -----------------------------------------------------------
+  // A modelled service is an ENVIRONMENT divergence, the same class of
+  // disclosure as the toolchain block: under the certified toolchain
+  // CEE3ABD is an absent module and the call simply ends the run, while on
+  // z/OS it raises user abend `abcode`. Naming it here — inside the signed
+  // body — is what keeps "certified" from over-reading.
+  let externalServices: Record<string, unknown>;
+  if (opts.irPath) {
+    const services = collectExternalServices(readJson(opts.irPath, "module IR"));
+    externalServices = {
+      checked: true,
+      services,
+      ...(services.length > 0
+        ? {
+            note:
+              "Each service below NEVER RETURNS, which is the only reason it can be modelled: " +
+              "the program terminates at the call, so there is no post-call state to get wrong. " +
+              "COVERED: the program reaches the call under the same conditions in both " +
+              "implementations, has produced identical output beforehand, and runs nothing " +
+              "afterwards. NOT COVERED: the service's own behaviour, and the USING argument " +
+              "values — under the certified toolchain they have no observable effect, whereas " +
+              "on z/OS they are visible as the abend code. See docs/external-services.md.",
+          }
+        : {}),
+    };
+    for (const s of services) {
+      gaps.push(
+        `external service ${(s as { service: string }).service} is modelled as non-returning: its own ` +
+          `behaviour and its argument values are outside this certificate (docs/external-services.md)`,
+      );
+    }
+  } else {
+    externalServices = {
+      checked: false,
+      note:
+        "No IR was supplied to certify, so this certificate does NOT state whether the module " +
+        "calls an external service modelled as non-returning. See docs/external-services.md.",
+    };
+    gaps.push("module IR not supplied — external-service disclosure could not be checked");
+  }
+
   const body = {
     tool: "legacymind certify",
     version: "0.1.0",
@@ -207,6 +257,7 @@ export function runCertify(opts: {
     module: selection.module,
     target,
     toolchain,
+    externalServices,
     layers,
     coverageEnvelope: { ...coverage, gaps },
     selection: {
@@ -237,6 +288,40 @@ export function runCertify(opts: {
   console.log(`  signed: ed25519, key ${integrity.keyId} (${keySource})`);
   console.log(`  certificate: ${opts.outPath}`);
   return verdict === "CERTIFIED" ? 0 : 1;
+}
+
+/**
+ * Every `terminate-abnormal` in the IR, deduplicated by service, with the
+ * source spans that reached it — so an auditor can find the call sites.
+ */
+function collectExternalServices(ir: any): Record<string, unknown>[] {
+  interface ServiceRec {
+    service: string;
+    callSites: string[];
+    args: string[];
+  }
+  const byService = new Map<string, ServiceRec>();
+  const scan = (stmts: any): void => {
+    if (!Array.isArray(stmts)) return;
+    for (const s of stmts) {
+      if (!s || typeof s !== "object") continue;
+      if (s.kind === "terminate-abnormal") {
+        const rec: ServiceRec = byService.get(s.service) ?? { service: s.service, callSites: [], args: [] };
+        const span = s.span ? `${s.span.file}:${s.span.startLine}` : "unknown";
+        if (!rec.callSites.includes(span)) rec.callSites.push(span);
+        for (const a of s.args ?? []) if (!rec.args.includes(a)) rec.args.push(a);
+        byService.set(s.service, rec);
+      }
+      for (const arm of ["then", "else", "atEnd", "notAtEnd"]) scan(s[arm]);
+    }
+  };
+  for (const p of ir?.procedureDivision?.paragraphs ?? []) scan(p?.statements);
+  return [...byService.values()].map((r) => ({
+    service: r.service,
+    model: "non-returning: terminates the run; nothing after the call executes",
+    callSites: r.callSites,
+    unverifiedArguments: r.args,
+  }));
 }
 
 function checkTargetsWinner(report: any, winnerId: string, layer: string, gaps: string[]): void {
@@ -325,6 +410,27 @@ export function runReport(certPath: string, outPath?: string): number {
         `${k.divergent ?? 0} divergent, ${k.unresolved ?? 0} unresolved; ` +
         `${env.layerD.capacityWarnings ?? 0} capacity warning(s)`,
     );
+  }
+  push();
+  push(`## External services`);
+  push();
+  const ext = cert.externalServices ?? {};
+  if (!ext.checked) {
+    push(`- **Not checked.** ${ext.note ?? "No IR was supplied to certify."}`);
+  } else if ((ext.services ?? []).length === 0) {
+    push(`- None. This module calls no external service; no environment divergence is claimed away.`);
+  } else {
+    for (const s of ext.services) {
+      push(`- **\`${s.service}\`** — modelled as ${s.model}.`);
+      push(`  - call site(s): ${(s.callSites ?? []).map((c: string) => `\`${c}\``).join(", ")}`);
+      push(
+        `  - **not verified**: the service's own behaviour, and the argument value(s) ` +
+          `${(s.unverifiedArguments ?? []).map((a: string) => `\`${a}\``).join(", ") || "(none)"} — ` +
+          `unobservable under the certified toolchain, visible as the abend code on z/OS.`,
+      );
+    }
+    push();
+    push(`> ${ext.note}`);
   }
   push();
   push(`## Known gaps — read before relying on this certificate`);

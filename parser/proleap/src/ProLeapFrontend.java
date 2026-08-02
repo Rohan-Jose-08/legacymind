@@ -249,6 +249,8 @@ public class ProLeapFrontend {
 
 		final List<String> unsupported = new ArrayList<>();
 		final List<String> warnings = new ArrayList<>();
+		/** PROGRAM-ID, set once by lower(); read by lowerCall to refuse self-named services. */
+		String programId = null;
 		final Set<String> declared = new LinkedHashSet<>();
 		final Set<String> paragraphNames = new LinkedHashSet<>();
 		/** Paragraph names in source order — the domain for PERFORM THRU ranges. */
@@ -794,7 +796,6 @@ public class ProLeapFrontend {
 			final ProgramUnit pu = unit.getProgramUnit();
 
 			// --- IDENTIFICATION DIVISION ---
-			String programId = null;
 			if (pu.getIdentificationDivision() == null
 					|| pu.getIdentificationDivision().getProgramIdParagraph() == null) {
 				unsupported.add("PROGRAM-ID not found in IDENTIFICATION DIVISION");
@@ -1044,7 +1045,11 @@ public class ProLeapFrontend {
 					final List<?> stmts = (List<?>) pm.get("statements");
 					if (!stmts.isEmpty()) {
 						final Object lastKind = ((Map<?, ?>) stmts.get(stmts.size() - 1)).get("kind");
-						if ("stop-run".equals(lastKind) || "goback".equals(lastKind)) {
+						// terminate-abnormal ends the run as surely as STOP RUN — control
+						// never reaches the next paragraph (measured: statements after the
+						// call do not execute, docs/external-services.md).
+						if ("stop-run".equals(lastKind) || "goback".equals(lastKind)
+								|| "terminate-abnormal".equals(lastKind)) {
 							continue;
 						}
 					}
@@ -1679,6 +1684,10 @@ public class ProLeapFrontend {
 				m.put("text", "GOBACK");
 				m.put("span", span(ctx));
 				out.add(m);
+				return;
+			}
+			case CALL: {
+				lowerCall((io.proleap.cobol.asg.metamodel.procedure.call.CallStatement) s, ctx, out);
 				return;
 			}
 			case GO_TO: {
@@ -2902,6 +2911,99 @@ public class ProLeapFrontend {
 			out.put("text", textOf(ctx));
 			out.put("span", span(ctx));
 			return out;
+		}
+
+		/**
+		 * External services the IR models, and the rule that admits them:
+		 * a service belongs here ONLY IF IT NEVER RETURNS. A non-returning
+		 * call has no post-call state, so the unknown vendor implementation
+		 * cannot affect anything the equivalence claim covers. The moment a
+		 * service returns, its unknown result feeds later logic and the
+		 * module is unverifiable — which is why this list has one member and
+		 * every other CALL target stays rejected. See
+		 * docs/external-services.md for the measurements behind each entry.
+		 */
+		static final Set<String> NON_RETURNING_SERVICES = new LinkedHashSet<>(Arrays.asList("CEE3ABD"));
+
+		/**
+		 * CALL: rejected as a whole, except for a call to an allowlisted
+		 * non-returning service, which lowers to a terminal statement.
+		 *
+		 * The rejection message for every other shape is deliberately
+		 * unchanged ("CALL statement") so blocker tables stay comparable
+		 * across this stage.
+		 */
+		void lowerCall(final io.proleap.cobol.asg.metamodel.procedure.call.CallStatement s,
+				final ParserRuleContext ctx, final List<Object> out) {
+			if (s.getProgramValueStmt() == null) {
+				reject(ctx, "CALL statement");
+				return;
+			}
+			final String progText = textOf(s.getProgramValueStmt().getCtx());
+			// A literal target is quoted; an unquoted one is `CALL identifier`,
+			// the dynamic form, which names a program only known at runtime.
+			if (progText.length() < 3 || !(progText.startsWith("'") || progText.startsWith("\""))) {
+				reject(ctx, "CALL statement");
+				return;
+			}
+			final String service = progText.substring(1, progText.length() - 1).toUpperCase();
+			if (!NON_RETURNING_SERVICES.contains(service)) {
+				reject(ctx, "CALL statement");
+				return;
+			}
+			// This program IS the service: then it is application code that
+			// returns to its caller, not an environment service, and the
+			// non-returning model does not apply to it.
+			if (service.equals(programId)) {
+				reject(ctx, "CALL of \"" + service + "\" from a program of the same name");
+				return;
+			}
+			// Measured (docs/external-services.md, examples/probes/
+			// abend-onexception.cbl): ON EXCEPTION catches the missing-module
+			// condition and EXECUTION CONTINUES, exit 0. That makes the call a
+			// returning one, so the whole basis for modelling it is gone.
+			if (s.getOnExceptionClause() != null || s.getNotOnExceptionClause() != null
+					|| s.getOnOverflowPhrase() != null) {
+				reject(ctx, "CALL \"" + service + "\" with ON EXCEPTION/ON OVERFLOW (the service then returns)");
+				return;
+			}
+			if (s.getGivingPhrase() != null) {
+				reject(ctx, "CALL \"" + service + "\" with GIVING/RETURNING");
+				return;
+			}
+			final List<Object> args = new ArrayList<>();
+			final io.proleap.cobol.asg.metamodel.procedure.call.UsingPhrase using = s.getUsingPhrase();
+			if (using != null) {
+				for (final io.proleap.cobol.asg.metamodel.procedure.call.UsingParameter p : using.getUsingParameters()) {
+					if (p.getByContentPhrase() != null || p.getByValuePhrase() != null) {
+						reject(ctx, "CALL \"" + service + "\" USING BY CONTENT/BY VALUE");
+						return;
+					}
+					if (p.getByReferencePhrase() == null) {
+						reject(ctx, "CALL \"" + service + "\" USING parameter with no resolvable operand");
+						return;
+					}
+					for (final io.proleap.cobol.asg.metamodel.procedure.call.ByReference br : p.getByReferencePhrase()
+							.getByReferences()) {
+						if (br.getValueStmt() == null) {
+							reject(ctx, "CALL \"" + service + "\" USING parameter with no resolvable operand");
+							return;
+						}
+						final String arg = resolveQualified(textOf(br.getValueStmt().getCtx()), ctx);
+						if (arg == null) {
+							return;
+						}
+						args.add(arg);
+					}
+				}
+			}
+			final Map<String, Object> m = new LinkedHashMap<>();
+			m.put("kind", "terminate-abnormal");
+			m.put("service", service);
+			m.put("args", args);
+			m.put("text", textOf(ctx));
+			m.put("span", span(ctx));
+			out.add(m);
 		}
 
 		static final Set<String> PERFORM_KINDS = new LinkedHashSet<>(

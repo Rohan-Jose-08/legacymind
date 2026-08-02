@@ -146,7 +146,7 @@ for (const m of modules) {
   steps.certify = run(
     ["node", "cli/dist/main.js", "certify", "--selection", `${m.migrateOut}/selection.json`,
       "--layer-a", propOut, "--layer-c", symOut, "--layer-d", staticOut,
-      "--toolchain", toolchainOut, "--out", certOut],
+      "--toolchain", toolchainOut, "--ir", `out/ir/${m.programId}.ir.json`, "--out", certOut],
     "certify",
   );
   run(["node", "cli/dist/main.js", "report", certOut, "--out", `${benchDir}/certification.md`], "report");

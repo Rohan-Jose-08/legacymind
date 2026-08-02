@@ -1,0 +1,12 @@
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. AB3.
+       DATA DIVISION.
+       WORKING-STORAGE SECTION.
+       01  ABCODE                  PIC S9(9) BINARY.
+       PROCEDURE DIVISION.
+           DISPLAY 'BEFORE'.
+           CALL 'CEE3ABD' USING ABCODE
+               ON EXCEPTION DISPLAY 'CAUGHT'
+           END-CALL.
+           DISPLAY 'AFTER'.
+           STOP RUN.
