@@ -1,0 +1,22 @@
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. DDN.
+       ENVIRONMENT DIVISION.
+       INPUT-OUTPUT SECTION.
+       FILE-CONTROL.
+           SELECT OUTF ASSIGN TO MYDD
+               ORGANIZATION IS LINE SEQUENTIAL
+               FILE STATUS IS WS-ST.
+       DATA DIVISION.
+       FILE SECTION.
+       FD  OUTF.
+       01  OREC PIC X(12).
+       WORKING-STORAGE SECTION.
+       01  WS-ST PIC XX.
+       PROCEDURE DIVISION.
+       MAIN.
+           OPEN OUTPUT OUTF
+           DISPLAY "OPEN-ST=" WS-ST
+           MOVE "HELLO-DDNAME" TO OREC
+           WRITE OREC
+           CLOSE OUTF
+           STOP RUN.

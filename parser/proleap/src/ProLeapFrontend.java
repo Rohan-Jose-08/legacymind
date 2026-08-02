@@ -271,6 +271,8 @@ public class ProLeapFrontend {
 		final Map<String, String> fileRecordKey = new LinkedHashMap<>();
 		/** VSAM V1: file name -> its FILE STATUS variable name, when declared. */
 		final Map<String, String> fileStatusVar = new LinkedHashMap<>();
+		/** Files assigned to a ddname (an external binding) rather than a literal path. */
+		final Set<String> fileAssignIsDdname = new LinkedHashSet<>();
 		/** Pending FD links: {fdName, recordItemMap} — record names finalize later. */
 		final List<Object[]> pendingFds = new ArrayList<>();
 		/** Final record name -> file name (built after finalizeNames). */
@@ -514,9 +516,30 @@ public class ProLeapFrontend {
 					reject(ctx, "SELECT " + name + " without an ASSIGN TO clause");
 					continue;
 				}
+				// ASSIGN TO <word> is a ddname: a DEPLOYMENT binding, not a
+				// property of the program. On z/OS the JCL DD statement maps it
+				// to a dataset; GnuCOBOL implements the same convention and
+				// resolves it at RUNTIME from the environment (DD_<name>,
+				// dd_<name>, or <name>), falling back to a file of that name in
+				// the working directory - measured, examples/probes/ddname.cbl.
+				// Every ASSIGN in AWS CardDemo is this form (49 of 49, zero
+				// literals), so rejecting it rejected all real file I/O.
+				//
+				// The binding itself is NOT verified: equivalence is a claim
+				// about the program given a binding, and both sides are handed
+				// the same records by the harness. That is disclosed rather
+				// than assumed (docs/ddname.md).
 				final String assignText = textOf(e.getAssignClause().getToValueStmt().getCtx());
-				if (!(assignText.startsWith("\"") || assignText.startsWith("'"))) {
-					reject(ctx, "SELECT " + name + " ASSIGN TO a non-literal (" + assignText + ")");
+				final boolean assignIsLiteral = assignText.startsWith("\"") || assignText.startsWith("'");
+				String assignName;
+				if (assignIsLiteral) {
+					assignName = assignText.substring(1, assignText.length() - 1);
+				} else if (ID_ONLY.matcher(assignText.toUpperCase()).matches()) {
+					assignName = assignText.toUpperCase();
+					fileAssignIsDdname.add(name);
+				} else {
+					reject(ctx, "SELECT " + name + " ASSIGN TO \"" + assignText
+							+ "\" which is neither a literal nor a ddname");
 					continue;
 				}
 				final String orgText = e.getOrganizationClause() != null
@@ -538,7 +561,7 @@ public class ProLeapFrontend {
 							+ " with organization other than LINE SEQUENTIAL or INDEXED (file I/O stage 1 / VSAM V1)");
 					continue;
 				}
-				selectedFiles.put(name, assignText.substring(1, assignText.length() - 1));
+				selectedFiles.put(name, assignName);
 			}
 		}
 
@@ -776,6 +799,16 @@ public class ProLeapFrontend {
 				final Map<String, Object> f = new LinkedHashMap<>();
 				f.put("name", fdName);
 				f.put("assign", selectedFiles.get(fdName));
+				// "ddname" means the name is bound externally at run time (JCL DD
+				// on z/OS, DD_<name> in the environment here) rather than being a
+				// path in the source. The binding is deployment configuration and
+				// is not itself verified - docs/ddname.md. Emitted ONLY for
+				// ddnames: a literal ASSIGN keeps the IR it has always had, so
+				// the committed replay-cache keys (which hash the IR into the
+				// prompt) stay valid for every existing module.
+				if (fileAssignIsDdname.contains(fdName)) {
+					f.put("assignKind", "ddname");
+				}
 				f.put("organization", fileOrganization.getOrDefault(fdName, "line-sequential"));
 				f.put("record", recName);
 				// VSAM V1: the RECORD KEY is what makes iteration order the
