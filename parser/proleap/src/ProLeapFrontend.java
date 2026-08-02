@@ -525,6 +525,20 @@ public class ProLeapFrontend {
 			unsupported.add(what + " (line " + mapLine(ctx.getStart().getLine()) + ")");
 		}
 
+		/** Paragraphs hoisted out of inline PERFORM bodies, appended after lowering. */
+		final List<Map<String, Object>> pendingInlineParagraphs = new ArrayList<>();
+
+		/** A collision-free name for a hoisted inline PERFORM body. */
+		String synthesizeInlineName() {
+			String name = "INLINE PERFORM " + (pendingInlineParagraphs.size() + 1);
+			int n = 2;
+			while (paragraphNames.contains(name)) {
+				name = "INLINE PERFORM " + (pendingInlineParagraphs.size() + 1) + " " + n++;
+			}
+			paragraphNames.add(name);
+			return name;
+		}
+
 		/**
 		 * A name for the synthetic mainline paragraph that no source text can
 		 * collide with: real procedure names come from COBOL words, which
@@ -1043,6 +1057,12 @@ public class ProLeapFrontend {
 					edges.add(e);
 				}
 			}
+
+			// Bodies hoisted out of inline PERFORMs become real paragraphs,
+			// appended after the source ones so paragraph ORDER (which decides
+			// fall-through and the control-flow entry) is untouched. Nothing
+			// falls into them: each is reached only by its own PERFORM.
+			paragraphs.addAll(pendingInlineParagraphs);
 
 			// Soundness gate for GO TO: only the structured early-exit of a plain
 			// PERFORM THRU range survives; every other shape is enumerated as
@@ -2615,8 +2635,29 @@ public class ProLeapFrontend {
 
 		Map<String, Object> lowerPerform(final PerformStatement s) {
 			final ParserRuleContext ctx = s.getCtx();
+			if (s.getPerformStatementType() == PerformStatement.PerformStatementType.INLINE) {
+				// Inline PERFORM is the same loop with its body written in
+				// place instead of in a paragraph. Hoist the body into a
+				// synthetic paragraph and emit the ordinary out-of-line form,
+				// so every loop shape (TIMES/UNTIL/VARYING) and every verifier
+				// layer is reused unchanged - the stage-75 mainline mechanism.
+				final io.proleap.cobol.asg.metamodel.procedure.perform.PerformInlineStatement pi =
+						s.getPerformInlineStatement();
+				if (pi == null) {
+					reject(ctx, "inline PERFORM without a body");
+					return null;
+				}
+				final List<Object> body = lowerStatements(pi.getStatements());
+				final String name = synthesizeInlineName();
+				final Map<String, Object> para = new LinkedHashMap<>();
+				para.put("name", name);
+				para.put("span", span(ctx));
+				para.put("statements", body);
+				pendingInlineParagraphs.add(para);
+				return finishPerform(s, pi.getPerformType(), ctx, name, null);
+			}
 			if (s.getPerformStatementType() != PerformStatement.PerformStatementType.PROCEDURE) {
-				reject(ctx, "inline PERFORM");
+				reject(ctx, "PERFORM form " + s.getPerformStatementType());
 				return null;
 			}
 			final PerformProcedureStatement pp = s.getPerformProcedureStatement();
@@ -2639,7 +2680,7 @@ public class ProLeapFrontend {
 					reject(ctx, "PERFORM of unknown section " + target);
 					return null;
 				}
-				return finishPerform(s, pp, ctx, target, end.equals(target) ? null : end);
+				return finishPerform(s, pp.getPerformType(), ctx, target, end.equals(target) ? null : end);
 			}
 			// PERFORM <a> THRU <b>: ProLeap resolves a valid forward range into
 			// the full ordered paragraph list. Accept only when the returned
@@ -2667,13 +2708,15 @@ public class ProLeapFrontend {
 					thru = last;
 				}
 			}
-			return finishPerform(s, pp, ctx, target, thru);
+			return finishPerform(s, pp.getPerformType(), ctx, target, thru);
 		}
 
-		/** Shared tail of PERFORM lowering: plain vs TIMES/UNTIL/VARYING forms. */
-		Map<String, Object> finishPerform(final PerformStatement s, final PerformProcedureStatement pp,
+		/** Shared tail of PERFORM lowering: plain vs TIMES/UNTIL/VARYING forms.
+		 *  Takes the PerformType directly so the inline form, whose body has
+		 *  been hoisted into a synthetic paragraph, reuses it unchanged. */
+		Map<String, Object> finishPerform(final PerformStatement s,
+				final io.proleap.cobol.asg.metamodel.procedure.perform.PerformType pt,
 				final ParserRuleContext ctx, final String target, final String thru) {
-			final io.proleap.cobol.asg.metamodel.procedure.perform.PerformType pt = pp.getPerformType();
 			final Map<String, Object> out = new LinkedHashMap<>();
 			if (pt == null) {
 				out.put("kind", "perform");
