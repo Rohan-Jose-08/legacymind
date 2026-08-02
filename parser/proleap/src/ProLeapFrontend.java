@@ -364,55 +364,100 @@ public class ProLeapFrontend {
 					+ "span provenance cannot be mapped to original lines yet");
 		}
 
-		/** Area-A/B content of a line for alignment: strip the sequence area
-		 *  (cols 1-6), the indicator column, and cols 73+, then trim right —
-		 *  the preprocessor's writer normalizes those regions. */
-		String alignKey(final String line) {
-			final int start = format == CobolSourceFormatEnum.TANDEM ? 0 : Math.min(7, line.length());
-			final int end = format == CobolSourceFormatEnum.TANDEM ? line.length() : Math.min(72, line.length());
-			return start >= end ? "" : line.substring(start, end).replaceAll("\\s+$", "");
+		/**
+		 * Alignment key for a CODE line, or null when the line carries no code
+		 * (a comment or a blank).
+		 *
+		 * Aligning on raw text does not work, because the preprocessor rewrites
+		 * more than it inserts: fixed-format comments become free-format
+		 * (`      *****` -> `      *> ****`), comment ENTRIES gain a `*>CE`
+		 * marker inside the line (`AUTHOR. *>CE  AWS.`), the first line can
+		 * carry a BOM, and blank/comment lines are re-flowed. Every one of
+		 * those was hit in turn on real CardDemo modules.
+		 *
+		 * Span provenance only ever needs to map lines that carry STATEMENTS,
+		 * so comments and blanks are dropped from both sequences and the
+		 * remaining code lines are matched on whitespace-collapsed content with
+		 * preprocessor markers removed. Comments may then be rewritten or
+		 * re-flowed freely without breaking the mapping.
+		 */
+		String codeKey(final String line) {
+			final String l = line.startsWith("﻿") ? line.substring(1) : line;
+			final int ind = format == CobolSourceFormatEnum.TANDEM ? -1 : 6;
+			if (ind >= 0 && l.length() > ind) {
+				final char c = l.charAt(ind);
+				if (c == '*' || c == '/') {
+					return null; // fixed-format comment (either original or rewritten)
+				}
+			}
+			final int start = format == CobolSourceFormatEnum.TANDEM ? 0 : Math.min(7, l.length());
+			final int end = format == CobolSourceFormatEnum.TANDEM ? l.length() : Math.min(72, l.length());
+			if (start >= end) {
+				return null;
+			}
+			final String body = l.substring(start, end)
+					.replaceAll("\\*>\\S*", "")   // preprocessor markers (*>CE and friends)
+					.replaceAll("\\s+", " ")
+					.trim();
+			return body.isEmpty() ? null : body;
 		}
 
-		/** True when the original line is a COPY statement (area B). */
-		boolean isCopyLine(final String line) {
-			return alignKey(line).matches("(?i)\\s*COPY\\s+\\S+.*");
+		/** True when a code key is a COPY statement. */
+		boolean isCopyKey(final String key) {
+			return key != null && key.matches("(?i)COPY\\s+\\S+.*");
 		}
 
 		int[] alignThroughCopies(final String[] orig, final List<Integer> nonContinuation) {
 			final String[] pre = preprocessed.split("\n", -1);
 			final int preCount = pre.length;
+
+			// Original CODE lines (comments, blanks and continuations dropped).
+			final List<int[]> oIdx = new ArrayList<>();   // {originalLineNo, indexIntoKeys}
+			final List<String> oKey = new ArrayList<>();
+			for (final int lineNo : nonContinuation) {
+				final String k = codeKey(orig[lineNo - 1]);
+				if (k != null) {
+					oIdx.add(new int[] { lineNo });
+					oKey.add(k);
+				}
+			}
+
 			final int[] map = new int[preCount + 1];
-			int o = 0; // index into nonContinuation
+			int o = 0;
+			int lastMapped = oIdx.isEmpty() ? 1 : oIdx.get(0)[0];
 			for (int p = 1; p <= preCount; p++) {
-				final String pKey = alignKey(pre[p - 1]);
-				if (o < nonContinuation.size()
-						&& pKey.equals(alignKey(orig[nonContinuation.get(o) - 1]))) {
-					map[p] = nonContinuation.get(o);
+				final String pKey = codeKey(pre[p - 1]);
+				if (pKey == null) {
+					map[p] = lastMapped; // comment/blank: no statement can live here
+					continue;
+				}
+				if (o < oKey.size() && pKey.equals(oKey.get(o))) {
+					map[p] = oIdx.get(o)[0];
+					lastMapped = map[p];
 					o++;
 					continue;
 				}
 				// Mismatch: explained only when the pending original line is a
 				// COPY statement (this preprocessed line is copied content) —
-				// attribute it to the COPY site. When the NEXT original line
-				// matches, the copied region has ended: consume the COPY line.
-				if (o < nonContinuation.size() && isCopyLine(orig[nonContinuation.get(o) - 1])) {
-					if (o + 1 < nonContinuation.size()
-							&& pKey.equals(alignKey(orig[nonContinuation.get(o + 1) - 1]))) {
-						o++; // the COPY produced no further lines; this matches the line after it
-						map[p] = nonContinuation.get(o);
+				// attribute it to the COPY site. When the NEXT original code
+				// line matches, the copied region has ended: consume the COPY.
+				if (o < oKey.size() && isCopyKey(oKey.get(o))) {
+					if (o + 1 < oKey.size() && pKey.equals(oKey.get(o + 1))) {
+						o++;
+						map[p] = oIdx.get(o)[0];
 						o++;
 					} else {
-						map[p] = nonContinuation.get(o); // copied content -> the COPY site
+						map[p] = oIdx.get(o)[0]; // copied content -> the COPY site
 					}
+					lastMapped = map[p];
 					continue;
 				}
 				return null; // unexplained divergence: refuse, never guess
 			}
-			// Every original line after the last mapped one must be a COPY
-			// line or blank — otherwise output ended early unexplained.
-			for (int rest = o; rest < nonContinuation.size(); rest++) {
-				final String line = orig[nonContinuation.get(rest) - 1];
-				if (!isCopyLine(line) && !alignKey(line).isEmpty()) {
+			// Every original code line after the last mapped one must be a COPY
+			// line — otherwise output ended early, unexplained.
+			for (int rest = o; rest < oKey.size(); rest++) {
+				if (!isCopyKey(oKey.get(rest))) {
 					return null;
 				}
 			}
