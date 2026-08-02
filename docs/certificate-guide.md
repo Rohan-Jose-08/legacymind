@@ -207,9 +207,15 @@ against it.
 
 Stated plainly, so there is no ambiguity in an audit:
 
-- **Dialect, *and its options*.** Equivalence is established against
-  **GnuCOBOL 3.1.2** (named in the run's toolchain record), compiled with
-  its **default options** — which for binary fields means
+- **Dialect, *and its options*.** Read the certificate's `toolchain`
+  block: it names the compiler, its version, and **the exact options the
+  evidence was produced with**, captured from the harness image itself
+  rather than declared. It rides inside the signed body, so altering it
+  breaks the signature. If `toolchain.recorded` is `false`, the compiler
+  and options are *not* pinned by that certificate and it says so, with a
+  matching entry in `gaps`. Equivalence for the benchmark is established
+  against **GnuCOBOL 3.1.2** compiled with its **default options** —
+  which for binary fields means
   *decimal-truncating* `COMP`. This matters more than it sounds: some
   COBOL semantics are a property of the compiler flags, not of the
   source. A `PIC S9(4) COMP` field computing `9999 + 1` yields `0` under

@@ -19,12 +19,18 @@ RUN apt-get update \
 
 # Path of the COBOL source within the build context (repo root), and the
 # file name the program ASSIGNs its input to (relative to CWD = /tmp).
+ARG COBFLAGS=""
 ARG SOURCE=examples/batchsum.cbl
 ARG INFILE=in.dat
 COPY ${SOURCE} /opt/legacy/program.cbl
 
-RUN cobc -x -o /opt/legacy/program /opt/legacy/program.cbl \
+RUN cobc -x ${COBFLAGS} -o /opt/legacy/program /opt/legacy/program.cbl \
  && cobc --version | head -n 1 > /opt/legacy/cobc-version.txt
+
+# The compile options are part of the verified envelope: some COBOL
+# semantics (binary COMP truncation) are decided by them, not by the
+# source. Record them so certify can put them in the signed body.
+RUN printf '%s' "${COBFLAGS}" > /opt/legacy/cobc-flags.txt
 
 RUN { echo '#!/bin/sh'; \
       echo 'cd /tmp'; \

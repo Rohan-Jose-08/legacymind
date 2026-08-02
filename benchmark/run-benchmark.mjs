@@ -110,9 +110,43 @@ for (const m of modules) {
     ["node", "cli/dist/main.js", "verify", "--layer", "D", "--config", m.staticConfig, "--out", staticOut],
     "verify layer D (static, no execution)",
   );
+  // Capture the toolchain from the ARTIFACT rather than declaring it: the
+  // harness image records the compiler version and the exact cobc options it
+  // was built with, and certify puts them inside the signed certificate body.
+  // Some COBOL semantics belong to those options (docs/binary-comp.md), so a
+  // certificate that omits them overstates what it proves.
+  const toolchainOut = `${benchDir}/toolchain.json`;
+  const cobcOf = (what) => {
+    const r = spawnSync("docker",
+      ["run", "--rm", "--entrypoint", "cat", m.imageTag, `/opt/legacy/cobc-${what}.txt`],
+      { encoding: "utf8" });
+    return r.status === 0 ? r.stdout.trim() : null;
+  };
+  const cobcVersion = cobcOf("version");
+  const cobcFlags = cobcOf("flags");
+  writeFileSync(join(ROOT, toolchainOut), JSON.stringify({
+    legacy: {
+      compiler: cobcVersion ?? "unknown (harness image did not report a version)",
+      options: cobcFlags === null ? "unknown" : (cobcFlags === "" ? "(compiler defaults)" : cobcFlags),
+      image: m.imageTag,
+      sandbox: "docker run --network none --rm",
+    },
+    modern: {
+      runtime: process.env.LM_JAVA_IMAGE
+        ? `Java 21 sandboxed in ${process.env.LM_JAVA_IMAGE} (--network none, ro classpath)`
+        : "Java 21 executed on the host JDK",
+      compiledWith: "javac --release 21",
+    },
+    notes:
+      "Equivalence is established against this compiler with THESE options. " +
+      "Binary COMP truncation is decided by the options, not by the source: a certificate " +
+      "does not transfer to a build with different truncation settings (docs/binary-comp.md).",
+  }, null, 2) + "\n");
+
   steps.certify = run(
     ["node", "cli/dist/main.js", "certify", "--selection", `${m.migrateOut}/selection.json`,
-      "--layer-a", propOut, "--layer-c", symOut, "--layer-d", staticOut, "--out", certOut],
+      "--layer-a", propOut, "--layer-c", symOut, "--layer-d", staticOut,
+      "--toolchain", toolchainOut, "--out", certOut],
     "certify",
   );
   run(["node", "cli/dist/main.js", "report", certOut, "--out", `${benchDir}/certification.md`], "report");

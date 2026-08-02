@@ -287,6 +287,7 @@ switch (command) {
           layerDPath: str(flags, "layer-d"),
           outPath: out,
           signingKeyPath: str(flags, "signing-key"),
+          toolchainPath: str(flags, "toolchain"),
         }),
       );
     } catch (e) {

@@ -61,6 +61,12 @@ export function runCertify(opts: {
   outPath: string;
   /** PEM private key for production signing; omitted uses the committed demo key. */
   signingKeyPath?: string;
+  /**
+   * JSON record of the toolchain the evidence was produced with (compiler,
+   * version, options). Rides inside the signed body; when omitted the
+   * certificate says so and gains a gap (docs/binary-comp.md).
+   */
+  toolchainPath?: string;
 }): number {
   const selection = readJson(opts.selectionPath, "selection.json");
   if (!selection.winner) {
@@ -169,6 +175,30 @@ export function runCertify(opts: {
   const allRunPassed = [layers.B, ...provided].every((l) => l.status === "PASS");
   const verdict = layers.B.status === "PASS" && provided.length >= 1 && allRunPassed ? "CERTIFIED" : "NOT_CERTIFIED";
 
+  // --- toolchain -----------------------------------------------------------------------
+  // Equivalence is established against a SPECIFIC compiler with SPECIFIC
+  // options, and some COBOL semantics belong to the options rather than to
+  // the source: a PIC S9(4) COMP field computing 9999+1 yields 0 under
+  // GnuCOBOL's default and 10000 under -std=ibm (docs/binary-comp.md). A
+  // certificate that does not say which one it used overstates what it
+  // proves, so the toolchain rides INSIDE the signed body - and when it was
+  // not supplied we say so loudly rather than leaving the reader to assume.
+  let toolchain: Record<string, unknown>;
+  if (opts.toolchainPath) {
+    toolchain = { recorded: true, ...readJson(opts.toolchainPath, "toolchain record") };
+  } else {
+    toolchain = {
+      recorded: false,
+      note:
+        "No toolchain record was supplied to certify, so the compiler, its version and its " +
+        "options are NOT part of this certificate. Semantics that depend on compile options " +
+        "(notably binary COMP truncation) are therefore unpinned: see docs/binary-comp.md.",
+    };
+    gaps.push(
+      "toolchain not recorded — the compiler and its options are not pinned by this certificate",
+    );
+  }
+
   const body = {
     tool: "legacymind certify",
     version: "0.1.0",
@@ -176,6 +206,7 @@ export function runCertify(opts: {
     verdict,
     module: selection.module,
     target,
+    toolchain,
     layers,
     coverageEnvelope: { ...coverage, gaps },
     selection: {
@@ -244,6 +275,12 @@ export function runReport(certPath: string, outPath?: string): number {
   push(`| Source | \`${cert.module?.source?.file}\` (sha256 \`${short(cert.module?.source?.sha256)}\`) |`);
   push(`| Target | \`${cert.target?.file}\` (sha256 \`${short(cert.target?.sha256)}\`) |`);
   push(`| Transpiler model | ${cert.target?.model} (candidate ${cert.target?.candidate}) |`);
+  const tc = cert.toolchain ?? {};
+  push(
+    `| Reference compiler | ${tc.recorded
+      ? `${tc.legacy?.compiler ?? "?"}, options: ${tc.legacy?.options ?? "?"}`
+      : "**not recorded** — compiler and options are not pinned by this certificate"} |`,
+  );
   push(`| Candidates evaluated | ${cert.selection?.candidatesEvaluated} |`);
   push(`| LLM cost (this migration) | $${Number(cert.selection?.totalCostUsd ?? 0).toFixed(4)} |`);
   const integ = cert.integrity ?? {};
