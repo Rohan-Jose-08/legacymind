@@ -1,6 +1,6 @@
 {
   "tool": "legacymind parse-sweep",
-  "generatedAt": "2026-07-17T14:59:57.287Z",
+  "generatedAt": "2026-08-02T12:48:52.748Z",
   "corpus": "https://github.com/uwol/proleap-cobol-parser",
   "commit": "d1bfe75bdd6d480f70c74c6345bcc02610ac30d3",
   "total": 759,
@@ -145,7 +145,7 @@
       },
       {
         "reason": "CLOSE of \"…\" which is not a lowered file",
-        "count": 951
+        "count": 957
       },
       {
         "reason": "REDEFINES group view \"…\" over elementary target \"…\" (RG aligns group leaves to group leaves)",
@@ -153,11 +153,11 @@
       },
       {
         "reason": "OPEN of \"…\" which is not a lowered file",
-        "count": 878
+        "count": 880
       },
       {
         "reason": "WRITE with ADVANCING/END-OF-PAGE/INVALID KEY (outside file I/O stage 1)",
-        "count": 766
+        "count": 767
       },
       {
         "reason": "GO TO FAIL-ROUTINE-WRITE inside PERFORM-reachable paragraph FAIL-ROUTINE is neither a structured ran",
@@ -169,14 +169,14 @@
       },
       {
         "reason": "READ of \"…\" which is not a lowered file",
-        "count": 551
+        "count": 614
       },
       {
         "reason": "SELECT PRINT-FILE ASSIGN TO a non-literal (XXXXX055)",
         "count": 397
       },
       {
-        "reason": "FD PRINT-FILE without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD PRINT-FILE without a matching lowered SELECT",
         "count": 397
       },
       {
@@ -189,7 +189,7 @@
       },
       {
         "reason": "SET target(s) TO a value other than TRUE (only SET condition-name TO TRUE or SET index TO n is suppo",
-        "count": 331
+        "count": 336
       },
       {
         "reason": "PERFORM target \"…\" is not a paragraph in this program",
@@ -213,23 +213,23 @@
       },
       {
         "reason": "START statement",
-        "count": 186
+        "count": 187
       },
       {
         "reason": "data clause outside the IR subset (SIGN/JUSTIFIED/SYNC/BLANK/EXTERNAL/GLOBAL)",
         "count": 184
       },
       {
-        "reason": "RETURN statement",
-        "count": 153
+        "reason": "READ ... KEY/INVALID KEY (keyed indexed reads are a named VSAM residual)",
+        "count": 156
       },
       {
-        "reason": "READ ... KEY/INVALID KEY (indexed reads are outside the subset)",
-        "count": 153
+        "reason": "RETURN statement",
+        "count": 154
       },
       {
         "reason": "SEARCH statement",
-        "count": 147
+        "count": 148
       },
       {
         "reason": "PICTURE …: P scaling is not supported",
@@ -245,15 +245,15 @@
       },
       {
         "reason": "INSPECT statement",
-        "count": 104
+        "count": 108
       },
       {
         "reason": "ALTER statement",
-        "count": 97
+        "count": 98
       },
       {
         "reason": "OPEN I-O/EXTEND (outside the file I/O subset)",
-        "count": 88
+        "count": 89
       },
       {
         "reason": "DECLARATIVES",
@@ -265,7 +265,7 @@
       },
       {
         "reason": "REWRITE statement",
-        "count": 80
+        "count": 81
       },
       {
         "reason": "SUBTRACT ... ON SIZE ERROR",
@@ -273,27 +273,23 @@
       },
       {
         "reason": "SEND statement",
-        "count": 64
-      },
-      {
-        "reason": "READ ... INTO (outside file I/O stage 2a)",
-        "count": 63
+        "count": 66
       },
       {
         "reason": "CALL statement",
-        "count": 62
+        "count": 66
       },
       {
         "reason": "MULTIPLY ... ON SIZE ERROR",
-        "count": 58
-      },
-      {
-        "reason": "FD SQ-FS1 without a matching LINE SEQUENTIAL SELECT",
-        "count": 55
+        "count": 60
       },
       {
         "reason": "ACCEPT ... FROM",
-        "count": 54
+        "count": 58
+      },
+      {
+        "reason": "FD SQ-FS1 without a matching lowered SELECT",
+        "count": 55
       },
       {
         "reason": "REDEFINES view \"…\" is signed numeric, not elementary unsigned numeric DISPLAY (REDEFINES R1a)",
@@ -308,6 +304,10 @@
         "count": 43
       },
       {
+        "reason": "RELEASE statement",
+        "count": 43
+      },
+      {
         "reason": "PERFORM VARYING ... AFTER (nested control variables)",
         "count": 43
       },
@@ -316,20 +316,20 @@
         "count": 42
       },
       {
-        "reason": "RELEASE statement",
-        "count": 42
-      },
-      {
         "reason": "data name \"…\" is not representable in the IR",
         "count": 42
       },
       {
-        "reason": "SORT statement",
-        "count": 38
+        "reason": "CONTINUE statement",
+        "count": 40
       },
       {
-        "reason": "CONTINUE statement",
-        "count": 38
+        "reason": "SORT statement",
+        "count": 39
+      },
+      {
+        "reason": "STRING statement",
+        "count": 37
       },
       {
         "reason": "DATA DIVISION section outside WORKING-STORAGE",
@@ -341,31 +341,27 @@
       },
       {
         "reason": "UNSTRING statement",
-        "count": 35
-      },
-      {
-        "reason": "STRING statement",
-        "count": 34
+        "count": 36
       },
       {
         "reason": "WRITE SQ-FS1R1-F-G-120 which is not a file record",
         "count": 34
       },
       {
+        "reason": "ENABLE statement",
+        "count": 32
+      },
+      {
         "reason": "DELETE statement",
-        "count": 31
+        "count": 32
       },
       {
         "reason": "EXIT PROGRAM statement",
-        "count": 31
+        "count": 32
       },
       {
         "reason": "SELECT SQ-FS1 ASSIGN TO a non-literal (XXXXX001)",
         "count": 30
-      },
-      {
-        "reason": "ENABLE statement",
-        "count": 29
       },
       {
         "reason": "EXEC SQL data entry",
@@ -380,8 +376,16 @@
         "count": 27
       },
       {
+        "reason": "DISPLAY ... AT/UPON/WITH/ON EXCEPTION",
+        "count": 27
+      },
+      {
         "reason": "ADD operand \"…\" (qualified/subscripted)",
         "count": 27
+      },
+      {
+        "reason": "MOVE CORRESPONDING",
+        "count": 26
       },
       {
         "reason": "OCCURS group \"…\" leaf \"…\" carries nested OCCURS (multi-dimensional tables are outside O3-flat)",
@@ -390,14 +394,6 @@
       {
         "reason": "ambiguous unqualified reference \"…\" (declared more than once)",
         "count": 25
-      },
-      {
-        "reason": "DISPLAY ... AT/UPON/WITH/ON EXCEPTION",
-        "count": 25
-      },
-      {
-        "reason": "MOVE CORRESPONDING",
-        "count": 24
       },
       {
         "reason": "paragraph DECL-PASS outside any section in a sectioned PROCEDURE DIVISION",
@@ -448,12 +444,16 @@
         "count": 23
       },
       {
-        "reason": "FD SQ-FS4 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SQ-FS4 without a matching lowered SELECT",
         "count": 23
       },
       {
         "reason": "paragraph END-DECLS outside any section in a sectioned PROCEDURE DIVISION",
         "count": 23
+      },
+      {
+        "reason": "DISABLE statement",
+        "count": 22
       },
       {
         "reason": "PROCEDURE DIVISION USING/GIVING",
@@ -464,7 +464,15 @@
         "count": 22
       },
       {
+        "reason": "MOVE target \"…\" uses reference modification",
+        "count": 22
+      },
+      {
         "reason": "GO TO ... DEPENDING ON (computed jump)",
+        "count": 21
+      },
+      {
+        "reason": "DIVIDE ... REMAINDER",
         "count": 21
       },
       {
@@ -484,11 +492,7 @@
         "count": 20
       },
       {
-        "reason": "DISABLE statement",
-        "count": 19
-      },
-      {
-        "reason": "FD SQ-FS2 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SQ-FS2 without a matching lowered SELECT",
         "count": 19
       },
       {
@@ -496,19 +500,15 @@
         "count": 19
       },
       {
-        "reason": "DIVIDE ... REMAINDER",
-        "count": 18
-      },
-      {
         "reason": "GO TO SEQ-TEST-002 is a backward or self jump; only strictly forward top-level jumps are supported",
         "count": 18
       },
       {
-        "reason": "FD SQ-FS3 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SQ-FS3 without a matching lowered SELECT",
         "count": 17
       },
       {
-        "reason": "FD TFIL without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD TFIL without a matching lowered SELECT",
         "count": 17
       },
       {
@@ -520,7 +520,7 @@
         "count": 16
       },
       {
-        "reason": "FD IX-FS1 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD IX-FS1 without a matching lowered SELECT",
         "count": 16
       },
       {
@@ -528,8 +528,24 @@
         "count": 16
       },
       {
+        "reason": "INITIALIZE statement",
+        "count": 16
+      },
+      {
         "reason": "EVALUATE WHEN NOT",
         "count": 16
+      },
+      {
+        "reason": "EXEC_CICS statement",
+        "count": 16
+      },
+      {
+        "reason": "EXEC_SQLIMS statement",
+        "count": 16
+      },
+      {
+        "reason": "RECEIVE statement",
+        "count": 15
       },
       {
         "reason": "GO TO target \"…\" is not representable in the IR",
@@ -540,8 +556,16 @@
         "count": 15
       },
       {
+        "reason": "GENERATE statement",
+        "count": 15
+      },
+      {
         "reason": "SELECT SQ-FS4 ASSIGN TO a non-literal (XXXXX014)",
         "count": 15
+      },
+      {
+        "reason": "inline PERFORM",
+        "count": 14
       },
       {
         "reason": "MULTIPLY operand \"…\" (qualified/subscripted)",
@@ -549,10 +573,6 @@
       },
       {
         "reason": "GO TO REL-TEST-010-R is a backward or self jump; only strictly forward top-level jumps are supported",
-        "count": 14
-      },
-      {
-        "reason": "GENERATE statement",
         "count": 14
       },
       {
@@ -566,10 +586,6 @@
       {
         "reason": "GO TO READ-LONG-REC-EXIT inside PERFORM-reachable paragraph READ-LONG-REC is neither a structured ra",
         "count": 14
-      },
-      {
-        "reason": "RECEIVE statement",
-        "count": 13
       },
       {
         "reason": "PERFORM ... THRU involving a section",
@@ -660,7 +676,15 @@
         "count": 13
       },
       {
+        "reason": "CANCEL statement",
+        "count": 12
+      },
+      {
         "reason": "paragraph D-TERMINATE-CCVS outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 12
+      },
+      {
+        "reason": "ADD CORRESPONDING",
         "count": 12
       },
       {
@@ -669,6 +693,10 @@
       },
       {
         "reason": "statement before the first paragraph header",
+        "count": 12
+      },
+      {
+        "reason": "EXEC_SQL statement",
         "count": 12
       },
       {
@@ -684,11 +712,7 @@
         "count": 11
       },
       {
-        "reason": "INITIALIZE statement",
-        "count": 11
-      },
-      {
-        "reason": "ADD CORRESPONDING",
+        "reason": "STOP STOP_RUN_AND_DISPLAY",
         "count": 11
       },
       {
@@ -704,15 +728,7 @@
         "count": 10
       },
       {
-        "reason": "inline PERFORM",
-        "count": 10
-      },
-      {
         "reason": "WRITE SQ-FS3R1-F-G-120 which is not a file record",
-        "count": 10
-      },
-      {
-        "reason": "CANCEL statement",
         "count": 10
       },
       {
@@ -724,7 +740,7 @@
         "count": 10
       },
       {
-        "reason": "FD IX-FS3 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD IX-FS3 without a matching lowered SELECT",
         "count": 10
       },
       {
@@ -736,7 +752,7 @@
         "count": 10
       },
       {
-        "reason": "STOP STOP_RUN_AND_DISPLAY",
+        "reason": "SUBTRACT CORRESPONDING",
         "count": 10
       },
       {
@@ -765,10 +781,6 @@
       },
       {
         "reason": "GO TO BREAKDOWN-EXIT inside PERFORM-reachable paragraph BREAKDOWN-PARA is neither a structured range",
-        "count": 9
-      },
-      {
-        "reason": "SUBTRACT CORRESPONDING",
         "count": 9
       },
       {
@@ -808,6 +820,10 @@
         "count": 8
       },
       {
+        "reason": "EVALUATE ... ALSO (multiple subjects)",
+        "count": 8
+      },
+      {
         "reason": "GO TO GO--TEST-F2-1 is a backward or self jump; only strictly forward top-level jumps are supported",
         "count": 8
       },
@@ -836,7 +852,7 @@
         "count": 8
       },
       {
-        "reason": "FD RL-FS1 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD RL-FS1 without a matching lowered SELECT",
         "count": 8
       },
       {
@@ -848,11 +864,11 @@
         "count": 8
       },
       {
-        "reason": "FD RL-FD2 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD RL-FD2 without a matching lowered SELECT",
         "count": 8
       },
       {
-        "reason": "FD TEST-FILE without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD TEST-FILE without a matching lowered SELECT",
         "count": 8
       },
       {
@@ -862,6 +878,10 @@
       {
         "reason": "SELECT SQ-FS2 ASSIGN TO a non-literal (XXXXX014)",
         "count": 8
+      },
+      {
+        "reason": "MERGE statement",
+        "count": 7
       },
       {
         "reason": "GO TO SEQ-TEST-008 is a backward or self jump; only strictly forward top-level jumps are supported",
@@ -888,7 +908,7 @@
         "count": 7
       },
       {
-        "reason": "FD IX-FD1 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD IX-FD1 without a matching lowered SELECT",
         "count": 7
       },
       {
@@ -900,7 +920,15 @@
         "count": 7
       },
       {
-        "reason": "FD ST-FS1 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD ST-FS1 without a matching lowered SELECT",
+        "count": 7
+      },
+      {
+        "reason": "INITIATE statement",
+        "count": 7
+      },
+      {
+        "reason": "TERMINATE statement",
         "count": 7
       },
       {
@@ -920,7 +948,7 @@
         "count": 7
       },
       {
-        "reason": "FD SQ-VS7 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SQ-VS7 without a matching lowered SELECT",
         "count": 7
       },
       {
@@ -944,19 +972,11 @@
         "count": 7
       },
       {
-        "reason": "MERGE statement",
-        "count": 6
-      },
-      {
         "reason": "SELECT TFIL ASSIGN TO a non-literal (XXXXX014)",
         "count": 6
       },
       {
-        "reason": "EVALUATE ... ALSO (multiple subjects)",
-        "count": 6
-      },
-      {
-        "reason": "FD IX-FS2 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD IX-FS2 without a matching lowered SELECT",
         "count": 6
       },
       {
@@ -964,7 +984,7 @@
         "count": 6
       },
       {
-        "reason": "FD TFIL2 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD TFIL2 without a matching lowered SELECT",
         "count": 6
       },
       {
@@ -981,6 +1001,10 @@
       },
       {
         "reason": "GO TO BUILD-LEVEL-3 is a backward or self jump; only strictly forward top-level jumps are supported",
+        "count": 6
+      },
+      {
+        "reason": "SET target(s) TO a compound or missing value",
         "count": 6
       },
       {
@@ -1004,19 +1028,11 @@
         "count": 6
       },
       {
-        "reason": "INITIATE statement",
-        "count": 6
-      },
-      {
-        "reason": "TERMINATE statement",
-        "count": 6
-      },
-      {
         "reason": "SELECT SORTFILE-1H ASSIGN TO a non-literal (XXXXX027)",
         "count": 6
       },
       {
-        "reason": "FD SORTFILE-1H without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SORTFILE-1H without a matching lowered SELECT",
         "count": 6
       },
       {
@@ -1038,6 +1054,10 @@
       {
         "reason": "OCCURS element \"…\" is numeric-edited, not an elementary unsigned numeric or alphanumeric DISPLAY ite",
         "count": 6
+      },
+      {
+        "reason": "qualified reference \"…\" resolves to 0 data item(s)",
+        "count": 5
       },
       {
         "reason": "paragraph DB-COMMON outside any section in a sectioned PROCEDURE DIVISION",
@@ -1076,6 +1096,10 @@
         "count": 5
       },
       {
+        "reason": "PERFORM ... WITH TEST AFTER",
+        "count": 5
+      },
+      {
         "reason": "REDEFINES target \"…\" is a group, not elementary unsigned numeric DISPLAY (REDEFINES R1a)",
         "count": 5
       },
@@ -1084,7 +1108,7 @@
         "count": 5
       },
       {
-        "reason": "FD SQ-FS5 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SQ-FS5 without a matching lowered SELECT",
         "count": 5
       },
       {
@@ -1096,11 +1120,11 @@
         "count": 5
       },
       {
-        "reason": "FD RL-FS2 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD RL-FS2 without a matching lowered SELECT",
         "count": 5
       },
       {
-        "reason": "FD RL-FD1 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD RL-FD1 without a matching lowered SELECT",
         "count": 5
       },
       {
@@ -1164,10 +1188,6 @@
         "count": 4
       },
       {
-        "reason": "qualified reference \"…\" resolves to 0 data item(s)",
-        "count": 4
-      },
-      {
         "reason": "GO TO BAIL-OUT-WRITE-2 inside PERFORM-reachable paragraph BAIL-OUT-2 is neither a structured range e",
         "count": 4
       },
@@ -1196,7 +1216,7 @@
         "count": 4
       },
       {
-        "reason": "FD RL-FR1 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD RL-FR1 without a matching lowered SELECT",
         "count": 4
       },
       {
@@ -1204,7 +1224,7 @@
         "count": 4
       },
       {
-        "reason": "FD IX-FD2 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD IX-FD2 without a matching lowered SELECT",
         "count": 4
       },
       {
@@ -1284,10 +1304,6 @@
         "count": 4
       },
       {
-        "reason": "SET target(s) TO a compound or missing value",
-        "count": 4
-      },
-      {
         "reason": "88-level B with multiple values or a THRU range",
         "count": 4
       },
@@ -1344,10 +1360,6 @@
         "count": 4
       },
       {
-        "reason": "PERFORM ... WITH TEST AFTER",
-        "count": 4
-      },
-      {
         "reason": "REDEFINES view \"…\" is untyped, not elementary unsigned numeric DISPLAY (REDEFINES R1a)",
         "count": 4
       },
@@ -1396,7 +1408,7 @@
         "count": 4
       },
       {
-        "reason": "FD RL-FD3 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD RL-FD3 without a matching lowered SELECT",
         "count": 4
       },
       {
@@ -1524,11 +1536,11 @@
         "count": 3
       },
       {
-        "reason": "FD SQ-FRR without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SQ-FRR without a matching lowered SELECT",
         "count": 3
       },
       {
-        "reason": "FD RR-FS1 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD RR-FS1 without a matching lowered SELECT",
         "count": 3
       },
       {
@@ -1556,6 +1568,10 @@
         "count": 3
       },
       {
+        "reason": "COMPUTE with multiple receiving fields",
+        "count": 3
+      },
+      {
         "reason": "SELECT TFIL ASSIGN TO a non-literal (XXXXX001)",
         "count": 3
       },
@@ -1564,11 +1580,11 @@
         "count": 3
       },
       {
-        "reason": "FD SQ-FS6 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SQ-FS6 without a matching lowered SELECT",
         "count": 3
       },
       {
-        "reason": "FD SQ-FS8 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SQ-FS8 without a matching lowered SELECT",
         "count": 3
       },
       {
@@ -1640,7 +1656,7 @@
         "count": 3
       },
       {
-        "reason": "FD SQ-VS6 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SQ-VS6 without a matching lowered SELECT",
         "count": 3
       },
       {
@@ -1764,7 +1780,11 @@
         "count": 3
       },
       {
-        "reason": "SELECT SOMEFILE1 with organization other than LINE SEQUENTIAL (file I/O stage 1)",
+        "reason": "ACCEPT target \"…\" (qualified/subscripted)",
+        "count": 3
+      },
+      {
+        "reason": "SELECT SOMEFILE1 with organization other than LINE SEQUENTIAL or INDEXED (file I/O stage 1 / VSAM V1",
         "count": 3
       },
       {
@@ -1773,6 +1793,10 @@
       },
       {
         "reason": "GO TO LOOK-FOR-LATE-TRANSMISSIONS is a backward or self jump; only strictly forward top-level jumps ",
+        "count": 2
+      },
+      {
+        "reason": "PURGE statement",
         "count": 2
       },
       {
@@ -1904,7 +1928,7 @@
         "count": 2
       },
       {
-        "reason": "FD IX-VS2 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD IX-VS2 without a matching lowered SELECT",
         "count": 2
       },
       {
@@ -2028,7 +2052,7 @@
         "count": 2
       },
       {
-        "reason": "FD TFIL-2 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD TFIL-2 without a matching lowered SELECT",
         "count": 2
       },
       {
@@ -2048,7 +2072,7 @@
         "count": 2
       },
       {
-        "reason": "FD SQ-FS7 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SQ-FS7 without a matching lowered SELECT",
         "count": 2
       },
       {
@@ -2140,7 +2164,7 @@
         "count": 2
       },
       {
-        "reason": "FD RL-VS1 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD RL-VS1 without a matching lowered SELECT",
         "count": 2
       },
       {
@@ -2196,27 +2220,27 @@
         "count": 2
       },
       {
-        "reason": "FD FILE1 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD FILE1 without a matching lowered SELECT",
         "count": 2
       },
       {
-        "reason": "FD FILE2 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD FILE2 without a matching lowered SELECT",
         "count": 2
       },
       {
-        "reason": "FD FILE3 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD FILE3 without a matching lowered SELECT",
         "count": 2
       },
       {
-        "reason": "FD SORT1 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SORT1 without a matching lowered SELECT",
         "count": 2
       },
       {
-        "reason": "FD SORT2 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SORT2 without a matching lowered SELECT",
         "count": 2
       },
       {
-        "reason": "FD SORT3 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SORT3 without a matching lowered SELECT",
         "count": 2
       },
       {
@@ -2232,11 +2256,11 @@
         "count": 2
       },
       {
-        "reason": "FD SORTFILE-1E without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SORTFILE-1E without a matching lowered SELECT",
         "count": 2
       },
       {
-        "reason": "FD SORTOUT-1E without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SORTOUT-1E without a matching lowered SELECT",
         "count": 2
       },
       {
@@ -2244,11 +2268,11 @@
         "count": 2
       },
       {
-        "reason": "FD SORTFILE-2E without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SORTFILE-2E without a matching lowered SELECT",
         "count": 2
       },
       {
-        "reason": "FD SORTOUT-2E without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SORTOUT-2E without a matching lowered SELECT",
         "count": 2
       },
       {
@@ -2352,11 +2376,11 @@
         "count": 2
       },
       {
-        "reason": "FD SORTFILE-1A without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SORTFILE-1A without a matching lowered SELECT",
         "count": 2
       },
       {
-        "reason": "FD SORTOUT-1A without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SORTOUT-1A without a matching lowered SELECT",
         "count": 2
       },
       {
@@ -2372,15 +2396,15 @@
         "count": 2
       },
       {
-        "reason": "FD SORTFILE-1B without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SORTFILE-1B without a matching lowered SELECT",
         "count": 2
       },
       {
-        "reason": "FD SORTIN-1B without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SORTIN-1B without a matching lowered SELECT",
         "count": 2
       },
       {
-        "reason": "FD SORTOUT-1B without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SORTOUT-1B without a matching lowered SELECT",
         "count": 2
       },
       {
@@ -2388,7 +2412,7 @@
         "count": 2
       },
       {
-        "reason": "FD SORTIN-1C without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SORTIN-1C without a matching lowered SELECT",
         "count": 2
       },
       {
@@ -2404,11 +2428,11 @@
         "count": 2
       },
       {
-        "reason": "FD SORTOUT-1F without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SORTOUT-1F without a matching lowered SELECT",
         "count": 2
       },
       {
-        "reason": "FD SORTFILE-1F without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SORTFILE-1F without a matching lowered SELECT",
         "count": 2
       },
       {
@@ -2416,7 +2440,7 @@
         "count": 2
       },
       {
-        "reason": "FD SORTIN-1G without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SORTIN-1G without a matching lowered SELECT",
         "count": 2
       },
       {
@@ -2424,7 +2448,7 @@
         "count": 2
       },
       {
-        "reason": "FD SORTOUT-1I without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SORTOUT-1I without a matching lowered SELECT",
         "count": 2
       },
       {
@@ -2452,15 +2476,15 @@
         "count": 2
       },
       {
-        "reason": "FD SORTIN-1J without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SORTIN-1J without a matching lowered SELECT",
         "count": 2
       },
       {
-        "reason": "FD SORTOUT-1J without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SORTOUT-1J without a matching lowered SELECT",
         "count": 2
       },
       {
-        "reason": "FD SORTFILE-1J without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SORTFILE-1J without a matching lowered SELECT",
         "count": 2
       },
       {
@@ -2468,11 +2492,11 @@
         "count": 2
       },
       {
-        "reason": "FD SORTIN-1K without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SORTIN-1K without a matching lowered SELECT",
         "count": 2
       },
       {
-        "reason": "FD SORTOUT-2F without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SORTOUT-2F without a matching lowered SELECT",
         "count": 2
       },
       {
@@ -2552,39 +2576,43 @@
         "count": 2
       },
       {
-        "reason": "SELECT SOMEFILE2 with organization other than LINE SEQUENTIAL (file I/O stage 1)",
+        "reason": "SELECT SOMEFILE2 with organization other than LINE SEQUENTIAL or INDEXED (file I/O stage 1 / VSAM V1",
         "count": 2
       },
       {
-        "reason": "SELECT SOMEFILE3 with organization other than LINE SEQUENTIAL (file I/O stage 1)",
+        "reason": "SELECT SOMEFILE3 with organization other than LINE SEQUENTIAL or INDEXED (file I/O stage 1 / VSAM V1",
         "count": 2
       },
       {
-        "reason": "SELECT SOMEFILE4 with organization other than LINE SEQUENTIAL (file I/O stage 1)",
+        "reason": "SELECT SOMEFILE4 with organization other than LINE SEQUENTIAL or INDEXED (file I/O stage 1 / VSAM V1",
         "count": 2
       },
       {
-        "reason": "SELECT SOMEFILE5 with organization other than LINE SEQUENTIAL (file I/O stage 1)",
+        "reason": "SELECT SOMEFILE5 with organization other than LINE SEQUENTIAL or INDEXED (file I/O stage 1 / VSAM V1",
         "count": 2
       },
       {
-        "reason": "FD SOMEFILE2 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SOMEFILE2 without a matching lowered SELECT",
         "count": 2
       },
       {
-        "reason": "FD SOMEFILE3 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SOMEFILE3 without a matching lowered SELECT",
         "count": 2
       },
       {
-        "reason": "FD SOMEFILE4 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SOMEFILE4 without a matching lowered SELECT",
         "count": 2
       },
       {
-        "reason": "FD SOMEFILE5 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SOMEFILE5 without a matching lowered SELECT",
         "count": 2
       },
       {
-        "reason": "FD SOMEFILE1 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "COMPUTE target \"…\" (qualified/subscripted)",
+        "count": 2
+      },
+      {
+        "reason": "FD SOMEFILE1 without a matching lowered SELECT",
         "count": 2
       },
       {
@@ -2597,6 +2625,10 @@
       },
       {
         "reason": "88-level EGAL with multiple values or a THRU range",
+        "count": 2
+      },
+      {
+        "reason": "DISPLAY operand \"…\" (qualified/subscripted)",
         "count": 2
       },
       {
@@ -2640,10 +2672,6 @@
         "count": 1
       },
       {
-        "reason": "PURGE statement",
-        "count": 1
-      },
-      {
         "reason": "SELECT GEN-FILE ASSIGN TO a non-literal (XXXXX014)",
         "count": 1
       },
@@ -2652,11 +2680,11 @@
         "count": 1
       },
       {
-        "reason": "FD GEN-FILE without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD GEN-FILE without a matching lowered SELECT",
         "count": 1
       },
       {
-        "reason": "FD SORT-FILE without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SORT-FILE without a matching lowered SELECT",
         "count": 1
       },
       {
@@ -2816,7 +2844,7 @@
         "count": 1
       },
       {
-        "reason": "FD SEQ-FILE without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SEQ-FILE without a matching lowered SELECT",
         "count": 1
       },
       {
@@ -2844,7 +2872,7 @@
         "count": 1
       },
       {
-        "reason": "FD IND-FILE without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD IND-FILE without a matching lowered SELECT",
         "count": 1
       },
       {
@@ -2852,7 +2880,7 @@
         "count": 1
       },
       {
-        "reason": "FD ST-FS4 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD ST-FS4 without a matching lowered SELECT",
         "count": 1
       },
       {
@@ -2900,19 +2928,19 @@
         "count": 1
       },
       {
-        "reason": "FD POPULATION-FILE without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD POPULATION-FILE without a matching lowered SELECT",
         "count": 1
       },
       {
-        "reason": "FD CONTROL-CARD-FILE without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD CONTROL-CARD-FILE without a matching lowered SELECT",
         "count": 1
       },
       {
-        "reason": "FD SOURCE-COBOL-PROGRAMS without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SOURCE-COBOL-PROGRAMS without a matching lowered SELECT",
         "count": 1
       },
       {
-        "reason": "FD UPDATED-POPULATION-FILE without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD UPDATED-POPULATION-FILE without a matching lowered SELECT",
         "count": 1
       },
       {
@@ -3136,15 +3164,15 @@
         "count": 1
       },
       {
-        "reason": "FD IX-FR1 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD IX-FR1 without a matching lowered SELECT",
         "count": 1
       },
       {
-        "reason": "FD IX-FR2 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD IX-FR2 without a matching lowered SELECT",
         "count": 1
       },
       {
-        "reason": "FD IX-FR3 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD IX-FR3 without a matching lowered SELECT",
         "count": 1
       },
       {
@@ -3192,7 +3220,7 @@
         "count": 1
       },
       {
-        "reason": "FD IX-NOP without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD IX-NOP without a matching lowered SELECT",
         "count": 1
       },
       {
@@ -3400,7 +3428,7 @@
         "count": 1
       },
       {
-        "reason": "FD IX-FD3 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD IX-FD3 without a matching lowered SELECT",
         "count": 1
       },
       {
@@ -3428,7 +3456,7 @@
         "count": 1
       },
       {
-        "reason": "FD IX-VS1 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD IX-VS1 without a matching lowered SELECT",
         "count": 1
       },
       {
@@ -3756,10 +3784,6 @@
         "count": 1
       },
       {
-        "reason": "COMPUTE with multiple receiving fields",
-        "count": 1
-      },
-      {
         "reason": "REDEFINES group view \"…\" has 3 leaves but target \"…\" has 5 (RG requires one-to-one leaf alignment)",
         "count": 1
       },
@@ -3928,11 +3952,11 @@
         "count": 1
       },
       {
-        "reason": "FD RL-FR2 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD RL-FR2 without a matching lowered SELECT",
         "count": 1
       },
       {
-        "reason": "FD RL-FR3 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD RL-FR3 without a matching lowered SELECT",
         "count": 1
       },
       {
@@ -3960,15 +3984,15 @@
         "count": 1
       },
       {
-        "reason": "FD RL-FR4 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD RL-FR4 without a matching lowered SELECT",
         "count": 1
       },
       {
-        "reason": "FD RL-FR5 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD RL-FR5 without a matching lowered SELECT",
         "count": 1
       },
       {
-        "reason": "FD RL-FR6 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD RL-FR6 without a matching lowered SELECT",
         "count": 1
       },
       {
@@ -4000,11 +4024,11 @@
         "count": 1
       },
       {
-        "reason": "FD RL-FR7 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD RL-FR7 without a matching lowered SELECT",
         "count": 1
       },
       {
-        "reason": "FD RL-FR8 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD RL-FR8 without a matching lowered SELECT",
         "count": 1
       },
       {
@@ -4056,7 +4080,7 @@
         "count": 1
       },
       {
-        "reason": "FD RL-FS3 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD RL-FS3 without a matching lowered SELECT",
         "count": 1
       },
       {
@@ -4260,7 +4284,7 @@
         "count": 1
       },
       {
-        "reason": "FD RW-FS1 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD RW-FS1 without a matching lowered SELECT",
         "count": 1
       },
       {
@@ -4268,7 +4292,7 @@
         "count": 1
       },
       {
-        "reason": "FD RW-FS2 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD RW-FS2 without a matching lowered SELECT",
         "count": 1
       },
       {
@@ -4276,7 +4300,7 @@
         "count": 1
       },
       {
-        "reason": "FD RW-FS3 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD RW-FS3 without a matching lowered SELECT",
         "count": 1
       },
       {
@@ -4284,7 +4308,7 @@
         "count": 1
       },
       {
-        "reason": "FD RW-FS4 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD RW-FS4 without a matching lowered SELECT",
         "count": 1
       },
       {
@@ -4444,7 +4468,7 @@
         "count": 1
       },
       {
-        "reason": "FD TEST-FILE2 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD TEST-FILE2 without a matching lowered SELECT",
         "count": 1
       },
       {
@@ -4588,7 +4612,7 @@
         "count": 1
       },
       {
-        "reason": "FD SQ-FS9 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SQ-FS9 without a matching lowered SELECT",
         "count": 1
       },
       {
@@ -4864,7 +4888,7 @@
         "count": 1
       },
       {
-        "reason": "FD TFIL3 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD TFIL3 without a matching lowered SELECT",
         "count": 1
       },
       {
@@ -4872,7 +4896,7 @@
         "count": 1
       },
       {
-        "reason": "FD SORTOUT-1D without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SORTOUT-1D without a matching lowered SELECT",
         "count": 1
       },
       {
@@ -4884,7 +4908,7 @@
         "count": 1
       },
       {
-        "reason": "FD SORTIN-1E without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SORTIN-1E without a matching lowered SELECT",
         "count": 1
       },
       {
@@ -4892,7 +4916,7 @@
         "count": 1
       },
       {
-        "reason": "FD SORTOUT-1L without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SORTOUT-1L without a matching lowered SELECT",
         "count": 1
       },
       {
@@ -4916,15 +4940,15 @@
         "count": 1
       },
       {
-        "reason": "FD SORTIN-1M without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SORTIN-1M without a matching lowered SELECT",
         "count": 1
       },
       {
-        "reason": "FD SORTOUT-1M without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SORTOUT-1M without a matching lowered SELECT",
         "count": 1
       },
       {
-        "reason": "FD SORTFILE-1M without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SORTFILE-1M without a matching lowered SELECT",
         "count": 1
       },
       {
@@ -4932,7 +4956,7 @@
         "count": 1
       },
       {
-        "reason": "FD SORTIN-1N without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SORTIN-1N without a matching lowered SELECT",
         "count": 1
       },
       {
@@ -4984,7 +5008,7 @@
         "count": 1
       },
       {
-        "reason": "FD SORTOUT-3F without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SORTOUT-3F without a matching lowered SELECT",
         "count": 1
       },
       {
@@ -4996,11 +5020,11 @@
         "count": 1
       },
       {
-        "reason": "FD SORTIN-2G without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SORTIN-2G without a matching lowered SELECT",
         "count": 1
       },
       {
-        "reason": "FD SORTIN-3G without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SORTIN-3G without a matching lowered SELECT",
         "count": 1
       },
       {
@@ -5112,15 +5136,15 @@
         "count": 1
       },
       {
-        "reason": "FD FILE4 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD FILE4 without a matching lowered SELECT",
         "count": 1
       },
       {
-        "reason": "FD SORT4 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SORT4 without a matching lowered SELECT",
         "count": 1
       },
       {
-        "reason": "FD SORT5 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SORT5 without a matching lowered SELECT",
         "count": 1
       },
       {
@@ -5140,19 +5164,19 @@
         "count": 1
       },
       {
-        "reason": "FD SORTIN-2C without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SORTIN-2C without a matching lowered SELECT",
         "count": 1
       },
       {
-        "reason": "FD SORTOUT-2C without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SORTOUT-2C without a matching lowered SELECT",
         "count": 1
       },
       {
-        "reason": "FD FIRST-SORTFILE without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD FIRST-SORTFILE without a matching lowered SELECT",
         "count": 1
       },
       {
-        "reason": "FD SECOND-SORTFILE without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SECOND-SORTFILE without a matching lowered SELECT",
         "count": 1
       },
       {
@@ -5184,15 +5208,15 @@
         "count": 1
       },
       {
-        "reason": "FD SORTFILE-2D without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SORTFILE-2D without a matching lowered SELECT",
         "count": 1
       },
       {
-        "reason": "FD SORTIN-2D without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SORTIN-2D without a matching lowered SELECT",
         "count": 1
       },
       {
-        "reason": "FD SORTOUT-2D without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SORTOUT-2D without a matching lowered SELECT",
         "count": 1
       },
       {
@@ -5236,15 +5260,15 @@
         "count": 1
       },
       {
-        "reason": "FD SORTIN-2E without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SORTIN-2E without a matching lowered SELECT",
         "count": 1
       },
       {
-        "reason": "FD USELESS-FILE without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD USELESS-FILE without a matching lowered SELECT",
         "count": 1
       },
       {
-        "reason": "FD DEADWEIGHT-FILE without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD DEADWEIGHT-FILE without a matching lowered SELECT",
         "count": 1
       },
       {
@@ -5268,7 +5292,7 @@
         "count": 1
       },
       {
-        "reason": "FD SORTFILE-2F without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SORTFILE-2F without a matching lowered SELECT",
         "count": 1
       },
       {
@@ -5280,7 +5304,7 @@
         "count": 1
       },
       {
-        "reason": "FD ST-FR1 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD ST-FR1 without a matching lowered SELECT",
         "count": 1
       },
       {
@@ -5316,15 +5340,15 @@
         "count": 1
       },
       {
-        "reason": "FD TFIL-3 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD TFIL-3 without a matching lowered SELECT",
         "count": 1
       },
       {
-        "reason": "FD TFIL-4 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD TFIL-4 without a matching lowered SELECT",
         "count": 1
       },
       {
-        "reason": "FD TFIL-5 without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD TFIL-5 without a matching lowered SELECT",
         "count": 1
       },
       {
@@ -5332,15 +5356,15 @@
         "count": 1
       },
       {
-        "reason": "FD D111E without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD D111E without a matching lowered SELECT",
         "count": 1
       },
       {
-        "reason": "SELECT VIDEOFILE with organization other than LINE SEQUENTIAL (file I/O stage 1)",
+        "reason": "SELECT VIDEOFILE ACCESS MODE DYNAMIC (VSAM V1 lowers ACCESS SEQUENTIAL; keyed reads are a named resi",
         "count": 1
       },
       {
-        "reason": "FD VIDEOFILE without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD VIDEOFILE without a matching lowered SELECT",
         "count": 1
       },
       {
@@ -5348,19 +5372,23 @@
         "count": 1
       },
       {
-        "reason": "SELECT FILEIN with organization other than LINE SEQUENTIAL (file I/O stage 1)",
+        "reason": "SELECT FILEIN with organization other than LINE SEQUENTIAL or INDEXED (file I/O stage 1 / VSAM V1)",
         "count": 1
       },
       {
-        "reason": "SELECT FILEOUT with organization other than LINE SEQUENTIAL (file I/O stage 1)",
+        "reason": "SELECT FILEOUT with organization other than LINE SEQUENTIAL or INDEXED (file I/O stage 1 / VSAM V1)",
         "count": 1
       },
       {
-        "reason": "FD FILEIN without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD FILEIN without a matching lowered SELECT",
         "count": 1
       },
       {
-        "reason": "FD FILEOUT without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD FILEOUT without a matching lowered SELECT",
+        "count": 1
+      },
+      {
+        "reason": "WRITE FILEOUT-Z which is not a file record",
         "count": 1
       },
       {
@@ -5372,7 +5400,7 @@
         "count": 1
       },
       {
-        "reason": "FD PERSON without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD PERSON without a matching lowered SELECT",
         "count": 1
       },
       {
@@ -5384,7 +5412,7 @@
         "count": 1
       },
       {
-        "reason": "SELECT TEACHER with organization other than LINE SEQUENTIAL (file I/O stage 1)",
+        "reason": "SELECT TEACHER ACCESS MODE DYNAMIC (VSAM V1 lowers ACCESS SEQUENTIAL; keyed reads are a named residu",
         "count": 1
       },
       {
@@ -5396,19 +5424,27 @@
         "count": 1
       },
       {
-        "reason": "SELECT SOMEFILE1A with organization other than LINE SEQUENTIAL (file I/O stage 1)",
+        "reason": "SELECT SOMEFILE1A with organization other than LINE SEQUENTIAL or INDEXED (file I/O stage 1 / VSAM V",
         "count": 1
       },
       {
-        "reason": "SELECT SOMEFILE1B with organization other than LINE SEQUENTIAL (file I/O stage 1)",
+        "reason": "SELECT SOMEFILE1B with organization other than LINE SEQUENTIAL or INDEXED (file I/O stage 1 / VSAM V",
         "count": 1
       },
       {
-        "reason": "FD SOMEFILE1A without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SOMEFILE1A without a matching lowered SELECT",
         "count": 1
       },
       {
-        "reason": "FD SOMEFILE1B without a matching LINE SEQUENTIAL SELECT",
+        "reason": "FD SOMEFILE1B without a matching lowered SELECT",
+        "count": 1
+      },
+      {
+        "reason": "ENTRY statement",
+        "count": 1
+      },
+      {
+        "reason": "EXHIBIT statement",
         "count": 1
       },
       {
@@ -5421,6 +5457,18 @@
       },
       {
         "reason": "paragraph INIT outside any section in a sectioned PROCEDURE DIVISION",
+        "count": 1
+      },
+      {
+        "reason": "SET SOMEID1 UP/DOWN BY on a target that is not an INDEXED BY index-name",
+        "count": 1
+      },
+      {
+        "reason": "STOP STOP_RUN_GIVING",
+        "count": 1
+      },
+      {
+        "reason": "DISPLAY operand \"…\"HELLO WORLD\"…\" (qualified/subscripted)",
         "count": 1
       }
     ],

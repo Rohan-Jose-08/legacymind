@@ -797,6 +797,17 @@ public class ProLeapFrontend {
 			final ProcedureDivision pd = pu.getProcedureDivision();
 			if (pd == null || (pd.getParagraphs().isEmpty() && pd.getSections().isEmpty())) {
 				unsupported.add("PROCEDURE DIVISION has no paragraphs");
+				// Enumerate the division-level statements' constructs too. The
+				// module stays BLOCKED either way (the entry above guarantees
+				// it), but a structural rejection must not HIDE what else
+				// stands between this module and verifiability - an assessment
+				// that under-reports blockers is a hidden failure, and it made
+				// AWS CardDemo's COBSWAIT look 2 constructs away when it also
+				// needs ACCEPT ... FROM and CALL. Result discarded: this is
+				// analysis, not lowering.
+				if (pd != null) {
+					lowerStatements(pd.getStatements());
+				}
 			} else {
 				if (pd.getUsingClause() != null || pd.getGivingClause() != null) {
 					reject(pd.getCtx(), "PROCEDURE DIVISION USING/GIVING");
@@ -810,6 +821,13 @@ public class ProLeapFrontend {
 				// corpus sweep: MERGE/PERFORM-UNTIL files ranked IR-complete).
 				for (final Statement stray : pd.getStatements()) {
 					reject(stray.getCtx(), "statement before the first paragraph header");
+				}
+				// ...and enumerate what those stray statements themselves
+				// contain, for the same reason: the placement rejection must
+				// not mask the constructs inside. Analysis only - the result is
+				// discarded and the rejection above keeps the module blocked.
+				if (!pd.getStatements().isEmpty()) {
+					lowerStatements(pd.getStatements());
 				}
 				if (pd.getSections().isEmpty()) {
 					for (final Paragraph p : pd.getParagraphs()) {

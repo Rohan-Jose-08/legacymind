@@ -1,5 +1,17 @@
 # Real-code assessment — what `assess` says about code we did not write
 
+> **Corrected 2026-08-02.** The first version of this document reported
+> blocker counts that were **too low**: a structural rejection
+> ("PROCEDURE DIVISION has no paragraphs", "statement before the first
+> paragraph header") stopped the frontend before it lowered the affected
+> statements, so every construct underneath was silently omitted from the
+> module's blocker list. An assessment that under-reports blockers is
+> exactly the hidden failure this product exists to refuse, so the
+> frontend now enumerates those statements for analysis while keeping the
+> module blocked. Numbers below are the corrected ones; the deltas are
+> called out where they matter. Nothing about the verdicts changed —
+> VERIFIABLE stayed 15/759 on NIST and 0/31 on CardDemo.
+
 Every coverage number this project has published came from either its own
 benchmark (27 modules we wrote) or the ProLeap/NIST test corpus (parser
 fixtures). Neither is customer code. This is the first measurement
@@ -38,9 +50,13 @@ independent gaps, not a sum:
 
 | corpus | median | range | ≤3 blockers |
 |---|---|---|---|
-| AWS CardDemo | **26** | 2–32 | 1 of 14 |
+| AWS CardDemo | **26** | 4–33 | 0 of 14 |
 | DSF + OMP | 12 | 1–18 | 2 of 6 |
-| NIST/ProLeap | 11 | 1–73 | 293 of 722 |
+| NIST/ProLeap | 11 | 1–73 | ~290 of 722 |
+
+(CardDemo before the masking fix read "2–32, 1 of 14". Ten of its
+fourteen blocked modules were under-reporting; the nearest module moved
+from 2 blockers to 4, and **no** real module is within 3.)
 
 Real mainframe modules sit ~26 constructs away from verifiable. This is
 the central finding: the gap to real code is not one feature, it is a
@@ -98,7 +114,26 @@ Read as themes, real code needs, in order:
 5. **CICS/BMS** (and DB2) — structurally excluded, and it is *most* of
    the online half of a real estate.
 
-## Two product defects this surfaced
+## The nearest real module is not near
+
+`COBSWAIT.cbl` looked like the closest thing to a first real certified
+module — 2 blockers. It is not a candidate at all:
+
+- the "2" was masking two more (`ACCEPT ... FROM`, `CALL`), so it is
+  really 4;
+- and its whole purpose is `CALL 'MVSWAIT' USING ...` — an external
+  **assembler** wait routine. There is no COBOL behaviour to establish
+  equivalence *for*; the program's entire observable effect happens
+  inside a module we would never see.
+
+The next nearest, `CSUTLDTC.cbl` (12 blockers), needs `CALL` +
+`LINKAGE SECTION` + `PROCEDURE DIVISION USING` + `OCCURS DEPENDING ON` +
+binary `COMP` + two REDEFINES shapes. So the honest statement is: **no
+single stage, and no plausible pair of stages, produces a certified
+third-party module.** That is a multi-stage programme, and the roadmap
+should say so rather than implying the next feature unlocks real code.
+
+## Three product defects this surfaced
 
 1. **Quoted `COPY 'NAME'` does not resolve `NAME.cpy`.** ProLeap's
    literal copybook finder requires an exact filename match and ignores
@@ -114,20 +149,36 @@ Read as themes, real code needs, in order:
    sequence-alignment fallback handles the benchmark's simple COPY sites
    but not real-world expansion (`REPLACING`, adjacent COPYs, nested).
 
-Both are honest failures (loud, enumerated, never silent) — but both make
-the tool weaker on real code than the NIST numbers implied.
+3. **Structural rejections masked every blocker beneath them** (fixed
+   2026-08-02, see the note at the top). "PROCEDURE DIVISION has no
+   paragraphs" and "statement before the first paragraph header" stopped
+   the frontend before those statements were lowered, so their
+   constructs never reached the report. Effect: 10 of CardDemo's 14
+   blocked modules and 96 NIST modules under-reported their distance,
+   and 73 NIST modules looked unlockable by the paragraph fix alone when
+   they were not. Unlike defects 1 and 2, this one was not loud — the
+   report was confidently incomplete, which is worse than a refusal.
+
+Defects 1 and 2 are honest failures (loud, enumerated, never silent) —
+but all three make the tool weaker on real code than the NIST numbers
+implied.
 
 ## The scaffold lesson, a sixth time
 
-192 NIST modules are blocked *only* by paragraph-structure constructs, so
+119 NIST modules are blocked *only* by paragraph-structure constructs, so
 "support statements outside paragraphs" looks like it would take the NIST
-rate from 2.0% to ~27%. Inspecting them kills that headline:
+rate from 2.0% to ~18%. Inspecting them kills that headline:
 
 - **48** have no `PROCEDURE DIVISION` at all — nothing to verify.
 - **4** have an empty one.
-- **140** have statements, but are ProLeap *unit-test fixtures*
-  (`AcceptStatement.cbl`, `AddCorrespondingStatement.cbl` — 5-line,
-  single-verb programs).
+- **67** have statements, but are ProLeap *unit-test fixtures*
+  (`AddToStatement.cbl`, `DisplayStatement.cbl` — 5-line, single-verb
+  programs).
+
+(Before the masking fix this read 192 / 140, and the tempting headline
+was "2% → 27%". Complete enumeration showed 73 of those 192 were hiding
+*other* blockers behind the structural one — so even the corrected 119 is
+an upper bound on what the paragraph fix alone would unlock.)
 
 On real code the same fix unlocks **2 of 45** files (`DEPTPAY.CBL`,
 `EMPPAY.CBL` — both from a *testing* course), and **0** of CardDemo.
