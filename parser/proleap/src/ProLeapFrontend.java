@@ -273,6 +273,12 @@ public class ProLeapFrontend {
 		final Map<String, String> fileStatusVar = new LinkedHashMap<>();
 		/** Files assigned to a ddname (an external binding) rather than a literal path. */
 		final Set<String> fileAssignIsDdname = new LinkedHashSet<>();
+		/**
+		 * READ ... INTO where the target carves the record's bytes differently
+		 * from the FD record's own fields: file name -> target item name. The
+		 * TARGET's layout becomes the input layout (docs/read-into.md).
+		 */
+		final Map<String, String> fileIntoLayoutTarget = new LinkedHashMap<>();
 		/** Pending FD links: {fdName, recordItemMap} — record names finalize later. */
 		final List<Object[]> pendingFds = new ArrayList<>();
 		/** Final record name -> file name (built after finalizeNames). */
@@ -585,7 +591,7 @@ public class ProLeapFrontend {
 		 * align one-to-one, rejected loudly when they do not.
 		 */
 		List<Object> readIntoMoves(final Map<String, Object> recItem, final String intoTarget,
-				final ParserRuleContext ctx) {
+				final String fileOf, final ParserRuleContext ctx) {
 			final Map<String, Object> tgt = finalItemsByName().get(intoTarget);
 			if (tgt == null) {
 				reject(ctx, "READ ... INTO \"" + intoTarget + "\" which is not a declared data item");
@@ -599,9 +605,18 @@ public class ProLeapFrontend {
 				return null;
 			}
 			if (rch.size() != tch.size()) {
-				reject(ctx, "READ ... INTO \"" + intoTarget + "\" has " + tch.size()
-						+ " leaves but the record has " + rch.size() + " (V1 requires one-to-one alignment)");
-				return null;
+				// The target carves the record's bytes differently from the FD
+				// record's own fields - the dominant real idiom: a coarse
+				// buffer record (FD-CARD-NUM X(16) + FD-CARD-DATA X(134)) read
+				// INTO a fully-typed structure of the same total width.
+				// Measured (examples/probes/readinto.cbl): the target's fields
+				// take their bytes BY OFFSET, implied decimals included, which
+				// is exactly the stage-2b input decode. So no per-leaf moves;
+				// the target's own layout becomes the input layout, validated
+				// in gateFiles (widths must match and the record's own fields
+				// must be unreferenced).
+				fileIntoLayoutTarget.put(fileOf, intoTarget);
+				return new ArrayList<>();
 			}
 			final List<Object> moves = new ArrayList<>();
 			for (int i = 0; i < rch.size(); i++) {
@@ -1792,10 +1807,9 @@ public class ProLeapFrontend {
 				// read, so it desugars into the NOT AT END arm.
 				String intoTarget = null;
 				if (r.getInto() != null) {
-					if (!indexed) {
-						reject(ctx, "READ ... INTO (outside file I/O stage 2a)");
-						return;
-					}
+					// READ ... INTO is a byte copy of the record area into the
+					// target, identical for LINE SEQUENTIAL and INDEXED files;
+					// the earlier restriction to indexed files was arbitrary.
 					if (r.getInto().getIntoCall() == null || r.getInto().getIntoCall().getName() == null) {
 						reject(ctx, "READ ... INTO an unresolvable target");
 						return;
@@ -1816,7 +1830,7 @@ public class ProLeapFrontend {
 						? lowerStatements(r.getNotAtEndPhrase().getStatements())
 						: new ArrayList<>();
 				if (intoTarget != null) {
-					final List<Object> intoMoves = readIntoMoves(fileRecordItems.get(f), intoTarget, ctx);
+					final List<Object> intoMoves = readIntoMoves(fileRecordItems.get(f), intoTarget, f, ctx);
 					if (intoMoves == null) {
 						return; // readIntoMoves enumerated the reason
 					}
@@ -3085,15 +3099,46 @@ public class ProLeapFrontend {
 				// and attach it to the file entry. The group record itself may
 				// not be referenced in the PROCEDURE DIVISION (only its
 				// fields) - the raw record line is not modeled.
-				final Map<String, Object> layout = computeLayout(rec);
+				final Set<String> refs = new LinkedHashSet<>();
+				for (final Object po : paragraphs) {
+					collectDataRefs((List<?>) ((Map<?, ?>) po).get("statements"), refs);
+				}
+				// READ ... INTO a differently-shaped target: the FD record is a
+				// coarse buffer whose own fields the program never touches, and
+				// the target carves the same bytes finely. Then the TARGET is
+				// the input layout (docs/read-into.md). Requires equal total
+				// width - anything else is a different record, not a re-carving.
+				Map<String, Object> layoutSource = rec;
+				final String intoName = fileIntoLayoutTarget.get(inFile);
+				if (intoName != null) {
+					final Map<String, Object> tgt = finalItemsByName().get(intoName);
+					final Map<String, Object> recLayout = computeLayout(rec);
+					final Map<String, Object> tgtLayout = tgt == null ? null : computeLayout(tgt);
+					if (tgt == null || tgtLayout == null || recLayout == null) {
+						unsupported.add("READ ... INTO \"" + intoName
+								+ "\" whose layout cannot be computed");
+					} else if (!recLayout.get("recordWidth").equals(tgtLayout.get("recordWidth"))) {
+						unsupported.add("READ ... INTO \"" + intoName + "\" is "
+								+ tgtLayout.get("recordWidth") + " bytes but the record is "
+								+ recLayout.get("recordWidth")
+								+ " (a re-carving must have the same total width)");
+					} else {
+						for (final Object lo : (List<?>) recLayout.get("layout")) {
+							final Object slotName = ((Map<?, ?>) lo).get("name");
+							if (slotName != null && refs.contains(slotName)) {
+								unsupported.add("input record field \"" + slotName
+										+ "\" is referenced in the PROCEDURE DIVISION as well as being"
+										+ " re-carved by READ ... INTO \"" + intoName + "\"");
+							}
+						}
+						layoutSource = tgt;
+					}
+				}
+				final Map<String, Object> layout = computeLayout(layoutSource);
 				if (layout != null) {
 					final Map<String, Object> fe = fileEntries.get(inFile);
 					fe.put("recordWidth", layout.get("recordWidth"));
 					fe.put("layout", layout.get("layout"));
-				}
-				final Set<String> refs = new LinkedHashSet<>();
-				for (final Object po : paragraphs) {
-					collectDataRefs((List<?>) ((Map<?, ?>) po).get("statements"), refs);
 				}
 				if (refs.contains((String) rec.get("name"))) {
 					unsupported.add("input record \"" + rec.get("name")
