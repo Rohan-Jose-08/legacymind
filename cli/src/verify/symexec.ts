@@ -769,6 +769,19 @@ function loopBody(ctx: ExecCtx, s: LoopStmt): Statement[] {
   return body;
 }
 
+/** Every item a byte window can reach, in declaration order (docs/byte-window.md). */
+export function byteModelledNames(items: DataItem[]): string[] {
+  const out: string[] = [];
+  const walk = (list: DataItem[]): void => {
+    for (const it of list ?? []) {
+      if (it.byteModelled && it.name) out.push(it.name);
+      walk(it.children);
+    }
+  };
+  walk(items);
+  return out;
+}
+
 /** True if a program-ending statement appears in `stmts` or nested IF/READ branches. */
 function containsStop(stmts: Statement[]): boolean {
   for (const s of stmts) {
@@ -1176,6 +1189,15 @@ function execute(stmts: Statement[], state: PathState, ctx: ExecCtx, out: PathSt
         // rest of an IF fork, or fall-through paragraphs) never run on it.
         out.push(state);
         return;
+      case "move-window":
+        // Unreachable in practice: runSymExec refuses any module with
+        // byte-modelled storage at the door, and a move-window always makes
+        // its target byte-modelled. Kept as a hard stop so a future path into
+        // this engine fails loudly instead of silently skipping the write.
+        throw new DiffExecError(
+          `layer C: MOVE into a byte window of ${s.target} reached the symbolic engine ` +
+            `(docs/byte-window.md); this module should have been refused at entry`,
+        );
       case "terminate-abnormal":
         // Also a program end, and for path ENUMERATION that is all it is:
         // nothing after it runs. What distinguishes it from stop-run — the
@@ -1820,6 +1842,19 @@ export function runSymExec(configPath: string, outPath: string): number {
 
   const irPath = resolve(baseDir, sym.ir);
   const ir = JSON.parse(readFileSync(irPath, "utf8")) as ModuleIR;
+  // Byte-modelled storage is outside layer C's model, and the refusal has to
+  // be at the DOOR rather than per statement: this engine reasons over
+  // rationals, so a byte-modelled field read as a number would be a
+  // confident wrong claim, not a missing one. A window can leave a space
+  // inside a PIC 9 (docs/byte-window.md), which no numeric domain can hold.
+  const byteModelled = byteModelledNames(ir.dataDivision.items);
+  if (byteModelled.length > 0) {
+    throw new DiffExecError(
+      `layer C: ${byteModelled.join(", ")} ${byteModelled.length === 1 ? "is" : "are"} byte-modelled ` +
+        `(a byte window reaches this storage), which the symbolic engine does not model — ` +
+        `run layers A/B/D for this module and see docs/byte-window.md`,
+    );
+  }
   const items = ir.dataDivision.items;
   const moneyRe = new RegExp(sym.moneyPattern ?? DEFAULT_MONEY_PATTERN);
   const annotations = new Set(sym.annotations ?? []);

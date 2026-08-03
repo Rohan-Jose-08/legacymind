@@ -46,6 +46,15 @@ export interface DataItem {
   redefines?: string;
   /** OCCURS O1 (proleap engine, docs/occurs.md): fixed element count of this table. */
   occurs?: number;
+  /** Byte view of another item's storage (proleap engine, docs/byte-window.md); offset is 1-based. */
+  window?: { of: string; offset: number; length: number };
+  /**
+   * A byte window can reach this item's storage (docs/byte-window.md), so it
+   * holds BYTES rather than a value — a window can leave a space inside a
+   * PIC 9. Any layer that assumes this field decodes as a number must refuse
+   * it, not assume.
+   */
+  byteModelled?: true;
   picture?: string;
   type?: PictureType;
   usage: string;
@@ -65,6 +74,13 @@ export type DisplayOperand =
 
 export type Statement =
   | { kind: "move"; from: OperandExpr; to: string[]; text: string; span: Span }
+  /**
+   * MOVE into a byte window of an item's storage (proleap engine only;
+   * docs/byte-window.md). `offset` is 1-based, as COBOL counts. The target's
+   * storage stops being a typed value — a window can leave a space inside a
+   * PIC 9 — so layers that assume numeric well-formedness must refuse it.
+   */
+  | { kind: "move-window"; from: OperandExpr; target: string; offset: number; length: number; text: string; span: Span }
   | { kind: "compute"; target: string; rounded: boolean; expression: OperandExpr; text: string; span: Span }
   | { kind: "if"; condition: OperandExpr; then: Statement[]; else?: Statement[]; text: string; span: Span }
   | { kind: "perform"; target: string; thru?: string; text: string; span: Span }

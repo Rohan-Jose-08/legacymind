@@ -144,7 +144,55 @@ its target.
 - anything that would make a byte-modelled field an operand of arithmetic
   without an intervening decode
 
-## Why this stops here
+## Built (W1, stage 80)
+
+Shipped as scoped above, with one decision the design left open: **byte
+windows are executed, not reasoned about.**
+
+| layer | treatment |
+|---|---|
+| A, B | **execute both sides** — they need no model at all, which is why the feature is deliverable now |
+| C | **refuses the module at the door**, naming every byte-modelled item |
+| D | **discloses**: a window-written field is `UNRESOLVED`, never a claimed derivation |
+
+Layer C's refusal is deliberately total rather than per statement. Its
+state is rationals; a byte-modelled field read as a number would be a
+confident *wrong* claim, and no numeric domain can hold the space that a
+window can leave inside a `PIC 9`. Refusing at entry is the only sound
+option short of a symbolic byte domain, which is a stage of its own.
+
+What lands in the IR:
+
+- each `REDEFINES` view leaf carries `window: {of, offset, length}`
+  (offset 1-based, as COBOL counts);
+- reference modification lowers to a **new statement kind**,
+  `move-window`, so no existing module's IR changes and the transpiler
+  replay cache does not re-key;
+- every item a window can reach — the whole subtree, since a group's
+  bytes *are* its children's storage — is marked `byteModelled`.
+
+`ir-core` re-checks the window bounds, because the IR is what the
+certificate is signed over.
+
+The frontend also checks that a window lies **wholly inside** its target,
+which needs a storage width for every item — a group is the sum of its
+children, an elementary item depends on `USAGE`, and a width that cannot
+be computed is a refusal rather than an assumption. `G4(4:2)` over a
+4-byte group is rejected by name; `G4(3:2)` is accepted. Out of bounds is
+not a smaller claim, it is a different program: the bytes past the end
+belong to whatever the compiler laid out next.
+
+**Verified** on `examples/statusfmt.cbl`, the CardDemo
+`9910-DISPLAY-IO-STATUS` idiom: layer **A 200/200**, layer **B 9/9**
+(including the two-space case that puts a space inside a `PIC 9`), layer
+**C refused by name**, layer **D PASS with the window derivation
+disclosed as unresolved**.
+
+**Effect on real code:** `CBACT02C`, `CBACT03C` and `CBCUS01C` drop from
+3 blockers to **1** — the stage-2a `READ`-loop shape is all that is left.
+CardDemo's median falls 16.5 → 15.5.
+
+## Why the design stopped where it did
 
 The stage is scoped, measured and de-risked, and it deliberately ships no
 engine code, because the measurement changed what the work is:
@@ -164,6 +212,15 @@ Recommendation: take W1 as the next stage's scope, and expect it to be
 the largest single engine change since the file model — not because the
 COBOL is exotic, but because it removes an invariant three layers
 currently assume.
+
+**Outcome (stage 80).** Point 3 held and points 1 and 2 held, but the
+size estimate did not: W1 turned out **smaller** than "the largest
+change since the file model", because the estimate assumed all four
+layers needed a byte model. They do not — layers A and B execute both
+sides and never inspect storage, so only C and D had to change, and both
+changed by *declining to claim* rather than by modelling bytes. The
+expensive part — a symbolic byte domain — is still unbuilt and is still
+the right thing to defer.
 
 ## The charset finding — the more important result
 

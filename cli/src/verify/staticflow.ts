@@ -91,6 +91,7 @@ const isPowerOfTen = (v: number): boolean => {
 function collectAssigned(stmts: Statement[], out: Set<string>): void {
   for (const s of stmts) {
     if (s.kind === "move") for (const t of s.to) out.add(t);
+    else if (s.kind === "move-window") out.add(s.target);
     else if (s.kind === "compute") out.add(s.target);
     else if (s.kind === "accept") out.add(s.target);
     else if (s.kind === "perform-varying") out.add(s.varying.var);
@@ -258,6 +259,18 @@ export function extractLegacyFlows(ir: ModuleIR): { outputs: Map<string, FlowRec
             pendingKey = null;
           }
         }
+      } else if (s.kind === "move-window") {
+        // A byte window writes part of the target's storage, so the target's
+        // value is no longer a function of this MOVE alone — the bytes it did
+        // not touch still carry whatever was there. Recording it as an
+        // ordinary derivation would be a wrong claim, so the target is marked
+        // UNRESOLVED and surfaces as a disclosed gap rather than a verdict.
+        const flow = varFlows.get(s.target) ?? newFlow();
+        flow.unresolved.push(
+          `${s.target} is written through a byte window (${s.text}); its derivation is not statically modelled ` +
+            `(docs/byte-window.md)`,
+        );
+        varFlows.set(s.target, flow);
       } else if (s.kind === "terminate-abnormal") {
         // Deliberately flow-neutral, and the reason is a disclosed gap rather
         // than an omission: under the certified toolchain the service produces

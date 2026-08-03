@@ -104,11 +104,31 @@ pub struct DataItem {
     /// Synthetic occurrence-number variable for an INDEXED BY index-name.
     #[serde(rename = "indexName", default, skip_serializing_if = "Option::is_none")]
     pub index_name: Option<bool>,
+    /// This item is a BYTE VIEW of `window.of` (docs/byte-window.md): a
+    /// REDEFINES group leaf covering bytes [offset, offset+length) of an
+    /// elementary target, offset 1-based as COBOL counts.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub window: Option<ByteWindow>,
+    /// A byte window can reach this item's storage, so it holds BYTES, not a
+    /// value: a window can leave a space inside a PIC 9. Layers that rely on
+    /// a field decoding as a number must refuse it rather than assume.
+    #[serde(rename = "byteModelled", default, skip_serializing_if = "Option::is_none")]
+    pub byte_modelled: Option<bool>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub span: Option<Value>,
     /// Always emitted (empty for elementary items), so never skipped.
     #[serde(default)]
     pub children: Vec<DataItem>,
+}
+
+/// A byte range of another item's storage.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ByteWindow {
+    /// Name of the item whose bytes this views.
+    pub of: String,
+    /// 1-based first byte, as COBOL reference modification counts.
+    pub offset: i64,
+    pub length: i64,
 }
 
 /// A decoded PICTURE clause.
@@ -141,6 +161,8 @@ pub enum StmtKind {
     Goback,
     If,
     Move,
+    /// MOVE into a byte window of an item's storage (docs/byte-window.md).
+    MoveWindow,
     Open,
     Perform,
     PerformUntil,
@@ -256,6 +278,21 @@ fn validate_stmt(st: &Statement, where_: &str, errs: &mut Vec<String>) {
                 }
             }
             _ => errs.push(format!("{}: terminate-abnormal has no args array", where_)),
+        }
+    }
+    // A window with a non-positive bound would address storage outside the
+    // item; COBOL counts from 1, so 0 is never a legal offset.
+    if st.kind == StmtKind::MoveWindow {
+        match st.body.get("target").and_then(Value::as_str) {
+            Some(t) if !t.is_empty() => {}
+            _ => errs.push(format!("{}: move-window has no target item", where_)),
+        }
+        for bound in ["offset", "length"] {
+            match st.body.get(bound).and_then(Value::as_i64) {
+                Some(v) if v >= 1 => {}
+                Some(v) => errs.push(format!("{}: move-window {} is {}, must be >= 1", where_, bound, v)),
+                None => errs.push(format!("{}: move-window has no integer {}", where_, bound)),
+            }
         }
     }
     for key in NESTED {

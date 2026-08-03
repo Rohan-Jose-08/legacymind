@@ -8,8 +8,8 @@
 > | | original | now |
 > |---|---|---|
 > | CardDemo VERIFIABLE | 0/31 | **0/31** |
-> | CardDemo median blockers (of 14 blocked) | 26 | **16.5** |
-> | nearest genuine candidate | 4 | **3** |
+> | CardDemo median blockers (of 14 blocked) | 26 | **15.5** |
+> | nearest genuine candidates | 4 | **1** |
 > | NIST/ProLeap VERIFIABLE | 15/759 | **16/759** |
 >
 > Two things need saying plainly rather than being absorbed into a
@@ -23,9 +23,12 @@
 > stage). The baseline was stale, not the instrument.
 >
 > Three CardDemo modules — `CBACT02C`, `CBACT03C`, `CBCUS01C` — now sit at
-> **3 blockers with an identical set**: reference modification, `REDEFINES`
-> group-over-elementary, and the stage-2a `READ`-loop shape. They are one
-> shared three-item list away from being certifiable together.
+> **1 blocker each, and it is the same one**: the stage-2a `READ`-loop
+> shape (the READ's paragraph is PERFORMed from inside an `IF` within the
+> loop rather than being the loop body). Reference modification and
+> `REDEFINES` group-over-elementary were both removed by the byte-window
+> stage (`docs/byte-window.md`). One artificial restriction now stands
+> between this project and its first certified third-party modules.
 
 > **Corrected 2026-08-02.** The first version of this document reported
 > blocker counts that were **too low**: a structural rejection

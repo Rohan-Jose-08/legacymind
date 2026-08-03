@@ -251,6 +251,14 @@ public class ProLeapFrontend {
 		final List<String> warnings = new ArrayList<>();
 		/** PROGRAM-ID, set once by lower(); read by lowerCall to refuse self-named services. */
 		String programId = null;
+		/**
+		 * Items a byte window can reach (docs/byte-window.md). Their storage is
+		 * bytes, not a value: a window can leave a space inside a PIC 9, so the
+		 * numeric invariants layers C and D rely on do not hold for them.
+		 */
+		final Set<String> byteModelled = new LinkedHashSet<>();
+		/** Windows written by reference modification: base name -> {offset, length} pairs, for the bounds check. */
+		final List<Object[]> pendingWindows = new ArrayList<>();
 		final Set<String> declared = new LinkedHashSet<>();
 		final Set<String> paragraphNames = new LinkedHashSet<>();
 		/** Paragraph names in source order — the domain for PERFORM THRU ranges. */
@@ -1085,6 +1093,18 @@ public class ProLeapFrontend {
 			// Intrinsic-function gate: conditions and expressions are carried
 			// as text, so an unmodelled FUNCTION would ride through opaquely.
 			gateIntrinsics(paragraphs);
+			// Byte-window closure LAST: gateRedefines (RGE views) and MOVE
+			// lowering (reference modification) both add to `byteModelled`, so
+			// the subtree marking has to see both sets.
+			if (!byteModelled.isEmpty()) {
+				final Map<String, Map<String, Object>> byName = new LinkedHashMap<>();
+				for (final Object[] pi : pendingItems) {
+					@SuppressWarnings("unchecked")
+					final Map<String, Object> it = (Map<String, Object>) pi[0];
+					byName.put((String) it.get("name"), it);
+				}
+				markByteModelled(byName);
+			}
 
 			if (!unsupported.isEmpty()) {
 				return null;
@@ -2428,8 +2448,20 @@ public class ProLeapFrontend {
 					final int lp = target.indexOf('(');
 					if (lp > 0 && target.endsWith(")")) {
 						if (target.substring(lp).contains(":")) {
+							// Byte window (docs/byte-window.md). Admitted only with a
+							// literal offset and length, as a module's sole MOVE
+							// target: 118 of CardDemo's 164 sites are that shape, and
+							// it is the only one whose layout is statically known.
+							final Matcher rm = REFMOD.matcher(target);
+							if (mt.getReceivingAreaCalls().size() == 1 && rm.matches()) {
+								return lowerMoveWindow(ctx, fromText, rm.group(1),
+										Integer.parseInt(rm.group(2)), Integer.parseInt(rm.group(3)));
+							}
 							reject(ctx, "MOVE target \"" + target.substring(0, lp)
-									+ "\" uses reference modification");
+									+ "\" uses reference modification"
+									+ (mt.getReceivingAreaCalls().size() == 1
+											? " with a non-literal offset/length (byte-window V1 needs both literal)"
+											: " among multiple receiving areas (byte-window V1 takes one target)"));
 						} else {
 							reject(ctx, "MOVE target \"" + target.substring(0, lp)
 									+ "\" is subscripted but not a lowered table (O3 backlog)");
@@ -2451,6 +2483,145 @@ public class ProLeapFrontend {
 			out.put("text", textOf(ctx));
 			out.put("span", span(ctx));
 			return out;
+		}
+
+		/** `NAME ( offset : length )` with both bounds literal — the only
+		 *  reference-modification shape byte-window V1 admits. */
+		static final Pattern REFMOD = Pattern.compile("([A-Z0-9-]+) *\\( *(\\d+) *: *(\\d+) *\\)");
+
+		/**
+		 * MOVE into a byte window (docs/byte-window.md). A distinct statement
+		 * kind rather than a field on `move`, so no existing module's IR — and
+		 * so no transpiler replay-cache key — changes.
+		 *
+		 * The window makes its base item byte-modelled: after
+		 * `MOVE IO-STAT1 TO IO-STATUS-04(1:1)` the group holds whatever
+		 * character was written, which for a `PIC 9` child may not be a digit
+		 * at all (measured: two spaces in, `" 032"` out).
+		 */
+		Map<String, Object> lowerMoveWindow(final ParserRuleContext ctx, final String fromText,
+				final String base, final int offset, final int length) {
+			if (offset < 1 || length < 1) {
+				reject(ctx, "MOVE target \"" + base + "\" has a non-positive reference modification");
+				return null;
+			}
+			byteModelled.add(base);
+			pendingWindows.add(new Object[] { base, offset, length, ctx });
+			final Map<String, Object> out = new LinkedHashMap<>();
+			out.put("kind", "move-window");
+			final Map<String, Object> from = new LinkedHashMap<>();
+			from.put("text", fromText);
+			from.put("refs", refsIn(fromText));
+			out.put("from", from);
+			out.put("target", base);
+			out.put("offset", offset);
+			out.put("length", length);
+			out.put("text", textOf(ctx));
+			out.put("span", span(ctx));
+			return out;
+		}
+
+		/**
+		 * Byte-window closure. A window addresses bytes of one item, but those
+		 * bytes ARE its children's storage, so marking the base alone would
+		 * leave the children looking like ordinary typed values to later
+		 * layers. Mark the whole subtree, and refuse a window whose base was
+		 * never declared or whose bytes it would overrun.
+		 */
+		void markByteModelled(final Map<String, Map<String, Object>> byName) {
+			for (final String name : byteModelled) {
+				final Map<String, Object> item = byName.get(name);
+				if (item == null) {
+					unsupported.add("byte window over \"" + name
+							+ "\" which is not a WORKING-STORAGE data item");
+					continue;
+				}
+				markSubtreeByteModelled(item);
+			}
+			// A window must lie WHOLLY inside its target. Out of bounds is not a
+			// smaller claim, it is a different program: the bytes past the end
+			// belong to whatever the compiler laid out next.
+			for (final Object[] w : pendingWindows) {
+				final String name = (String) w[0];
+				final Map<String, Object> item = byName.get(name);
+				if (item == null) {
+					continue; // already enumerated above
+				}
+				final Integer width = itemByteWidth(item);
+				if (width == null) {
+					unsupported.add("byte window over \"" + name
+							+ "\" whose storage width is not computable (byte-window V1 needs a fixed layout)");
+					continue;
+				}
+				final int offset = (Integer) w[1];
+				final int length = (Integer) w[2];
+				if (offset + length - 1 > width) {
+					unsupported.add("byte window \"" + name + "(" + offset + ":" + length + ")\" runs past the end of "
+							+ name + ", which is " + width + " byte(s)");
+				}
+			}
+		}
+
+		/**
+		 * Storage width of any data item: a group is the sum of its children, an
+		 * elementary item depends on USAGE. Returns null when the width is not
+		 * computable, so the caller refuses rather than assuming one.
+		 */
+		Integer itemByteWidth(final Map<String, Object> item) {
+			final List<?> ch = (List<?>) item.get("children");
+			if (ch != null && !ch.isEmpty()) {
+				int sum = 0;
+				for (final Object c : ch) {
+					@SuppressWarnings("unchecked")
+					final Integer w = itemByteWidth((Map<String, Object>) c);
+					if (w == null) {
+						return null;
+					}
+					sum += w;
+				}
+				return sum;
+			}
+			final Map<?, ?> t = (Map<?, ?>) item.get("type");
+			if (t == null) {
+				return null;
+			}
+			final String usage = (String) item.get("usage");
+			if ("COMP".equals(usage)) {
+				final Object d = t.get("digits");
+				return d instanceof Integer ? binaryByteWidth((Integer) d) : null;
+			}
+			if (!"DISPLAY".equals(usage)) {
+				return null; // COMP-3 packing is outside byte-window V1
+			}
+			final String cat = (String) t.get("category");
+			if ("numeric".equals(cat)) {
+				final Object d = t.get("digits");
+				if (!(d instanceof Integer)) {
+					return null;
+				}
+				// A sign or an assumed decimal point takes no byte; an explicit
+				// one would, and numeric-edited is refused because its width is
+				// a property of the edit mask we do not model here.
+				return (Integer) d;
+			}
+			if ("alphanumeric".equals(cat)) {
+				final Object l = t.get("length");
+				return l instanceof Integer ? (Integer) l : null;
+			}
+			return null;
+		}
+
+		void markSubtreeByteModelled(final Map<String, Object> item) {
+			item.put("byteModelled", true);
+			final List<?> ch = (List<?>) item.get("children");
+			if (ch == null) {
+				return;
+			}
+			for (final Object c : ch) {
+				@SuppressWarnings("unchecked")
+				final Map<String, Object> cm = (Map<String, Object>) c;
+				markSubtreeByteModelled(cm);
+			}
 		}
 
 		Map<String, Object> lowerCompute(final ComputeStatement s) {
@@ -3535,6 +3706,12 @@ public class ProLeapFrontend {
 						out.add((String) t);
 					}
 					break;
+				case "move-window":
+					// Same reason as in collectWriteTargets: a byte window names its
+					// base item, so the group-reference checks must see it.
+					addRefs(s.get("from"), out);
+					out.add((String) s.get("target"));
+					break;
 				case "compute":
 					out.add((String) s.get("target"));
 					addRefs(s.get("expression"), out);
@@ -3801,8 +3978,7 @@ public class ProLeapFrontend {
 			final List<?> vch = (List<?>) view.get("children");
 			final List<?> tch = (List<?>) target.get("children");
 			if (tch == null || tch.isEmpty()) {
-				unsupported.add("REDEFINES group view \"" + viewName + "\" over elementary target \""
-						+ targetName + "\" (RG aligns group leaves to group leaves)");
+				gateGroupOverElementary(view, target, viewName, targetName, allRefs);
 				return;
 			}
 			if (view.get("occurs") != null || target.get("occurs") != null) {
@@ -3866,6 +4042,120 @@ public class ProLeapFrontend {
 				final Map<String, Object> vl = (Map<String, Object>) vch.get(i);
 				vl.put("redefines", ((Map<?, ?>) tch.get(i)).get("name"));
 			}
+		}
+
+		/**
+		 * Storage width of a binary (COMP/BINARY) item, measured
+		 * (docs/binary-comp.md: a group of S9(4) S9(8) S9(9) S9(11) S9(18) is
+		 * 26 bytes = 2+4+4+8+8).
+		 */
+		Integer binaryByteWidth(final int digits) {
+			if (digits >= 1 && digits <= 4) {
+				return 2;
+			}
+			if (digits <= 9) {
+				return 4;
+			}
+			if (digits <= 18) {
+				return 8;
+			}
+			return null;
+		}
+
+		/**
+		 * RGE gate (docs/byte-window.md): a GROUP view over an ELEMENTARY
+		 * binary target — the shape eight real CardDemo modules share
+		 * verbatim, where two `PIC X` leaves view the two bytes of a
+		 * `PIC 9(4) BINARY` so a character's code can be read as a number.
+		 *
+		 * Unlike RG this view is deliberately WRITABLE: writing a leaf and
+		 * then reading the target is the entire idiom. That is exactly why the
+		 * target stops being an ordinary typed value — it becomes
+		 * BYTE-MODELLED, and every later layer must treat it as bytes rather
+		 * than as a number it can reason about (a byte window can leave a
+		 * space inside a PIC 9; see the doc).
+		 *
+		 * V1 is narrow on purpose: unsigned integer binary target, whole-byte
+		 * `PIC X` leaves, and the view must cover the target EXACTLY.
+		 */
+		void gateGroupOverElementary(final Map<String, Object> view, final Map<String, Object> target,
+				final String viewName, final String targetName, final Set<String> allRefs) {
+			if (!"COMP".equals(target.get("usage"))) {
+				unsupported.add("REDEFINES group view \"" + viewName + "\" over elementary target \""
+						+ targetName + "\" USAGE " + target.get("usage")
+						+ " (byte-window V1 views a binary target only)");
+				return;
+			}
+			final Map<?, ?> tt = (Map<?, ?>) target.get("type");
+			if (tt == null || !"numeric".equals(tt.get("category")) || Boolean.TRUE.equals(tt.get("signed"))
+					|| !Integer.valueOf(0).equals(tt.get("scale"))) {
+				unsupported.add("REDEFINES group view \"" + viewName + "\" over elementary target \""
+						+ targetName + "\" which is not unsigned integer binary"
+						+ " (byte-window V1 excludes sign bytes and scaling)");
+				return;
+			}
+			final Integer targetWidth = binaryByteWidth(digitsOf(target));
+			if (targetWidth == null) {
+				unsupported.add("REDEFINES group view \"" + viewName + "\" over elementary target \""
+						+ targetName + "\" whose binary width is not representable");
+				return;
+			}
+			if (view.get("occurs") != null || target.get("occurs") != null) {
+				unsupported.add("REDEFINES view \"" + viewName + "\" or target \"" + targetName
+						+ "\" carries OCCURS (byte-window V1 excludes REDEFINES+OCCURS)");
+				return;
+			}
+			if (allRefs.contains(viewName)) {
+				unsupported.add("REDEFINES group view \"" + viewName
+						+ "\" is referenced as a group (byte-window V1 models leaf references only)");
+				return;
+			}
+			final List<?> vch = (List<?>) view.get("children");
+			int span = 0;
+			for (final Object o : vch) {
+				@SuppressWarnings("unchecked")
+				final Map<String, Object> leaf = (Map<String, Object>) o;
+				final String ln = (String) leaf.get("name");
+				if (leaf.get("occurs") != null) {
+					unsupported.add("REDEFINES view leaf \"" + ln
+							+ "\" carries OCCURS (byte-window V1 excludes REDEFINES+OCCURS)");
+					return;
+				}
+				if (!elementaryAlnumDisplay(leaf)) {
+					unsupported.add("REDEFINES view leaf \"" + ln + "\" is " + redefineShape(leaf)
+							+ ", not elementary PIC X (byte-window V1 views whole bytes only)");
+					return;
+				}
+				final Object len = ((Map<?, ?>) leaf.get("type")).get("length");
+				if (!(len instanceof Integer)) {
+					unsupported.add("REDEFINES view leaf \"" + ln + "\" has no resolvable byte length");
+					return;
+				}
+				span += (Integer) len;
+			}
+			if (span != targetWidth) {
+				unsupported.add("REDEFINES group view \"" + viewName + "\" spans " + span
+						+ " byte(s) but target \"" + targetName + "\" is " + targetWidth
+						+ " (byte-window V1 requires the view to cover the target exactly)");
+				return;
+			}
+			// Admitted: publish each leaf's byte window (1-based offset, as
+			// COBOL reference modification counts) and mark the target as
+			// byte-modelled so no later layer treats it as a typed value.
+			int offset = 1;
+			for (final Object o : vch) {
+				@SuppressWarnings("unchecked")
+				final Map<String, Object> leaf = (Map<String, Object>) o;
+				final int len = (Integer) ((Map<?, ?>) leaf.get("type")).get("length");
+				final Map<String, Object> window = new LinkedHashMap<>();
+				window.put("of", targetName);
+				window.put("offset", offset);
+				window.put("length", len);
+				leaf.put("window", window);
+				offset += len;
+			}
+			target.put("byteModelled", true);
+			byteModelled.add(targetName);
 		}
 
 		/**
@@ -4047,6 +4337,12 @@ public class ProLeapFrontend {
 					for (final Object t : (List<?>) s.get("to")) {
 						out.add((String) t);
 					}
+					break;
+				case "move-window":
+					// A window write IS a write to the base item. Omitting it here
+					// would hide it from the REDEFINES gate, which decides whether a
+					// view is read-only and whether a group is referenced at all.
+					out.add((String) s.get("target"));
 					break;
 				case "compute":
 					out.add((String) s.get("target"));
