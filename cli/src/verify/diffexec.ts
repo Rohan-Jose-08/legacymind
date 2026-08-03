@@ -482,6 +482,38 @@ export function compareFields(
 }
 
 /** Run one case through both sides and diff the outputs. */
+/**
+ * One-shot warning when the two sides run on DIFFERENT PLATFORMS: the
+ * legacy binary in a Linux container, the modern side on the host JDK.
+ *
+ * Java's line separator is platform-dependent, so a candidate that uses
+ * `println` or `%n` emits CRLF on Windows against the legacy side's LF and
+ * EVERY case fails on a difference that would not exist in the deployment
+ * target. Measured on the first real transpiler run against CBACT02C: 5 of
+ * 5 cases failed on line endings alone, obscuring a genuine ordering defect
+ * underneath and costing a paid model round to discover.
+ *
+ * Setting LM_JAVA_IMAGE runs the modern side in the pinned OpenJDK image,
+ * giving both sides the same platform — which is what the benchmark does.
+ */
+let platformWarned = false;
+function warnIfPlatformsDiffer(config: DiffConfig): void {
+  if (platformWarned) return;
+  const legacyContainerised = !!config.legacy.image;
+  const modernOnHostJava = !config.modern.image && config.modern.argv?.[0] === "java" && !process.env.LM_JAVA_IMAGE;
+  if (legacyContainerised && modernOnHostJava && process.platform === "win32") {
+    platformWarned = true;
+    console.warn(
+      [
+        "  WARNING: the legacy side runs in a Linux container and the modern side on the Windows host JDK.",
+        "           Java's line separator is platform-dependent, so a candidate using println or %n emits",
+        "           CRLF against the legacy side's LF, and every case fails on that alone.",
+        "           Set LM_JAVA_IMAGE=legacymind/harness-jdk21 to run both sides on the same platform.",
+      ].join("\n"),
+    );
+  }
+}
+
 export function runCase(
   config: DiffConfig,
   baseDir: string,
@@ -491,6 +523,7 @@ export function runCase(
   const tolerance = config.numericTolerance ?? 0;
   const timeoutMs = config.timeoutMs ?? 30_000;
   const notes: string[] = [];
+  warnIfPlatformsDiffer(config);
   const legacyRun = runSide(config.legacy, cs.stdin, baseDir, timeoutMs);
   const modernRun = runSide(config.modern, cs.stdin, baseDir, timeoutMs);
 

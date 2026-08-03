@@ -207,7 +207,19 @@ export async function runMigrate(opts: {
   propConfigPath?: string;
   /** Bounded generate->verify->repair rounds when no candidate passes (default 0 = off). */
   maxRepairs?: number;
+  /**
+   * Output-token ceiling per model call. Default 8192.
+   *
+   * This is PART OF THE REPLAY CACHE KEY (model, maxTokens, system,
+   * prompt), so changing the default would invalidate every cached
+   * completion and break the offline benchmark. It is therefore a
+   * per-run flag with the default pinned: real modules are far larger
+   * than the benchmark's and truncate at 8192, which the API reports as
+   * stop_reason=max_tokens rather than as a bad answer.
+   */
+  maxTokens?: number;
 }): Promise<number> {
+  const maxTokens = opts.maxTokens ?? 8192;
   const ir = JSON.parse(readFileSync(opts.irPath, "utf8")) as IrModule;
   if (ir.irVersion !== "0.1.0") throw new MigrateError(`unsupported irVersion ${ir.irVersion}`);
   const className = pascalCase(ir.module.programId);
@@ -224,7 +236,7 @@ export async function runMigrate(opts: {
       model: opts.model,
       system: SYSTEM_PROMPT,
       prompt: buildPrompt(ir, cand),
-      maxTokens: 8192,
+      maxTokens,
     };
     try {
       const completion = await completeWithCache(opts.cacheDir, req, { offline: opts.offline });
@@ -392,7 +404,7 @@ export async function runMigrate(opts: {
         model: opts.model,
         system: SYSTEM_PROMPT,
         prompt: buildRepairPrompt(buildPrompt(ir, parentSpec), java, evidence, round),
-        maxTokens: 8192,
+        maxTokens,
       };
       let completion: CachedCompletion;
       try {

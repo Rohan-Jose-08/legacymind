@@ -54,6 +54,7 @@ usage:
   legacymind migrate <ir.json> --diff-config <cfg.json> --out <dir>
                      [--prop-config <cfg.json>] [--model ${DEFAULT_MODEL}]
                      [--cache transpiler/cache] [--offline] [--max-repairs N]
+                     [--max-tokens N]
       Emit two prompt-variant Java 21 candidates through the replay cache,
       compile each with javac, run verifier layer B on each, and select
       the first candidate that passes. With --prop-config, winning also
@@ -225,6 +226,9 @@ async function cmdMigrate(args: string[]): Promise<void> {
         offline: flags.get("offline") === true,
         propConfigPath: str(flags, "prop-config"),
         maxRepairs: str(flags, "max-repairs") ? Number.parseInt(str(flags, "max-repairs")!, 10) : 0,
+        // Part of the replay-cache key, so the default stays pinned at 8192
+        // and only an explicit flag changes it (see runMigrate).
+        maxTokens: str(flags, "max-tokens") ? Number.parseInt(str(flags, "max-tokens")!, 10) : undefined,
       }),
     );
   } catch (e) {

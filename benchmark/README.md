@@ -627,6 +627,34 @@ in the order found. They are the sales pitch:
     layout name `CUST-ID` differ), and refuses loudly when the key domain
     is too narrow for the record count instead of retrying forever.
 
+12. **The transpiler ignored the VSAM index ordering, on the first live run
+    against real third-party COBOL (2026-08-03).** `migrate` on AWS
+    CardDemo's `CBACT02C` produced two candidates; both compiled, and layer
+    B refused both — `winner: NONE`, $0.76 spent, nothing certified. Given
+    a deliberately unsorted seed (`4222…`, `4000…`, `4111…`) the COBOL
+    emits ascending by RECORD KEY, because `ORGANIZATION INDEXED … ACCESS
+    SEQUENTIAL` says the file is read in key order. Both candidates emitted
+    **input order**. The Java receives a flat text seed and has to impose
+    the index's ordering itself, which is exactly what a real VSAM
+    migration must do and exactly what is easy to miss: the code looks
+    correct, and only the *file semantics* say otherwise. Pair this with
+    finding 10 — on real code a competent human and a strong model made
+    different mistakes of the same class, and layer B caught both in under
+    a second. The model responses are committed to the replay cache, so
+    the finding reproduces offline for free.
+13. **A platform mismatch failed every case for the wrong reason
+    (2026-08-03).** In the same run, all five cases also diverged on line
+    endings: the legacy binary ran in a Linux container while the modern
+    side ran on the Windows host JDK, where `println`/`%n` emit CRLF
+    against the legacy side's LF. That difference does not exist in the
+    deployment target and does not occur in the benchmark, which runs Java
+    in the pinned OpenJDK image — but it masked the genuine ordering defect
+    underneath and cost a paid model round to discover. Layer B now emits a
+    one-shot warning when the legacy side is containerised and the modern
+    side is host-JDK on Windows, naming `LM_JAVA_IMAGE` as the fix. A
+    harness that fails for an environmental reason it could have predicted
+    is the same class of defect as one that passes for a hollow one.
+
 ## Parser-coverage sweep
 
 `parse-sweep.mjs` runs **both engines** over every `.cbl` in an external
