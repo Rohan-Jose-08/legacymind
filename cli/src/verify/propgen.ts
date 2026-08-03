@@ -86,6 +86,14 @@ export interface ResolvedRecords {
   domain: DataItem | null;
   /** Stage 2b (docs/memory-layout.md): the fixed-width record layout. Null in 2a. */
   layout: LayoutSlot[] | null;
+  /**
+   * INDEXED (VSAM) input only: the RECORD KEY's byte range. A key is UNIQUE
+   * by definition of the file, so a generated case containing two records
+   * with the same key describes a file that cannot exist — the loader
+   * rightly refuses it with WRITE status 22 (docs/vsam.md). Generating one
+   * tests the harness, not the migration.
+   */
+  keyRange: { offset: number; width: number } | null;
   /** Stage 2b record byte width (0 in 2a). */
   recordWidth: number;
   min: number;
@@ -149,12 +157,36 @@ export function resolveGenerator(
     const inEntry = (ir.files ?? []).find((f) => f.mode === "input");
     if (inEntry?.layout) {
       // Stage 2b: draw each record from the input file's fixed-width layout.
-      records = { domain: null, layout: inEntry.layout, recordWidth: inEntry.recordWidth ?? 0, min, max: gen.records.max };
+      // The key's byte range comes from the layout slot whose name matches
+      // the SELECT's RECORD KEY. Resolved by name so a key that is not the
+      // first field still works.
+      let keyRange: { offset: number; width: number } | null = null;
+      if (inEntry.organization === "indexed" && inEntry.recordKey) {
+        // The FD key name and the INTO-target layout name can differ
+        // (FD-CUST-ID vs CUST-ID), so match on the trailing name segments.
+        const want = inEntry.recordKey.replace(/^FD-/, "");
+        const slot = inEntry.layout.find((sl) => (sl.name ?? "").replace(/^FD-/, "") === want);
+        if (!slot) {
+          throw new DiffExecError(
+            `generator: RECORD KEY ${inEntry.recordKey} of INDEXED file ${inEntry.name} does not match any ` +
+              `field in the record layout — cannot generate cases with unique keys`,
+          );
+        }
+        keyRange = { offset: slot.offset, width: slot.width };
+      }
+      records = {
+        domain: null,
+        layout: inEntry.layout,
+        recordWidth: inEntry.recordWidth ?? 0,
+        min,
+        max: gen.records.max,
+        keyRange,
+      };
     } else {
       if (!gen.records.domain) throw new DiffExecError(`generator: records.domain is required for a single-field record in ${gen.ir}`);
       const domain = findItem(ir.dataDivision.items, gen.records.domain);
       if (!domain) throw new DiffExecError(`generator: records.domain ${gen.records.domain} not found in ${gen.ir}`);
-      records = { domain, layout: null, recordWidth: 0, min, max: gen.records.max };
+      records = { domain, layout: null, recordWidth: 0, min, max: gen.records.max, keyRange: null };
     }
   } else {
     fields = gen.stdinFields!.map((name) => {
@@ -193,9 +225,35 @@ export function generateCases(
       else if (roll < 0.16) n = Math.min(records.min + 1, records.max);
       else if (roll < 0.24) n = records.max;
       else n = records.min + Math.floor(rng() * (span + 1));
-      stdin = Array.from({ length: n }, () =>
-        records.layout ? genRecordLine(records, rng) : genValue(records.domain!, rng),
-      );
+      if (records.layout && records.keyRange) {
+        // INDEXED input: draw until the case's keys are distinct. Bounded so a
+        // narrow key space refuses loudly instead of spinning.
+        const { offset, width } = records.keyRange;
+        const seen = new Set<string>();
+        stdin = [];
+        for (let k = 0; k < n; k++) {
+          let line: string | null = null;
+          for (let attempt = 0; attempt < 64 && line === null; attempt++) {
+            const cand = genRecordLine(records, rng);
+            const key = cand.slice(offset, offset + width);
+            if (!seen.has(key)) {
+              seen.add(key);
+              line = cand;
+            }
+          }
+          if (line === null) {
+            throw new DiffExecError(
+              `layer A: could not draw ${n} records with distinct RECORD KEYs after 64 attempts — ` +
+                `the key domain is too narrow for this record count`,
+            );
+          }
+          stdin.push(line);
+        }
+      } else {
+        stdin = Array.from({ length: n }, () =>
+          records.layout ? genRecordLine(records, rng) : genValue(records.domain!, rng),
+        );
+      }
     } else {
       stdin = fields.map((f) => genValue(f, rng));
     }

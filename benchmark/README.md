@@ -594,6 +594,38 @@ in the order found. They are the sales pitch:
    `USAGE COMP-3` (2) rows, and the verifiable set is unchanged — the
    hole never flipped a corpus verdict, but a customer data division
    full of packed amounts is exactly where it would have.
+10. **A hand migration of real CardDemo code printed every record once;
+    the COBOL prints it twice (2026-08-03).** The first three modules
+    audited from untouched AWS CardDemo (`CBACT02C`, `CBACT03C`,
+    `CBCUS01C`) share a batch-reader shape, so the Java for the latter two
+    was derived from the first. Layer B failed 3 of 4 curated cases on
+    both, with the counterexample attached: the legacy binary emitted each
+    record **twice**. The cause is four characters of source — in
+    `CBACT02C` the `DISPLAY` inside `1000-CARDFILE-GET-NEXT` is commented
+    out, and in the other two it is live, so those modules display once in
+    the read paragraph and again in the main loop. **This is the finding
+    that matters commercially**: it is exactly the mistake a competent
+    engineer makes when migrating a family of near-identical modules, it
+    is invisible to any test written from the Java side, and no amount of
+    reading the Java would reveal it. It was caught in seconds by
+    differential execution against the real binary, and the byte-for-byte
+    `raw` protocol (docs/raw-protocol.md) is what made the comparison
+    meaningful — under the KV protocol both sides parse to zero fields and
+    the case would have passed.
+11. **The property generator produced a file that cannot exist
+    (2026-08-03).** Layer A failed 2 of 200 on `CBCUS01C` with the legacy
+    side printing `LOADER: WRITE 22`. The generator had drawn two records
+    with the same `CUST-ID`, and `CUST-ID` is the RECORD KEY of an INDEXED
+    file — unique by definition — so the seed described a file GnuCOBOL
+    cannot represent, and the harness loader correctly refused it rather
+    than silently dropping a record. The failure was real and the input
+    was invalid, which is the awkward combination worth recording: a green
+    run would have meant the generator never probed key collisions, and a
+    red one blamed the migration for the harness. The generator now draws
+    distinct keys for INDEXED input, resolving the key's byte range from
+    the record layout by name (the FD key `FD-CUST-ID` and the `READ INTO`
+    layout name `CUST-ID` differ), and refuses loudly when the key domain
+    is too narrow for the record count instead of retrying forever.
 
 ## Parser-coverage sweep
 
