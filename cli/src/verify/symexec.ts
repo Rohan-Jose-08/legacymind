@@ -54,7 +54,14 @@ import {
 import { findItem } from "./propgen.js";
 
 const DEFAULT_MONEY_PATTERN = "PAY|TAX|GROSS|NET|AMT|AMOUNT|BAL|FEE|INT|PRICE|COST|RATE";
-const MAX_PATHS = 64;
+/**
+ * Default cap on enumerated paths. A RESOURCE bound, not a soundness one —
+ * exceeding it is a loud refusal, never a silent truncation — so it is
+ * per-module tunable via `symbolic.maxPaths`. Real modules branch far more
+ * than the benchmark's: CBACT02C forks on an opaque file status at every
+ * I/O site and blows 64 even with a single record.
+ */
+const DEFAULT_MAX_PATHS = 64;
 
 type ComputeStmt = Extract<Statement, { kind: "compute" }>;
 
@@ -517,6 +524,13 @@ interface PathState {
   readCount: number;
   /** AT END has fired on this path: the case has exactly readCount records. */
   eofSeen: boolean;
+  /**
+   * The PROGRAM ended on this path (STOP RUN / GOBACK / a non-returning
+   * external service). Distinct from "the statement list ran out": a
+   * terminated path must not be unrolled into another loop iteration, and
+   * nothing after the loop runs on it.
+   */
+  terminated?: boolean;
 }
 
 /**
@@ -752,6 +766,8 @@ interface ExecCtx {
   paras: Map<string, Paragraph>;
   /** Max iterations to unroll per PERFORM loop. */
   maxUnroll: number;
+  /** Cap on enumerated paths; exceeding it refuses loudly. */
+  maxPaths: number;
   /** Cache of inlined loop bodies by target paragraph. */
   loopBodies: Map<string, Statement[]>;
   /**
@@ -786,11 +802,6 @@ function loopBody(ctx: ExecCtx, s: LoopStmt): Statement[] {
     if (containsAccept(body, ctx, new Set(names))) {
       throw new DiffExecError(
         `layer C: ACCEPT inside PERFORM loop body ${key} — stdin positions become iteration-dependent (needs the record protocol)`,
-      );
-    }
-    if (containsStop(body)) {
-      throw new DiffExecError(
-        `layer C: STOP RUN/GOBACK inside PERFORM loop body ${key} — mid-loop program exit is not modeled by the unroller yet`,
       );
     }
     ctx.loopBodies.set(key, body);
@@ -883,6 +894,7 @@ function cloneState(s: PathState): PathState {
     notes: [...s.notes],
     readCount: s.readCount,
     eofSeen: s.eofSeen,
+    terminated: s.terminated,
   };
 }
 
@@ -1148,8 +1160,8 @@ function execute(stmts: Statement[], state: PathState, ctx: ExecCtx, out: PathSt
             forked.conds.push({ text: s.condition.text, taken, diff: null, exact: null });
             forked.notes.push(`condition "${s.condition.text}" is not affine; path constraints incomplete`);
             execute([...branch, ...rest], forked, ctx, out);
-            if (out.length > MAX_PATHS) {
-              throw new DiffExecError(`layer C: more than ${MAX_PATHS} paths; needs bounded exploration`);
+            if (out.length > ctx.maxPaths) {
+              throw new DiffExecError(`layer C: more than ${ctx.maxPaths} paths; needs bounded exploration`);
             }
             continue;
           }
@@ -1177,8 +1189,8 @@ function execute(stmts: Statement[], state: PathState, ctx: ExecCtx, out: PathSt
               });
             }
             execute([...branch, ...rest], forked, ctx, out);
-            if (out.length > MAX_PATHS) {
-              throw new DiffExecError(`layer C: more than ${MAX_PATHS} paths; needs bounded exploration`);
+            if (out.length > ctx.maxPaths) {
+              throw new DiffExecError(`layer C: more than ${ctx.maxPaths} paths; needs bounded exploration`);
             }
           }
         }
@@ -1233,8 +1245,8 @@ function execute(stmts: Statement[], state: PathState, ctx: ExecCtx, out: PathSt
           }
           avail.readCount += 1;
           execute([...s.notAtEnd, ...restAfterRead], avail, ctx, out);
-          if (out.length > MAX_PATHS) {
-            throw new DiffExecError(`layer C: more than ${MAX_PATHS} paths; lower the records max`);
+          if (out.length > ctx.maxPaths) {
+            throw new DiffExecError(`layer C: more than ${ctx.maxPaths} paths; lower the records max`);
           }
         }
         const eof = cloneState(state);
@@ -1251,6 +1263,7 @@ function execute(stmts: Statement[], state: PathState, ctx: ExecCtx, out: PathSt
       case "goback":
         // Program end: this path is complete here — statements after it (the
         // rest of an IF fork, or fall-through paragraphs) never run on it.
+        state.terminated = true;
         out.push(state);
         return;
       case "move-window":
@@ -1271,6 +1284,7 @@ function execute(stmts: Statement[], state: PathState, ctx: ExecCtx, out: PathSt
         // path but of the run, so it is compared where every other observable
         // is compared, in runCase (docs/external-services.md).
         state.notes.push(`path terminates abnormally via external service ${s.service}`);
+        state.terminated = true;
         out.push(state);
         return;
       case "perform":
@@ -1333,8 +1347,8 @@ function unrollLoop(
   for (const { st: exitState, pushed } of loopCondStates(s, timesVal, state, ctx, depth, true)) {
     if (pushed.some(provablyFalse)) continue;
     execute(rest, exitState, ctx, out);
-    if (out.length > MAX_PATHS) {
-      throw new DiffExecError(`layer C: more than ${MAX_PATHS} paths; lower maxLoopUnroll or split the module`);
+    if (out.length > ctx.maxPaths) {
+      throw new DiffExecError(`layer C: more than ${ctx.maxPaths} paths; lower maxLoopUnroll or split the module`);
     }
   }
 
@@ -1367,6 +1381,13 @@ function unrollLoop(
     const bodyOut: PathState[] = [];
     execute(loopBody(ctx, s), iter, ctx, bodyOut);
     for (const bs of bodyOut) {
+      // The program ended inside the body (STOP RUN / GOBACK / abend). The
+      // path is complete: it neither runs another iteration nor reaches the
+      // statements after the loop.
+      if (bs.terminated) {
+        out.push(bs);
+        continue;
+      }
       if (s.kind === "perform-varying") {
         const next = parseExpression(`${s.varying.var} + ${s.varying.by.text}`, exprCtxFor(bs, ctx));
         store(bs, ctx, s.varying.var, next, false);
@@ -2080,6 +2101,7 @@ export function runSymExec(configPath: string, outPath: string): number {
     // In records mode the unroll bound may not exceed the slot count, so
     // beyond-bound truncation (the honest disclosure) always fires first.
     maxUnroll: recordsMode ? Math.min(sym.maxLoopUnroll ?? 12, sym.records!.max) : sym.maxLoopUnroll ?? 12,
+    maxPaths: sym.maxPaths ?? DEFAULT_MAX_PATHS,
     loopBodies: new Map(),
     records: recordsMode ? { max: sym.records!.max, recordName: recordName!, fields: fieldSlots } : null,
   };

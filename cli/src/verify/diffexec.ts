@@ -106,6 +106,12 @@ export interface SymbolicConfig {
    * paths, never silently dropped.
    */
   maxLoopUnroll?: number;
+  /**
+   * Cap on enumerated paths (default 64). A RESOURCE bound, not a soundness
+   * one — exceeding it refuses loudly rather than truncating — so it is
+   * per-module tunable. Real modules branch far more than the benchmark's.
+   */
+  maxPaths?: number;
 }
 
 export interface DiffConfig {

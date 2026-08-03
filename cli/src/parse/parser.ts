@@ -150,12 +150,23 @@ export interface LayoutSlot {
 
 export interface ModuleIR {
   irVersion: "0.1.0";
-  /** File I/O (proleap engine only): LINE SEQUENTIAL files; mode from the OPEN statement. */
+  /** File I/O (proleap engine only): mode from the OPEN statement. */
   files?: {
     name: string;
     assign: string;
-    organization: "line-sequential";
+    /** ddname `ASSIGN TO WORD` rather than a literal filename (docs/ddname.md). */
+    assignKind?: "ddname";
+    /** VSAM V1 adds INDEXED (docs/vsam.md); the file model started LINE SEQUENTIAL only. */
+    organization: "line-sequential" | "indexed";
     record: string;
+    /** INDEXED only: the RECORD KEY, which imposes the read order. */
+    recordKey?: string;
+    /**
+     * The FILE STATUS item, when the SELECT declares one. Real batch COBOL
+     * drives its read loop from this rather than from an AT END clause, so
+     * layer C binds it per READ arm ("00" available, "10" at end).
+     */
+    fileStatus?: string;
     mode: "input" | "output";
     /** Multi-field records only (stage 2b): total record byte width and per-field layout. */
     recordWidth?: number;

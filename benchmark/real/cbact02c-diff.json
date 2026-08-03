@@ -1,0 +1,55 @@
+{
+  "$comment": "Layer B for the REAL AWS CardDemo CBACT02C against the real GnuCOBOL binary reading a real VSAM file. Output is raw records, not KEY=VALUE, so the contract is byte-for-byte stdout. The unsorted cases exist because the index imposes key order and the modern side must reproduce it.",
+  "legacy": {
+    "image": "legacymind/legacy-cbact02c",
+    "label": "COBOL 85 CBACT02C (AWS CardDemo, GnuCOBOL 3.1.2, INDEXED/VSAM via harness loader)"
+  },
+  "modern": {
+    "argv": [
+      "java",
+      "-cp",
+      "../../out/real/cbact02c/migrate/candidate-a",
+      "Cbact02c"
+    ],
+    "label": "Java 21 CBACT02C (migrated candidate A)"
+  },
+  "protocol": {
+    "input": "stdin-lines",
+    "output": "raw"
+  },
+  "numericTolerance": 0,
+  "timeoutMs": 30000,
+  "cases": [
+    {
+      "id": "empty-file",
+      "stdin": []
+    },
+    {
+      "id": "one-card",
+      "stdin": [
+        "411111111111111110000000001123ALICE EXAMPLE                                     2027-01-31Y                                                           "
+      ]
+    },
+    {
+      "id": "unsorted-three",
+      "stdin": [
+        "422222222222222210000000003789CAROL EXAMPLE                                     2028-06-30Y                                                           ",
+        "400000000000000210000000002456BOB EXAMPLE                                       2026-12-31N                                                           ",
+        "411111111111111110000000001123ALICE EXAMPLE                                     2027-01-31Y                                                           "
+      ]
+    },
+    {
+      "id": "key-order-boundary",
+      "stdin": [
+        "400000000000001000000000001001TEN                                               2027-01-31Y                                                           ",
+        "400000000000000200000000002002TWO                                               2027-01-31Y                                                           "
+      ]
+    },
+    {
+      "id": "spaces-in-name",
+      "stdin": [
+        "555555555555555599999999999999                                                  2030-12-31                                                            "
+      ]
+    }
+  ]
+}
