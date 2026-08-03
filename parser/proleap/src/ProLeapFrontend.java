@@ -211,6 +211,17 @@ public class ProLeapFrontend {
 					r.put("unsupported", new ArrayList<>(lowering.unsupported));
 				} else {
 					r.put("ir", ir);
+					// A module can lower completely and STILL not get all four
+					// layers. Saying "verifiable" without saying which layers will
+					// run is the promise `assess` must not make: byte-modelled
+					// storage holds bytes, not values, so layer C refuses the
+					// module outright (docs/byte-window.md).
+					if (!lowering.byteModelled.isEmpty()) {
+						r.put("disclosures", new ArrayList<>(Arrays.asList(
+								"layer C (symbolic) will not run: byte-modelled storage ("
+										+ String.join(", ", lowering.byteModelled)
+										+ ") - evidence comes from layers A, B and D (docs/byte-window.md)")));
+					}
 				}
 			} catch (final Throwable t) {
 				r.put("ok", false);
@@ -3569,20 +3580,77 @@ public class ProLeapFrontend {
 				unsupported.add("the READ must be the first statement of its paragraph (stage 2a)");
 				return;
 			}
-			// The read's paragraph must head the range of a perform-until loop.
-			boolean loopDriven = false;
+			// The READ's paragraph must be DRIVEN BY a PERFORM UNTIL loop —
+			// reachable through PERFORM edges from the loop's body, not
+			// necessarily the loop's own target. Requiring it to BE the target
+			// was an artificial restriction: every batch reader in AWS CardDemo
+			// writes the loop as
+			//     PERFORM UNTIL EOF = 'Y'
+			//         IF EOF = 'N'  PERFORM <read-para>  ... END-IF
+			//     END-PERFORM
+			// which is the same loop with the read one PERFORM deeper (and, since
+			// stage 76, with the inline body hoisted into a synthetic paragraph,
+			// so the loop's target is never the read paragraph at all).
+			final Map<String, Map<String, Object>> itemsByName = new LinkedHashMap<>();
+			for (final Object[] pi : pendingItems) {
+				@SuppressWarnings("unchecked")
+				final Map<String, Object> it = (Map<String, Object>) pi[0];
+				itemsByName.put((String) it.get("name"), it);
+			}
+			final Map<String, Set<String>> performs = new LinkedHashMap<>();
+			for (final Object po : paragraphs) {
+				final Map<?, ?> pm = (Map<?, ?>) po;
+				final Set<String> direct = new LinkedHashSet<>();
+				collectPerformTargets((List<?>) pm.get("statements"), direct);
+				performs.put((String) pm.get("name"), direct);
+			}
+			final List<Object[]> loopTargets = new ArrayList<>();
 			for (final Object po : paragraphs) {
 				final List<Object[]> loops = new ArrayList<>();
 				collectLoopTargets((List<?>) ((Map<?, ?>) po).get("statements"), loops);
-				for (final Object[] lt : loops) {
-					if (readPara.equals(lt[0])) {
-						loopDriven = true;
-					}
+				loopTargets.addAll(loops);
+			}
+			final List<String> driving = new ArrayList<>();
+			final List<Object[]> drivingLoops = new ArrayList<>();
+			for (final Object[] lt : loopTargets) {
+				final String t = (String) lt[0];
+				if (t.equals(readPara) || performClosure(t, performs).contains(readPara)) {
+					driving.add(t);
+					drivingLoops.add(lt);
 				}
 			}
-			if (!loopDriven) {
+			if (driving.isEmpty()) {
 				unsupported.add("the READ's paragraph " + readPara
-						+ " is not the target of a PERFORM UNTIL loop (stage 2a models the canonical batch loop)");
+						+ " is not reachable from any PERFORM UNTIL loop (stage 2a models the batch read loop)");
+			} else if (driving.size() > 1) {
+				// Two loops consuming the same READ site would give the record
+				// stream two different loop contexts; the model has one.
+				unsupported.add("the READ's paragraph " + readPara + " is driven by " + driving.size()
+						+ " PERFORM UNTIL loops (" + String.join(", ", driving)
+						+ ") - stage 2a models a single read loop");
+			} else {
+				// Stage 81 refused an ALPHANUMERIC exit condition here, because
+				// layer C could not decide one and would have refused the module
+				// after `assess` promised four-layer verification. Layer C now
+				// decides EQUALITY on literal-valued flags (docs/read-loop.md), so
+				// `UNTIL END-OF-FILE = 'Y'` is admitted — but ORDERING between
+				// alphanumerics still is not, and must not be: its answer depends
+				// on the collating sequence, which differs between the certified
+				// toolchain and z/OS (docs/charset.md).
+				final Map<?, ?> cond = (Map<?, ?>) drivingLoops.get(0)[1];
+				if (cond != null && ALNUM_ORDERING.matcher((String) cond.get("text")).find()) {
+					for (final Object r : (List<?>) cond.get("refs")) {
+						final Map<String, Object> item = itemsByName.get(r);
+						final Map<?, ?> t = item == null ? null : (Map<?, ?>) item.get("type");
+						if (t != null && "alphanumeric".equals(t.get("category"))) {
+							unsupported.add("the READ loop's exit condition ORDERS alphanumeric \"" + r
+									+ "\" (" + cond.get("text") + ") - alphanumeric ordering depends on the"
+									+ " collating sequence, which differs between the certified toolchain and"
+									+ " z/OS (docs/charset.md); equality is supported, ordering is not");
+							break;
+						}
+					}
+				}
 			}
 		}
 
@@ -4371,12 +4439,66 @@ public class ProLeapFrontend {
 		}
 
 		/** Collect perform-until loop targets {targetName}. */
+		/** A relational operator other than equality — collating-sequence dependent on alphanumerics. */
+		static final Pattern ALNUM_ORDERING = Pattern.compile("(<|>|\\bLESS\\b|\\bGREATER\\b)");
+
+		/** Every paragraph PERFORMed by these statements, at any nesting depth. */
+		void collectPerformTargets(final List<?> stmts, final Set<String> out) {
+			for (final Object so : stmts) {
+				final Map<?, ?> s = (Map<?, ?>) so;
+				final String kind = (String) s.get("kind");
+				if (PERFORM_KINDS.contains(kind)) {
+					final Object t = s.get("target");
+					if (t != null) {
+						out.add((String) t);
+					}
+					final Object thru = s.get("thru");
+					if (thru != null) {
+						// A THRU range runs every paragraph from target to thru.
+						final int i = paragraphOrder.indexOf((String) t);
+						final int j = paragraphOrder.indexOf((String) thru);
+						if (i >= 0 && j >= i) {
+							out.addAll(paragraphOrder.subList(i, j + 1));
+						}
+					}
+				} else if ("if".equals(kind)) {
+					collectPerformTargets((List<?>) s.get("then"), out);
+					if (s.get("else") != null) {
+						collectPerformTargets((List<?>) s.get("else"), out);
+					}
+				} else if ("read".equals(kind)) {
+					collectPerformTargets((List<?>) s.get("atEnd"), out);
+					collectPerformTargets((List<?>) s.get("notAtEnd"), out);
+				}
+			}
+		}
+
+		/** Paragraphs reachable from `start` by following PERFORM edges. */
+		Set<String> performClosure(final String start, final Map<String, Set<String>> performs) {
+			final Set<String> seen = new LinkedHashSet<>();
+			final List<String> queue = new ArrayList<>();
+			queue.add(start);
+			while (!queue.isEmpty()) {
+				final String cur = queue.remove(queue.size() - 1);
+				final Set<String> next = performs.get(cur);
+				if (next == null) {
+					continue;
+				}
+				for (final String n : next) {
+					if (seen.add(n)) {
+						queue.add(n);
+					}
+				}
+			}
+			return seen;
+		}
+
 		void collectLoopTargets(final List<?> stmts, final List<Object[]> out) {
 			for (final Object so : stmts) {
 				final Map<?, ?> s = (Map<?, ?>) so;
 				final String kind = (String) s.get("kind");
 				if ("perform-until".equals(kind)) {
-					out.add(new Object[] { s.get("target") });
+					out.add(new Object[] { s.get("target"), s.get("condition") });
 				} else if ("if".equals(kind)) {
 					collectLoopTargets((List<?>) s.get("then"), out);
 					if (s.get("else") != null) {

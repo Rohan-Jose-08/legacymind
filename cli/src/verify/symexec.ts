@@ -171,7 +171,29 @@ interface ExactForm {
 type SymVal =
   | { kind: "affine"; a: Affine; exact?: ExactForm }
   | { kind: "text"; input: number }
+  /**
+   * A known alphanumeric literal (docs/read-loop.md). COBOL's other
+   * end-of-file idiom is `01 END-OF-FILE PIC X VALUE 'N'` with
+   * `MOVE 'Y'` at AT END, and without this the engine cannot decide
+   * `UNTIL END-OF-FILE = 'Y'`, so it explores an iteration past the end
+   * of file and refuses with "READ after AT END".
+   *
+   * Deliberately only EQUALITY is decided on these. Ordering between
+   * literals depends on the collating sequence, which differs between the
+   * certified toolchain and z/OS (docs/charset.md), so `<`/`>` on
+   * alphanumerics stays undecided here rather than being answered in the
+   * wrong character set.
+   */
+  | { kind: "lit"; value: string }
   | { kind: "opaque"; reason: string };
+
+/** The quoted-literal token forms COBOL admits, unquoted. */
+function literalText(t: string): string | null {
+  if (t.length >= 2 && ((t.startsWith("'") && t.endsWith("'")) || (t.startsWith('"') && t.endsWith('"')))) {
+    return t.slice(1, -1);
+  }
+  return null;
+}
 
 /** Exact form of a value: explicit, or the affine itself when drift-free. */
 function exactOf(v: SymVal): ExactForm | null {
@@ -316,7 +338,12 @@ function tableCell(name: string, ctx: ExprCtx): "notable" | { key: string; item:
 }
 
 function parseExpression(text: string, ctx: ExprCtx): SymVal {
-  const raw = text.match(/[A-Z][A-Z0-9-]*\([^)]*\)|[A-Z][A-Z0-9-]*|\d+\.\d+|\.\d+|\d+|[()+\-*/]/g) ?? [];
+  // Quoted literals come FIRST: without them `'Y'` tokenized as the bare
+  // identifier `Y`, which then resolved as a (never declared) variable and
+  // went opaque. That is why an alphanumeric flag test could never be
+  // decided (docs/read-loop.md).
+  const raw =
+    text.match(/'[^']*'|"[^"]*"|[A-Z][A-Z0-9-]*\([^)]*\)|[A-Z][A-Z0-9-]*|\d+\.\d+|\.\d+|\d+|[()+\-*/]/g) ?? [];
   let pos = 0;
   const peek = () => raw[pos];
   const opaque = (reason: string): SymVal => ({ kind: "opaque", reason });
@@ -336,6 +363,8 @@ function parseExpression(text: string, ctx: ExprCtx): SymVal {
       const r = ratOf(t.startsWith(".") ? "0" + t : t);
       return r ? { kind: "affine", a: affineConst(r) } : opaque(`unparseable literal ${t}`);
     }
+    const lit = literalText(t);
+    if (lit !== null) return { kind: "lit", value: lit };
     // FUNCTION NUMVAL(WS-X): the tokenizer may keep NUMVAL(arg) glued.
     if (t === "FUNCTION") {
       const f = raw[pos];
@@ -868,6 +897,22 @@ function store(state: PathState, ctx: ExecCtx, target: string, val: SymVal, roun
   }
   const key = tc === "notable" ? target : tc.key;
   const item = tc === "notable" ? findItem(ctx.items, target) : tc.item;
+  if (val.kind === "lit") {
+    // A MOVE to an alphanumeric field truncates or space-pads to its
+    // PICTURE, so `MOVE "YES" TO X` with `X PIC X` stores "Y". Without the
+    // declared length the stored text is unknown, and guessing it would be
+    // worse than saying so.
+    const len = item?.type?.category === "alphanumeric" ? item.type.length : undefined;
+    if (typeof len === "number" && len > 0) {
+      state.env.set(key, { kind: "lit", value: val.value.slice(0, len).padEnd(len) });
+    } else {
+      state.env.set(key, {
+        kind: "opaque",
+        reason: `literal stored into ${key}, whose alphanumeric length is not declared in the IR`,
+      });
+    }
+    return;
+  }
   if (val.kind !== "affine") {
     state.env.set(key, val);
     return;
@@ -950,6 +995,25 @@ function parseCondition(text: string, ctx: ExprCtx): CondAtom | null {
   if (!m) return null;
   const left = parseExpression(m[1]!, ctx);
   const right = parseExpression(m[3]!, ctx);
+  // Two known literals: decide EQUALITY exactly and hand the result to the
+  // ordinary machinery as a constant (0 = 0 holds, 1 = 0 does not), so path
+  // pruning, dead-branch reporting and witness solving all work unchanged.
+  // Ordering is NOT decided — it depends on the collating sequence
+  // (docs/charset.md) — so it falls through to the honest "not affine" note.
+  if (left.kind === "lit" && right.kind === "lit") {
+    const op = m[2] as CmpOp;
+    if (op !== "=" && op !== "<>") return null;
+    // COBOL compares alphanumerics space-padded to the longer operand.
+    const width = Math.max(left.value.length, right.value.length);
+    const equal = left.value.padEnd(width) === right.value.padEnd(width);
+    const holds = op === "=" ? equal : !equal;
+    return {
+      diff: affineConst(holds ? R0 : { n: 1n, d: 1n }),
+      op: "=",
+      exact: null,
+      text: text.trim(),
+    };
+  }
   if (left.kind !== "affine" || right.kind !== "affine") return null;
   const le = exactOf(left);
   const re = exactOf(right);
@@ -2017,6 +2081,15 @@ export function runSymExec(configPath: string, outPath: string): number {
       if (it.type?.category === "numeric" && it.value) {
         const r = /^zero(s|es)?$/i.test(it.value) ? R0 : ratOf(it.value);
         if (r) initialEnv.set(it.name, { kind: "affine", a: affineConst(r) });
+      }
+      // Alphanumeric VALUE clauses seed the same way, so an EOF flag declared
+      // `PIC X VALUE 'N'` is known at its first test rather than opaque
+      // (docs/read-loop.md).
+      if (it.type?.category === "alphanumeric" && it.value && typeof it.type.length === "number") {
+        const lit = literalText(it.value);
+        if (lit !== null) {
+          initialEnv.set(it.name, { kind: "lit", value: lit.slice(0, it.type.length).padEnd(it.type.length) });
+        }
       }
       seedInitialValues(it.children ?? []);
     }

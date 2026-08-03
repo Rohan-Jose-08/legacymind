@@ -35,6 +35,12 @@ interface FileResult {
   stage?: string;
   error?: string;
   unsupported?: string[];
+  /**
+   * Lowered, but a named layer will still decline (docs/byte-window.md).
+   * A module can be verifiable and NOT get all four layers, and saying
+   * "verifiable" without saying which is a promise this tool must not make.
+   */
+  disclosures?: string[];
 }
 
 interface ModuleVerdict {
@@ -42,6 +48,8 @@ interface ModuleVerdict {
   verdict: "VERIFIABLE" | "BLOCKED" | "PARSE-FAILED";
   blockers: string[];
   parseError?: string;
+  /** Layers that will decline on this module, with the reason. */
+  disclosures?: string[];
 }
 
 /** Normalize a rejection message into a construct bucket: drop line
@@ -105,7 +113,11 @@ export function runAssess(opts: {
   // --- per-module verdicts ----------------------------------------------------
   const verdicts: ModuleVerdict[] = results.map((r, i) => {
     const rel = relative(resolve(opts.dir), files[i]!).split("\\").join("/");
-    if (r.ok) return { file: rel, verdict: "VERIFIABLE", blockers: [] };
+    if (r.ok) {
+      return r.disclosures?.length
+        ? { file: rel, verdict: "VERIFIABLE", blockers: [], disclosures: r.disclosures }
+        : { file: rel, verdict: "VERIFIABLE", blockers: [] };
+    }
     if (r.stage === "frontend" || r.stage === "asg") {
       return { file: rel, verdict: "PARSE-FAILED", blockers: [], parseError: bucket(r.error ?? "unknown") };
     }
@@ -159,7 +171,10 @@ export function runAssess(opts: {
   md.push(``);
   md.push(`| | modules | share |`);
   md.push(`|---|---:|---:|`);
-  md.push(`| **Verifiable today** — full four-layer verification and a signed certificate are available now | ${verifiable.length} | ${pct(verifiable.length)}% |`);
+  const fullEvidence = verifiable.filter((v) => !v.disclosures?.length);
+  const reduced = verifiable.filter((v) => v.disclosures?.length);
+  md.push(`| **Verifiable — all four layers** and a signed certificate available now | ${fullEvidence.length} | ${pct(fullEvidence.length)}% |`);
+  md.push(`| **Verifiable — reduced evidence**: lowers completely, but a named layer declines (listed per module) | ${reduced.length} | ${pct(reduced.length)}% |`);
   md.push(`| **Blocked** — parses, but uses constructs outside the verified subset (each enumerated below) | ${blocked.length} | ${pct(blocked.length)}% |`);
   md.push(`| **Parse failed** — the grammar/preprocessor rejected the source | ${parseFailed.length} | ${pct(parseFailed.length)}% |`);
   md.push(``);
@@ -173,7 +188,10 @@ export function runAssess(opts: {
   if (verifiable.length > 0) {
     md.push(`## Verifiable now (${verifiable.length})`);
     md.push(``);
-    for (const v of verifiable) md.push(`- \`${v.file}\``);
+    for (const v of verifiable) {
+      md.push(`- \`${v.file}\`${v.disclosures?.length ? " — **reduced evidence**" : ""}`);
+      for (const d of v.disclosures ?? []) md.push(`  - ${d}`);
+    }
     md.push(``);
   }
   if (unlockTable.length > 0) {
@@ -209,7 +227,10 @@ export function runAssess(opts: {
   const mdPath = join(resolve(opts.outDir), "ASSESSMENT.md");
   writeFileSync(mdPath, md.join("\n") + "\n");
 
-  console.log(`  verifiable now:   ${verifiable.length}/${files.length} (${pct(verifiable.length)}%)`);
+  console.log(
+    `  verifiable now:   ${verifiable.length}/${files.length} (${pct(verifiable.length)}%)` +
+      (reduced.length ? `  [${fullEvidence.length} four-layer, ${reduced.length} reduced evidence]` : ""),
+  );
   console.log(`  blocked:          ${blocked.length} (constructs enumerated per module)`);
   console.log(`  parse failures:   ${parseFailed.length}`);
   console.log(`  report:           ${mdPath}`);

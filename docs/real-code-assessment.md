@@ -1,46 +1,39 @@
 # Real-code assessment — what `assess` says about code we did not write
 
-> **Numbers updated 2026-08-02 (after the external-services stage).** The
-> tables below are the ORIGINAL 2026-08-01 measurement and are kept for the
-> record; several stages have moved them since. Current figures, measured
-> on the same corpora with the same command:
+> **Numbers updated 2026-08-03.** The tables below are the ORIGINAL
+> 2026-08-01 measurement and are kept for the record; several stages have
+> moved them since. Current figures, same corpora, same command:
 >
 > | | original | now |
 > |---|---|---|
-> | CardDemo VERIFIABLE | 0/31 | **0/31** |
-> | CardDemo median blockers (of 14 blocked) | 26 | **15.5** |
-> | nearest genuine candidates | 4 | **1** |
-> | NIST/ProLeap VERIFIABLE | 15/759 | **16/759** |
+> | CardDemo verifiable | 0/31 | **3/31** — and all three are *reduced evidence* |
+> | CardDemo median blockers (of 11 still blocked) | 26 | 21 |
+> | NIST/ProLeap verifiable | 15/759 | 16/759 |
 >
-> Two things need saying plainly rather than being absorbed into a
-> headline. First, **VERIFIABLE on real code is still zero** — every stage
-> so far has moved the wall, not breached it, and the marketing line in
-> "What this means" is unchanged. Second, the **NIST 15 → 16** is *not*
-> attributable to the external-services stage: `gov/nist/SM301M.CBL`
-> becomes verifiable with that stage's frontend change reverted, so it was
-> unlocked by one of the five earlier stages that were never NIST-swept
-> (its content is a single `COPY`, which points at the COPY-provenance
-> stage). The baseline was stale, not the instrument.
+> **This is the first non-zero result on real third-party COBOL, and it
+> needs its qualifier attached every time it is repeated.** `CBACT02C`,
+> `CBACT03C` and `CBCUS01C` lower completely into the IR, but all three
+> carry byte-modelled storage, so **layer C declines them**: their
+> evidence would come from layers A, B and D, with the missing layer
+> recorded in the certificate. `assess` prints this in the same line as
+> the number —
+> `verifiable now: 3/31 (9.7%)  [0 four-layer, 3 reduced evidence]` —
+> because an earlier version of this change reported the 3 without the
+> qualifier and would have been false (`docs/read-loop.md`).
 >
-> Three CardDemo modules — `CBACT02C`, `CBACT03C`, `CBCUS01C` — now sit at
-> **1 blocker each, and it is the same one**: the stage-2a `READ`-loop
-> shape (the READ's paragraph is PERFORMed from inside an `IF` within the
-> loop rather than being the loop body). Reference modification and
-> `REDEFINES` group-over-elementary were both removed by the byte-window
-> stage (`docs/byte-window.md`). One artificial restriction now stands
-> between this project and its first certified third-party modules.
-
-> **Corrected 2026-08-02.** The first version of this document reported
-> blocker counts that were **too low**: a structural rejection
-> ("PROCEDURE DIVISION has no paragraphs", "statement before the first
-> paragraph header") stopped the frontend before it lowered the affected
-> statements, so every construct underneath was silently omitted from the
-> module's blocker list. An assessment that under-reports blockers is
-> exactly the hidden failure this product exists to refuse, so the
-> frontend now enumerates those statements for analysis while keeping the
-> module blocked. Numbers below are the corrected ones; the deltas are
-> called out where they matter. Nothing about the verdicts changed —
-> VERIFIABLE stayed 15/759 on NIST and 0/31 on CardDemo.
+> **No real module has been certified end to end yet.** Verifiable means
+> eligible. Certification needs a VSAM harness image per module and a
+> `migrate` run, and until that happens the honest line is: *three
+> modules are eligible, none is certified.* The marketing guidance in
+> "What this means" below is unchanged.
+>
+> The median rose 15.5 → 21 only because the three nearest modules left
+> the blocked set; nothing regressed.
+>
+> The **NIST 15 → 16** is not attributable to any of these stages:
+> `gov/nist/SM301M.CBL` becomes verifiable with the relevant frontend
+> change reverted, so an earlier un-swept stage unlocked it. The baseline
+> was stale, not the instrument.
 
 Every coverage number this project has published came from either its own
 benchmark (27 modules we wrote) or the ProLeap/NIST test corpus (parser
