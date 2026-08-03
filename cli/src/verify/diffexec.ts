@@ -111,7 +111,12 @@ export interface SymbolicConfig {
 export interface DiffConfig {
   legacy: SideConfig;
   modern: SideConfig;
-  protocol?: { input: "stdin-lines"; output: "kv-lines" };
+  /**
+   * Output contract. "kv-lines" parses KEY=VALUE pairs; "raw" compares
+   * stdout byte for byte, which is what real COBOL needs — it prints
+   * records, not pairs (docs/raw-protocol.md).
+   */
+  protocol?: { input: "stdin-lines"; output: "kv-lines" | "raw" };
   /** Absolute tolerance for numeric fields. Default 0 — exact or fail. */
   numericTolerance?: number;
   timeoutMs?: number;
@@ -156,7 +161,8 @@ export interface FieldDiff {
     | "string-divergence"
     | "missing-in-legacy"
     | "missing-in-modern"
-    | "exit-status-divergence";
+    | "exit-status-divergence"
+    | "raw-output-divergence";
   legacy?: string;
   modern?: string;
   absDelta?: number;
@@ -498,10 +504,46 @@ export function runCase(
   const bothExited = typeof legacyRun.exitCode === "number" && typeof modernRun.exitCode === "number";
   const bothNonZero = bothExited && legacyRun.exitCode !== 0 && modernRun.exitCode !== 0;
 
+  const rawProtocol = config.protocol?.output === "raw";
+
+  /** Byte-for-byte stdout equality — the only honest contract for a module
+   *  whose output is not KEY=VALUE (real COBOL prints records, not pairs). */
+  const compareRaw = (): void => {
+    compared = 1;
+    diffs =
+      legacyRun.stdout === modernRun.stdout
+        ? []
+        : [
+            {
+              field: "<stdout>",
+              kind: "raw-output-divergence",
+              legacy: JSON.stringify(legacyRun.stdout).slice(0, 400),
+              modern: JSON.stringify(modernRun.stdout).slice(0, 400),
+            },
+          ];
+  };
+
   const compareStdout = (): void => {
+    if (rawProtocol) {
+      compareRaw();
+      return;
+    }
     const legacyFields = parseKv(legacyRun.stdout, "legacy", notes);
     const modernFields = parseKv(modernRun.stdout, "modern", notes);
     ({ diffs, compared } = compareFields(legacyFields, modernFields, tolerance));
+    // A case that compared NOTHING is not a pass. Under the KV protocol a
+    // module whose output is not KEY=VALUE parses to zero fields on both
+    // sides, and "no differences among no fields" would certify a candidate
+    // that printed nothing at all — measured, it did. Fall back to raw
+    // stdout equality, which is strictly stronger and cannot regress a
+    // module that does emit fields.
+    if (compared === 0) {
+      notes.push(
+        "no KEY=VALUE fields were parsed from either side; falling back to byte-for-byte stdout " +
+          'comparison (set protocol.output to "raw" to make this the contract)',
+      );
+      compareRaw();
+    }
   };
 
   if (harnessBroke) {
@@ -616,7 +658,11 @@ export function printCaseResults(results: CaseResult[]): void {
         console.log(
           `        ${d.field}: legacy=${d.legacy} modern=${d.modern} |delta|=${d.absDelta} > tolerance=${d.tolerance}`,
         );
-      } else if (d.kind === "string-divergence" || d.kind === "exit-status-divergence") {
+      } else if (
+        d.kind === "string-divergence" ||
+        d.kind === "exit-status-divergence" ||
+        d.kind === "raw-output-divergence"
+      ) {
         console.log(`        ${d.field}: legacy=${JSON.stringify(d.legacy)} modern=${JSON.stringify(d.modern)}`);
       } else {
         console.log(`        ${d.field}: ${d.kind}`);

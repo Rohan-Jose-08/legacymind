@@ -460,7 +460,13 @@ export function runStaticFlow(configPath: string, outPath: string): number {
     },
     capacityWarnings: results.reduce((n, r) => n + r.warnings.length, 0),
   };
-  const verdict: "PASS" | "FAIL" = summary.keys.divergent === 0 ? "PASS" : "FAIL";
+  // "No divergences among no keys" is not evidence. A module whose output is
+  // not KEY=VALUE — which is most real COBOL — yields zero output keys, and
+  // reporting PASS for it would let a layer that examined nothing stand as a
+  // module's supporting evidence. Measured on the real AWS CardDemo CBACT02C,
+  // which printed 0/0 and PASSed.
+  const verdict: "PASS" | "FAIL" | "NO-EVIDENCE" =
+    summary.keys.total === 0 ? "NO-EVIDENCE" : summary.keys.divergent === 0 ? "PASS" : "FAIL";
 
   const sha = (p: string) => createHash("sha256").update(readFileSync(p)).digest("hex");
   const report = {
@@ -496,6 +502,13 @@ export function runStaticFlow(configPath: string, outPath: string): number {
       `${summary.keys.divergent} divergent, ${summary.keys.unresolved} unresolved, ` +
       `${summary.capacityWarnings} capacity warning(s))`,
   );
+  if (verdict === "NO-EVIDENCE") {
+    console.log(
+      "  layer D examined no output keys: this module's stdout is not KEY=VALUE, so static " +
+        "data-flow has nothing to compare. That is NOT a pass — use layers A/B (raw protocol) " +
+        "and record layer D as providing no evidence.",
+    );
+  }
   console.log(`  report: ${outPath}`);
   return verdict === "PASS" ? 0 : 1;
 }

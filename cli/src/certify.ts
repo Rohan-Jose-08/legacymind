@@ -46,6 +46,20 @@ const readJson = (p: string, what: string): any => {
 };
 
 function evidence(reportPath: string, verdict: string, summary: Record<string, unknown>): LayerEvidence {
+  // NO-EVIDENCE is neither a pass nor a failure: the layer ran and had
+  // nothing to examine — layer D on a module whose output is not KEY=VALUE
+  // (docs/raw-protocol.md). Recording it as NOT_RUN is what stops it
+  // counting towards "at least one supporting layer", so a layer that
+  // examined nothing can never be what certifies a module. Calling it FAIL
+  // would be wrong in the other direction: nothing diverged.
+  if (verdict === "NO-EVIDENCE") {
+    return {
+      status: "NOT_RUN",
+      summary,
+      note: "the layer ran but examined nothing, so it provides no evidence",
+      report: { path: resolve(reportPath).replace(/\\/g, "/"), sha256: sha256File(reportPath) },
+    };
+  }
   return {
     status: verdict === "PASS" ? "PASS" : "FAIL",
     summary,

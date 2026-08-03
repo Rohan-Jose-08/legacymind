@@ -38,10 +38,16 @@ ARG COBFLAGS=""
 ARG SOURCE=benchmark/modules/ledgerx.cbl
 ARG LOADER=harness/gnucobol/ledgerx-loader.cbl
 ARG IXFILE=acct.dat
+# Real code COPYs. The copybook directory rides into the image so the
+# compile sees exactly the library the assessment resolved against. The
+# default points at a directory that always exists, so modules with no
+# copybooks are unaffected.
+ARG COPYDIR=harness/gnucobol
 COPY ${SOURCE} /opt/legacy/program.cbl
 COPY ${LOADER} /opt/legacy/loader.cbl
+COPY ${COPYDIR} /opt/legacy/copybooks
 
-RUN cobc -x ${COBFLAGS} -o /opt/legacy/program /opt/legacy/program.cbl \
+RUN cobc -x ${COBFLAGS} -I /opt/legacy/copybooks -o /opt/legacy/program /opt/legacy/program.cbl \
  && cobc -x ${COBFLAGS} -o /opt/legacy/loader /opt/legacy/loader.cbl \
  && cobc --version | head -n 1 > /opt/legacy/cobc-version.txt
 

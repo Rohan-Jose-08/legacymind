@@ -69,13 +69,15 @@ export function ensureProleapFrontend(): void {
 export function parseCobolProleap(
   sourceFile: string,
   format: string,
+  copybooks?: string,
 ): { ir: ModuleIR; summary: ParseSummary } {
   ensureProleapFrontend();
-  const res = spawnSync(
-    "java",
-    ["-cp", proleapClasspath(), "ProLeapFrontend", sourceFile, "--format", format],
-    { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 },
-  );
+  // Real code COPYs. `assess` has always been able to resolve a copybook
+  // directory; `parse` could not, which made every module that needs one
+  // assessable but not certifiable.
+  const args = ["-cp", proleapClasspath(), "ProLeapFrontend", sourceFile, "--format", format];
+  if (copybooks) args.push("--copybooks", resolve(copybooks));
+  const res = spawnSync("java", args, { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
   if (res.error) throw new ParseError(`proleap engine: java failed: ${res.error.message}`, 1);
   let result: FrontendResult;
   try {

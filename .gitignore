@@ -8,3 +8,8 @@ transpiler/cache/*.request.json
 graphify-out/
 # compiled Java (the CLI recompiles verifier/javaflow on demand)
 *.class
+
+# Third-party source staged for a harness image build (AWS CardDemo,
+# Apache-2.0). Kept out of the repo deliberately: clone the upstream and
+# stage the module plus its copybooks here — docs/raw-protocol.md.
+examples/real/

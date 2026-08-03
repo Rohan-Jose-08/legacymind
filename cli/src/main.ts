@@ -150,7 +150,7 @@ function cmdParse(args: string[]): void {
   try {
     const { ir, summary } =
       engine === "proleap"
-        ? parseCobolProleap(src.replace(/\\/g, "/"), format)
+        ? parseCobolProleap(src.replace(/\\/g, "/"), format, str(flags, "copybooks"))
         : parseCobol(text, src.replace(/\\/g, "/"));
     const outPath = out.endsWith(".json") ? out : join(out, `${ir.module.programId}.ir.json`);
     mkdirSync(dirname(outPath) || ".", { recursive: true });
