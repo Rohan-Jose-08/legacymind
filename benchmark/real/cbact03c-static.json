@@ -1,0 +1,6 @@
+{
+  "static": {
+    "ir": "../../out/real/CBACT03C.ir.json",
+    "modernJava": "../../out/real/cbact03c/audit/Cbact03c.java"
+  }
+}

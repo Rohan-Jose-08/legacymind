@@ -68,7 +68,21 @@ function evidence(reportPath: string, verdict: string, summary: Record<string, u
 }
 
 export function runCertify(opts: {
-  selectionPath: string;
+  /** Migration mode: the winner chosen by `migrate`. Omit in audit mode. */
+  selectionPath?: string;
+  /**
+   * AUDIT MODE (docs/audit-mode.md). Certify a Java artifact this pipeline
+   * did NOT generate — someone else's migration, or an in-house one. The
+   * verifier never cared who wrote the Java; only `certify` did, because it
+   * read the winner out of migrate's selection.json.
+   *
+   * The certificate then records provenance as SUPPLIED rather than naming
+   * a model and a cache key, so it can never be misread as evidence about
+   * the transpiler. Requires --layer-b, since there is no migrate run to
+   * have produced one.
+   */
+  auditJavaPath?: string;
+  layerBPath?: string;
   layerAPath?: string;
   layerCPath?: string;
   layerDPath?: string;
@@ -91,18 +105,51 @@ export function runCertify(opts: {
    */
   irPath?: string;
 }): number {
-  const selection = readJson(opts.selectionPath, "selection.json");
-  if (!selection.winner) {
+  const auditMode = !!opts.auditJavaPath;
+  if (auditMode === !!opts.selectionPath) {
+    throw new CertifyError(
+      "certify needs EITHER --selection (a migrate winner) OR --audit-java (an externally supplied artifact), not both",
+    );
+  }
+  if (auditMode && !opts.layerBPath) {
+    throw new CertifyError("audit mode needs --layer-b: there is no migrate run to have produced one");
+  }
+  if (auditMode && !existsSync(opts.auditJavaPath!)) {
+    throw new CertifyError(`--audit-java ${opts.auditJavaPath} does not exist`);
+  }
+  const selection = auditMode ? null : readJson(opts.selectionPath!, "selection.json");
+  if (selection && !selection.winner) {
     throw new CertifyError(
       "selection.json has no winning candidate — an unmigrated module cannot be certified",
     );
   }
-  const winnerId: string = selection.winner.id;
+  const winnerId: string | null = selection ? selection.winner.id : null;
+  // Every layer report must demonstrably have tested the SAME artifact. In
+  // migrate mode that is `candidate-<id>`; in audit mode it is the supplied
+  // class, which the layer configs name on their `java -cp <dir> <Class>`
+  // command line.
+  const artifactToken = auditMode
+    ? (opts.auditJavaPath!.split(/[\\/]/).pop() ?? "").replace(/\.java$/, "")
+    : `candidate-${winnerId}`;
   const gaps: string[] = [];
   const mockLegacyLabels = new Set<string>();
 
+  // Audit mode has no selection.json to name the module, so the IR does it.
+  // Without an IR there is nothing to identify what was audited, which is
+  // not a certificate worth issuing.
+  let auditModule: { programId: string; source: unknown } | null = null;
+  if (auditMode) {
+    if (!opts.irPath) {
+      throw new CertifyError("audit mode needs --ir: the IR is what identifies the module being audited");
+    }
+    const auditIr = readJson(opts.irPath, "module IR");
+    auditModule = { programId: auditIr.module?.programId ?? "?", source: auditIr.module?.source ?? null };
+  }
+
   // --- layer B: the winner's diff report written by migrate --------------------
-  const layerBPath = join(dirname(resolve(opts.selectionPath)), `candidate-${winnerId}.diff-report.json`);
+  const layerBPath = auditMode
+    ? resolve(opts.layerBPath!)
+    : join(dirname(resolve(opts.selectionPath!)), `candidate-${winnerId}.diff-report.json`);
   if (!existsSync(layerBPath)) {
     throw new CertifyError(`winner's layer B report not found at ${layerBPath}`);
   }
@@ -127,7 +174,7 @@ export function runCertify(opts: {
     const a = readJson(opts.layerAPath, "layer A report");
     layers.A = evidence(opts.layerAPath, a.verdict, a.summary);
     coverage.layerA = { generatedCases: a.summary?.generated ?? null, seed: a.generator?.seed ?? null };
-    checkTargetsWinner(a, winnerId, "A", gaps);
+    checkTargetsArtifact(a, artifactToken, "A", gaps);
     noteMock(a, mockLegacyLabels);
   } else {
     gaps.push("layer A (property-based) was not run");
@@ -151,7 +198,7 @@ export function runCertify(opts: {
     if (unrealizedPaths > 0) {
       gaps.push(`layer C: ${unrealizedPaths} obligation-path combination(s) unrealized (see report)`);
     }
-    checkTargetsWinner(c, winnerId, "C", gaps);
+    checkTargetsArtifact(c, artifactToken, "C", gaps);
     noteMock(c, mockLegacyLabels);
   } else {
     gaps.push("layer C (symbolic execution) was not run");
@@ -172,7 +219,7 @@ export function runCertify(opts: {
           `statically inconclusive, covered dynamically by layers A/B/C`,
       );
     }
-    checkTargetsWinner(d, winnerId, "D", gaps);
+    checkTargetsArtifact(d, artifactToken, "D", gaps);
   } else {
     gaps.push("layer D (static data-flow equivalence) was not run");
   }
@@ -184,13 +231,24 @@ export function runCertify(opts: {
   }
 
   // --- target hash ------------------------------------------------------------------
-  const targetFile: string | null = selection.winner.javaFile ?? null;
-  const target = {
-    file: targetFile,
-    sha256: targetFile && existsSync(targetFile) ? sha256File(targetFile) : null,
-    model: selection.model ?? null,
-    candidate: winnerId,
-  };
+  const targetFile: string | null = auditMode ? resolve(opts.auditJavaPath!) : selection!.winner.javaFile ?? null;
+  const target = auditMode
+    ? {
+        file: targetFile!.replace(/\\/g, "/"),
+        sha256: sha256File(targetFile!),
+        // No model, no candidate: this artifact was SUPPLIED. Naming a model
+        // here would let the certificate be read as evidence about a
+        // transpiler that had nothing to do with it.
+        provenance: "supplied — this artifact was NOT generated by this pipeline",
+        model: null,
+        candidate: null,
+      }
+    : {
+        file: targetFile,
+        sha256: targetFile && existsSync(targetFile) ? sha256File(targetFile) : null,
+        model: selection!.model ?? null,
+        candidate: winnerId,
+      };
   if (!target.sha256) gaps.push("target source file could not be hashed (moved or deleted since migrate)");
 
   // --- verdict ------------------------------------------------------------------------
@@ -268,18 +326,33 @@ export function runCertify(opts: {
     version: "0.1.0",
     generatedAt: new Date().toISOString(),
     verdict,
-    module: selection.module,
+    module: selection ? selection.module : auditModule,
     target,
     toolchain,
     externalServices,
     layers,
     coverageEnvelope: { ...coverage, gaps },
-    selection: {
-      path: resolve(opts.selectionPath).replace(/\\/g, "/"),
-      sha256: sha256File(opts.selectionPath),
-      candidatesEvaluated: selection.candidates?.length ?? null,
-      totalCostUsd: selection.totalCostUsd ?? null,
-    },
+    selection: auditMode
+      ? {
+          // Audit mode: nothing was selected because nothing was generated.
+          // Saying so explicitly beats an absent field a reader could
+          // mistake for an omission.
+          mode: "audit",
+          note:
+            "no candidate selection: the Java artifact was SUPPLIED, not generated by this pipeline. " +
+            "This certificate is evidence about that artifact, and about nothing upstream of it.",
+          path: null,
+          sha256: null,
+          candidatesEvaluated: null,
+          totalCostUsd: null,
+        }
+      : {
+          mode: "migrate",
+          path: resolve(opts.selectionPath!).replace(/\\/g, "/"),
+          sha256: sha256File(opts.selectionPath!),
+          candidatesEvaluated: selection?.candidates?.length ?? null,
+          totalCostUsd: selection?.totalCostUsd ?? null,
+        },
   };
 
   const signingKeyPath = opts.signingKeyPath ?? process.env.LEGACYMIND_SIGNING_KEY;
@@ -289,7 +362,7 @@ export function runCertify(opts: {
   mkdirSync(dirname(resolve(opts.outPath)), { recursive: true });
   writeFileSync(opts.outPath, JSON.stringify(certificate, null, 2) + "\n");
 
-  console.log(`legacymind certify — ${selection.module?.programId ?? "?"}`);
+  console.log(`legacymind certify — ${(selection ? selection.module : auditModule)?.programId ?? "?"}`);
   console.log("");
   for (const [name, l] of Object.entries(layers)) {
     console.log(`  layer ${name}: ${l.status}${l.note ? ` (${l.note})` : ""}`);
@@ -338,14 +411,14 @@ function collectExternalServices(ir: any): Record<string, unknown>[] {
   }));
 }
 
-function checkTargetsWinner(report: any, winnerId: string, layer: string, gaps: string[]): void {
+function checkTargetsArtifact(report: any, token: string, layer: string, gaps: string[]): void {
   const argv: string[] = report.artifacts?.modern?.argv ?? [];
   const label: string = report.artifacts?.modern?.label ?? "";
   const hay = argv.join(" ") + " " + label;
-  if (!hay.includes(`candidate-${winnerId}`) && !hay.includes(`candidate ${winnerId}`)) {
+  if (!hay.includes(token) && !hay.includes(token.replace("-", " "))) {
     gaps.push(
       `layer ${layer} report's modern side ("${label || argv.join(" ")}") does not clearly reference the ` +
-        `certified candidate-${winnerId} artifact — verify it tested the same binary`,
+        `certified artifact "${token}" — verify it tested the same binary`,
     );
   }
 }
@@ -373,15 +446,24 @@ export function runReport(certPath: string, outPath?: string): number {
   push(`| Generated | ${cert.generatedAt} |`);
   push(`| Source | \`${cert.module?.source?.file}\` (sha256 \`${short(cert.module?.source?.sha256)}\`) |`);
   push(`| Target | \`${cert.target?.file}\` (sha256 \`${short(cert.target?.sha256)}\`) |`);
-  push(`| Transpiler model | ${cert.target?.model} (candidate ${cert.target?.candidate}) |`);
+  // Audit mode: the artifact was supplied. Printing "model: null" invites a
+  // reader to assume an omission; say what actually happened.
+  const audited = cert.selection?.mode === "audit";
+  push(
+    audited
+      ? `| Artifact provenance | **SUPPLIED** — not generated by this pipeline |`
+      : `| Transpiler model | ${cert.target?.model} (candidate ${cert.target?.candidate}) |`,
+  );
   const tc = cert.toolchain ?? {};
   push(
     `| Reference compiler | ${tc.recorded
       ? `${tc.legacy?.compiler ?? "?"}, options: ${tc.legacy?.options ?? "?"}`
       : "**not recorded** — compiler and options are not pinned by this certificate"} |`,
   );
-  push(`| Candidates evaluated | ${cert.selection?.candidatesEvaluated} |`);
-  push(`| LLM cost (this migration) | $${Number(cert.selection?.totalCostUsd ?? 0).toFixed(4)} |`);
+  if (!audited) {
+    push(`| Candidates evaluated | ${cert.selection?.candidatesEvaluated} |`);
+    push(`| LLM cost (this migration) | $${Number(cert.selection?.totalCostUsd ?? 0).toFixed(4)} |`);
+  }
   const integ = cert.integrity ?? {};
   const sig =
     integ.algorithm === "ed25519"
@@ -389,6 +471,15 @@ export function runReport(certPath: string, outPath?: string): number {
       : `${integ.algorithm ?? "unsigned"}`;
   push(`| Signature | ${sig} |`);
   push();
+  if (audited) {
+    push(``);
+    push(
+      `> **Audit certificate.** The Java artifact was supplied, not produced by this pipeline. ` +
+        `This is evidence about that artifact and about nothing upstream of it — it says nothing ` +
+        `about how the code was written, or by whom.`,
+    );
+    push(``);
+  }
   push(`## Verification layers`);
   push();
   push(`| Layer | Technique | Status | Evidence |`);

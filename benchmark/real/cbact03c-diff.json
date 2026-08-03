@@ -1,0 +1,49 @@
+{
+  "legacy": {
+    "image": "legacymind/legacy-cbact03c",
+    "label": "COBOL 85 CBACT03C (AWS CardDemo, GnuCOBOL 3.1.2, INDEXED/VSAM via harness loader)"
+  },
+  "modern": {
+    "argv": [
+      "java",
+      "-cp",
+      "../../out/real/cbact03c/audit",
+      "Cbact03c"
+    ],
+    "label": "Java 21 CBACT03C (supplied artifact — audit mode)"
+  },
+  "protocol": {
+    "input": "stdin-lines",
+    "output": "raw"
+  },
+  "numericTolerance": 0,
+  "timeoutMs": 30000,
+  "$comment": "Layer B for the REAL AWS CardDemo CBACT03C. Output is raw records, not KEY=VALUE, so the contract is byte-for-byte stdout. Unsorted cases exist because the index imposes key order and the modern side must reproduce it.",
+  "cases": [
+    {
+      "id": "empty-file",
+      "stdin": []
+    },
+    {
+      "id": "one-xref",
+      "stdin": [
+        "411111111111111100000000110000000001              "
+      ]
+    },
+    {
+      "id": "unsorted-three",
+      "stdin": [
+        "422222222222222200000000310000000003              ",
+        "400000000000000200000000210000000002              ",
+        "411111111111111100000000110000000001              "
+      ]
+    },
+    {
+      "id": "key-order-boundary",
+      "stdin": [
+        "400000000000001000000000900000000009              ",
+        "400000000000000200000000800000000008              "
+      ]
+    }
+  ]
+}

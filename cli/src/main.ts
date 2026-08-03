@@ -77,6 +77,12 @@ usage:
   legacymind certify --selection <selection.json> --out <certification.json>
                      [--layer-a <r.json>] [--layer-c <r.json>] [--layer-d <r.json>]
                      [--signing-key <ed25519.pem>]
+  legacymind certify --audit-java <Main.java> --layer-b <r.json> --ir <ir.json>
+                     --out <certification.json> [--layer-a/-c/-d <r.json>]
+      AUDIT MODE: certify a Java artifact this pipeline did NOT generate —
+      someone else's migration, or an in-house one. Provenance is recorded
+      as SUPPLIED, with no model and no candidate, so the certificate can
+      never be read as evidence about the transpiler.
       Aggregate the winner's layer B report plus provided layer A/C/D
       reports into certification.json: per-layer verdicts, coverage
       envelope, every gap listed, Ed25519 signature. Exit 1 if
@@ -276,12 +282,18 @@ switch (command) {
   case "certify": {
     const { flags } = parseArgs(rest);
     const selection = str(flags, "selection");
+    const auditJava = str(flags, "audit-java");
     const out = str(flags, "out");
-    if (!selection || !out) fail("certify: --selection and --out are required", 2);
+    if (!out) fail("certify: --out is required", 2);
+    if (!selection && !auditJava) {
+      fail("certify: needs --selection <selection.json> or --audit-java <Main.java>", 2);
+    }
     try {
       process.exit(
         runCertify({
           selectionPath: selection,
+          auditJavaPath: auditJava,
+          layerBPath: str(flags, "layer-b"),
           layerAPath: str(flags, "layer-a"),
           layerCPath: str(flags, "layer-c"),
           layerDPath: str(flags, "layer-d"),

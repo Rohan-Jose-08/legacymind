@@ -1,0 +1,29 @@
+{
+  "legacy": {
+    "image": "legacymind/legacy-cbcus01c",
+    "label": "COBOL 85 CBCUS01C (AWS CardDemo, GnuCOBOL 3.1.2, INDEXED/VSAM via harness loader)"
+  },
+  "modern": {
+    "argv": [
+      "java",
+      "-cp",
+      "../../out/real/cbcus01c/audit",
+      "Cbcus01c"
+    ],
+    "label": "Java 21 CBCUS01C (supplied artifact — audit mode)"
+  },
+  "protocol": {
+    "input": "stdin-lines",
+    "output": "raw"
+  },
+  "numericTolerance": 0,
+  "timeoutMs": 30000,
+  "generator": {
+    "ir": "../../out/real/CBCUS01C.ir.json",
+    "records": {
+      "max": 5
+    },
+    "count": 200,
+    "seed": 31
+  }
+}

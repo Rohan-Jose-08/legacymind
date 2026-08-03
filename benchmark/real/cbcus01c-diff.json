@@ -1,0 +1,49 @@
+{
+  "legacy": {
+    "image": "legacymind/legacy-cbcus01c",
+    "label": "COBOL 85 CBCUS01C (AWS CardDemo, GnuCOBOL 3.1.2, INDEXED/VSAM via harness loader)"
+  },
+  "modern": {
+    "argv": [
+      "java",
+      "-cp",
+      "../../out/real/cbcus01c/audit",
+      "Cbcus01c"
+    ],
+    "label": "Java 21 CBCUS01C (supplied artifact — audit mode)"
+  },
+  "protocol": {
+    "input": "stdin-lines",
+    "output": "raw"
+  },
+  "numericTolerance": 0,
+  "timeoutMs": 30000,
+  "$comment": "Layer B for the REAL AWS CardDemo CBCUS01C. Output is raw records, not KEY=VALUE, so the contract is byte-for-byte stdout. Unsorted cases exist because the index imposes key order and the modern side must reproduce it.",
+  "cases": [
+    {
+      "id": "empty-file",
+      "stdin": []
+    },
+    {
+      "id": "one-customer",
+      "stdin": [
+        "000000001ALICE                                             EXAMPLE                  1 HIGH ST                                                                                                                                             LNGBRSW1A1AA   +44200000000                  123456789PASSPORT            1980-01-01          Y750                                                                                                                                                                        "
+      ]
+    },
+    {
+      "id": "unsorted-three",
+      "stdin": [
+        "000000030CAROL                                             THIRD                    1 HIGH ST                                                                                                                                             MAGBRSW1A1AA   +44200000000                  123456789PASSPORT            1980-01-01          Y600                                                                                                                                                                        ",
+        "000000002BOB                                               SECOND                   1 HIGH ST                                                                                                                                             NYGBRSW1A1AA   +44200000000                  123456789PASSPORT            1980-01-01          Y810                                                                                                                                                                        ",
+        "000000001ALICE                                             EXAMPLE                  1 HIGH ST                                                                                                                                             LNGBRSW1A1AA   +44200000000                  123456789PASSPORT            1980-01-01          Y750                                                                                                                                                                        "
+      ]
+    },
+    {
+      "id": "key-order-boundary",
+      "stdin": [
+        "000000010TEN                                               T                        1 HIGH ST                                                                                                                                             XXGBRSW1A1AA   +44200000000                  123456789PASSPORT            1980-01-01          Y300                                                                                                                                                                        ",
+        "000000002TWO                                               T                        1 HIGH ST                                                                                                                                             XXGBRSW1A1AA   +44200000000                  123456789PASSPORT            1980-01-01          Y850                                                                                                                                                                        "
+      ]
+    }
+  ]
+}

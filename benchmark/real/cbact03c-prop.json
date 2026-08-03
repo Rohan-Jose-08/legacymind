@@ -1,0 +1,29 @@
+{
+  "legacy": {
+    "image": "legacymind/legacy-cbact03c",
+    "label": "COBOL 85 CBACT03C (AWS CardDemo, GnuCOBOL 3.1.2, INDEXED/VSAM via harness loader)"
+  },
+  "modern": {
+    "argv": [
+      "java",
+      "-cp",
+      "../../out/real/cbact03c/audit",
+      "Cbact03c"
+    ],
+    "label": "Java 21 CBACT03C (supplied artifact — audit mode)"
+  },
+  "protocol": {
+    "input": "stdin-lines",
+    "output": "raw"
+  },
+  "numericTolerance": 0,
+  "timeoutMs": 30000,
+  "generator": {
+    "ir": "../../out/real/CBACT03C.ir.json",
+    "records": {
+      "max": 5
+    },
+    "count": 200,
+    "seed": 31
+  }
+}
