@@ -13,3 +13,4 @@ graphify-out/
 # Apache-2.0). Kept out of the repo deliberately: clone the upstream and
 # stage the module plus its copybooks here — docs/raw-protocol.md.
 examples/real/
+HANDOFF.md
