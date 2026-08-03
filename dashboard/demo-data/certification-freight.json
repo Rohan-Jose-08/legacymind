@@ -1,0 +1,159 @@
+{
+  "tool": "legacymind certify",
+  "version": "0.1.0",
+  "generatedAt": "2026-08-03T23:08:35.160Z",
+  "verdict": "CERTIFIED",
+  "module": {
+    "programId": "FREIGHT",
+    "source": {
+      "file": "benchmark/modules/freight.cbl",
+      "sha256": "6131178209cb36fd68ad83b2415b64a9b44e9f6dbfac13319b0de38b6dfdbde4"
+    }
+  },
+  "target": {
+    "file": "C:/Users/Ender/startup/legacymind/out/bench/freight/migrate/candidate-a/Freight.java",
+    "sha256": "91d4202993a42a8214e16c0faa4d00e864ac4534baf32fb9e8ae29dc1e920e43",
+    "model": "claude-opus-4-8",
+    "candidate": "a"
+  },
+  "toolchain": {
+    "recorded": true,
+    "legacy": {
+      "compiler": "cobc (GnuCOBOL) 3.1.2.0",
+      "options": "(compiler defaults)",
+      "image": "legacymind/legacy-freight",
+      "sandbox": "docker run --network none --rm"
+    },
+    "modern": {
+      "runtime": "Java 21 sandboxed in legacymind/harness-jdk21 (--network none, ro classpath)",
+      "compiledWith": "javac --release 21"
+    },
+    "notes": "Equivalence is established against this compiler with THESE options. Binary COMP truncation is decided by the options, not by the source: a certificate does not transfer to a build with different truncation settings (docs/binary-comp.md)."
+  },
+  "externalServices": {
+    "checked": true,
+    "services": []
+  },
+  "layers": {
+    "A": {
+      "status": "PASS",
+      "summary": {
+        "generated": 200,
+        "passed": 200,
+        "failed": 0,
+        "errored": 0
+      },
+      "report": {
+        "path": "C:/Users/Ender/startup/legacymind/out/bench/freight/property-report.json",
+        "sha256": "a9453428433a0e1b7e1e9d043ec32d99ba9b5f62c259cfa55acb19e121ea8474"
+      }
+    },
+    "B": {
+      "status": "PASS",
+      "summary": {
+        "total": 7,
+        "passed": 7,
+        "failed": 0,
+        "errored": 0
+      },
+      "report": {
+        "path": "C:/Users/Ender/startup/legacymind/out/bench/freight/migrate/candidate-a.diff-report.json",
+        "sha256": "632c9c24c605b14a52549eac178f3c6e4977a1bc36744f661681f89319cd1205"
+      }
+    },
+    "C": {
+      "status": "PASS",
+      "summary": {
+        "obligations": {
+          "total": 2,
+          "verified": 2,
+          "divergent": 0,
+          "unrealized": 0,
+          "notApplicable": 0
+        },
+        "cases": {
+          "total": 14,
+          "passed": 14,
+          "failed": 0,
+          "errored": 0
+        },
+        "paths": {
+          "total": 2,
+          "covered": 2,
+          "unknown": 0,
+          "infeasible": 0
+        },
+        "unrealizedPathObligations": 0,
+        "witnesses": {
+          "realized": 2,
+          "total": 2
+        }
+      },
+      "report": {
+        "path": "C:/Users/Ender/startup/legacymind/out/bench/freight/symexec-report.json",
+        "sha256": "feac567861d20ae939e0ef3ff40e9fadf985a4df546d3d5abf2d90a55059a6a9"
+      }
+    },
+    "D": {
+      "status": "PASS",
+      "summary": {
+        "keys": {
+          "total": 3,
+          "verified": 3,
+          "divergent": 0,
+          "unresolved": 0
+        },
+        "capacityWarnings": 0
+      },
+      "report": {
+        "path": "C:/Users/Ender/startup/legacymind/out/bench/freight/staticflow-report.json",
+        "sha256": "ea97b7f2eb4c3f6d940421e56b0caa84853db814c54cb55a8c8217422cbe22d8"
+      }
+    }
+  },
+  "coverageEnvelope": {
+    "layerB": {
+      "curatedCases": 7
+    },
+    "layerA": {
+      "generatedCases": 200,
+      "seed": 20260717
+    },
+    "layerC": {
+      "obligations": {
+        "total": 2,
+        "verified": 2,
+        "divergent": 0,
+        "unrealized": 0,
+        "notApplicable": 0
+      },
+      "pathsCovered": "2/2"
+    },
+    "layerD": {
+      "keys": {
+        "total": 3,
+        "verified": 3,
+        "divergent": 0,
+        "unresolved": 0
+      },
+      "capacityWarnings": 0
+    },
+    "gaps": []
+  },
+  "selection": {
+    "mode": "migrate",
+    "path": "C:/Users/Ender/startup/legacymind/out/bench/freight/migrate/selection.json",
+    "sha256": "13a63a9a1cbc40d84f382160e43f4a34f326bf6bb95d621b8d61b7573b56047c",
+    "candidatesEvaluated": 2,
+    "totalCostUsd": 0
+  },
+  "integrity": {
+    "algorithm": "ed25519",
+    "keyId": "9bf9bc9ae2dd373a",
+    "publicKey": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAbd/PCVMO2FT/HryeWaIJ1Alb+M81qCF80xbDSRzPqJE=\n-----END PUBLIC KEY-----",
+    "canonicalization": "json-sorted-keys",
+    "contentSha256": "e642a390051148bab711667b0eb73bdb28b21f7c176872ab8be99199feb11900",
+    "signature": "lRxho/HN57qryx1UjZlTAqmFoJr/9JeJRL9stWYStwpJ4Jk8L1nkdNVgjb9UvzwJcFZZnt6fkNhLxzzVyvLDAw==",
+    "note": "Ed25519 signature over the canonical certificate body (this field excluded). Check with `legacymind verify-cert`."
+  }
+}

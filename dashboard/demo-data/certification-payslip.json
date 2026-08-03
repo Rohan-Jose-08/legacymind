@@ -1,0 +1,161 @@
+{
+  "tool": "legacymind certify",
+  "version": "0.1.0",
+  "generatedAt": "2026-08-03T23:08:33.687Z",
+  "verdict": "CERTIFIED",
+  "module": {
+    "programId": "PAYSLIP",
+    "source": {
+      "file": "benchmark/modules/payslip.cbl",
+      "sha256": "3ffd7a32444f6efce6af0319223f7d422d88cce158c4606c354c2612fa45836a"
+    }
+  },
+  "target": {
+    "file": "C:/Users/Ender/startup/legacymind/out/bench/payslip/migrate/candidate-a/Payslip.java",
+    "sha256": "3cc3c76dbafcc92fe1986f75ee1b8773beeb3599c97056d5358aff6e0e8fb1f7",
+    "model": "claude-opus-4-8",
+    "candidate": "a"
+  },
+  "toolchain": {
+    "recorded": true,
+    "legacy": {
+      "compiler": "cobc (GnuCOBOL) 3.1.2.0",
+      "options": "(compiler defaults)",
+      "image": "legacymind/legacy-payslip",
+      "sandbox": "docker run --network none --rm"
+    },
+    "modern": {
+      "runtime": "Java 21 sandboxed in legacymind/harness-jdk21 (--network none, ro classpath)",
+      "compiledWith": "javac --release 21"
+    },
+    "notes": "Equivalence is established against this compiler with THESE options. Binary COMP truncation is decided by the options, not by the source: a certificate does not transfer to a build with different truncation settings (docs/binary-comp.md)."
+  },
+  "externalServices": {
+    "checked": true,
+    "services": []
+  },
+  "layers": {
+    "A": {
+      "status": "PASS",
+      "summary": {
+        "generated": 200,
+        "passed": 200,
+        "failed": 0,
+        "errored": 0
+      },
+      "report": {
+        "path": "C:/Users/Ender/startup/legacymind/out/bench/payslip/property-report.json",
+        "sha256": "c0e9c8ce604aa9f743da54dd227abf7d3466fec4d6ebbfa3e714e0950ed8c5ec"
+      }
+    },
+    "B": {
+      "status": "PASS",
+      "summary": {
+        "total": 5,
+        "passed": 5,
+        "failed": 0,
+        "errored": 0
+      },
+      "report": {
+        "path": "C:/Users/Ender/startup/legacymind/out/bench/payslip/migrate/candidate-a.diff-report.json",
+        "sha256": "4f97e2435cd85196f9aa22bffb8cf669cbc05b9cdf1d266594949607e7b17f0e"
+      }
+    },
+    "C": {
+      "status": "PASS",
+      "summary": {
+        "obligations": {
+          "total": 1,
+          "verified": 1,
+          "divergent": 0,
+          "unrealized": 0,
+          "notApplicable": 0
+        },
+        "cases": {
+          "total": 6,
+          "passed": 6,
+          "failed": 0,
+          "errored": 0
+        },
+        "paths": {
+          "total": 1,
+          "covered": 1,
+          "unknown": 0,
+          "infeasible": 0
+        },
+        "unrealizedPathObligations": 0,
+        "witnesses": {
+          "realized": 1,
+          "total": 1
+        }
+      },
+      "report": {
+        "path": "C:/Users/Ender/startup/legacymind/out/bench/payslip/symexec-report.json",
+        "sha256": "905776ab076df023eec7e393b44da3a030728f43de4d90904b27915356c0d5fd"
+      }
+    },
+    "D": {
+      "status": "PASS",
+      "summary": {
+        "keys": {
+          "total": 2,
+          "verified": 2,
+          "divergent": 0,
+          "unresolved": 0
+        },
+        "capacityWarnings": 1
+      },
+      "report": {
+        "path": "C:/Users/Ender/startup/legacymind/out/bench/payslip/staticflow-report.json",
+        "sha256": "bd74074945e0041833cb52d9190aad4f05371863f8ae883383f0c809c957ead1"
+      }
+    }
+  },
+  "coverageEnvelope": {
+    "layerB": {
+      "curatedCases": 5
+    },
+    "layerA": {
+      "generatedCases": 200,
+      "seed": 20260710
+    },
+    "layerC": {
+      "obligations": {
+        "total": 1,
+        "verified": 1,
+        "divergent": 0,
+        "unrealized": 0,
+        "notApplicable": 0
+      },
+      "pathsCovered": "1/1"
+    },
+    "layerD": {
+      "keys": {
+        "total": 2,
+        "verified": 2,
+        "divergent": 0,
+        "unresolved": 0
+      },
+      "capacityWarnings": 1
+    },
+    "gaps": [
+      "layer D: 1 storage-capacity difference(s) flagged as warnings — statically inconclusive, covered dynamically by layers A/B/C"
+    ]
+  },
+  "selection": {
+    "mode": "migrate",
+    "path": "C:/Users/Ender/startup/legacymind/out/bench/payslip/migrate/selection.json",
+    "sha256": "848cd10f88d615961402c71888163510294b28a8e0bde11dceb9aa1b35fc102c",
+    "candidatesEvaluated": 2,
+    "totalCostUsd": 0
+  },
+  "integrity": {
+    "algorithm": "ed25519",
+    "keyId": "9bf9bc9ae2dd373a",
+    "publicKey": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAbd/PCVMO2FT/HryeWaIJ1Alb+M81qCF80xbDSRzPqJE=\n-----END PUBLIC KEY-----",
+    "canonicalization": "json-sorted-keys",
+    "contentSha256": "61b85a1b38e352ebb96a43780e3b9df39de3dc62d1354d23a8ac5669be30f40a",
+    "signature": "vKkb9wxvQ27BDDuL2Z4cIfoxf0QQWLMetnGkWeGeg1Ualc7IaeRcG3o1IbrFTw78CZfgji3p6WZ8wvX11TNlAQ==",
+    "note": "Ed25519 signature over the canonical certificate body (this field excluded). Check with `legacymind verify-cert`."
+  }
+}

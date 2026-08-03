@@ -1,0 +1,161 @@
+{
+  "tool": "legacymind certify",
+  "version": "0.1.0",
+  "generatedAt": "2026-08-03T23:08:34.909Z",
+  "verdict": "CERTIFIED",
+  "module": {
+    "programId": "MANIFEST",
+    "source": {
+      "file": "benchmark/modules/manifest.cbl",
+      "sha256": "bc32c2c0af5e3505bef93bf3b4c6ba91a5a04f611ce0f31859b0f243986618f0"
+    }
+  },
+  "target": {
+    "file": "C:/Users/Ender/startup/legacymind/out/bench/manifest/migrate/candidate-a/Manifest.java",
+    "sha256": "86a2bae8cc5f0f95fbf27e4a7cfc86cbd680618d490373d26f64e078b4b7ebe3",
+    "model": "claude-opus-4-8",
+    "candidate": "a"
+  },
+  "toolchain": {
+    "recorded": true,
+    "legacy": {
+      "compiler": "cobc (GnuCOBOL) 3.1.2.0",
+      "options": "(compiler defaults)",
+      "image": "legacymind/legacy-manifest",
+      "sandbox": "docker run --network none --rm"
+    },
+    "modern": {
+      "runtime": "Java 21 sandboxed in legacymind/harness-jdk21 (--network none, ro classpath)",
+      "compiledWith": "javac --release 21"
+    },
+    "notes": "Equivalence is established against this compiler with THESE options. Binary COMP truncation is decided by the options, not by the source: a certificate does not transfer to a build with different truncation settings (docs/binary-comp.md)."
+  },
+  "externalServices": {
+    "checked": true,
+    "services": []
+  },
+  "layers": {
+    "A": {
+      "status": "PASS",
+      "summary": {
+        "generated": 200,
+        "passed": 200,
+        "failed": 0,
+        "errored": 0
+      },
+      "report": {
+        "path": "C:/Users/Ender/startup/legacymind/out/bench/manifest/property-report.json",
+        "sha256": "a1fcc5b5b4de3d31f3d38b0857277c074063450cb1ca8f042b57075367e6ad2f"
+      }
+    },
+    "B": {
+      "status": "PASS",
+      "summary": {
+        "total": 6,
+        "passed": 6,
+        "failed": 0,
+        "errored": 0
+      },
+      "report": {
+        "path": "C:/Users/Ender/startup/legacymind/out/bench/manifest/migrate/candidate-a.diff-report.json",
+        "sha256": "ac736edea0f5c2dd8f3454ad299f4fe74e652f7f04f0cca2586a23330297b230"
+      }
+    },
+    "C": {
+      "status": "PASS",
+      "summary": {
+        "obligations": {
+          "total": 3,
+          "verified": 2,
+          "divergent": 0,
+          "unrealized": 1,
+          "notApplicable": 0
+        },
+        "cases": {
+          "total": 11,
+          "passed": 11,
+          "failed": 0,
+          "errored": 0
+        },
+        "paths": {
+          "total": 2,
+          "covered": 2,
+          "unknown": 0,
+          "infeasible": 0
+        },
+        "unrealizedPathObligations": 0,
+        "witnesses": {
+          "realized": 2,
+          "total": 2
+        }
+      },
+      "report": {
+        "path": "C:/Users/Ender/startup/legacymind/out/bench/manifest/symexec-report.json",
+        "sha256": "1eb310bb171430845699c64b4bb9711f8212fc8e8246a49c9168b16d9b346a9f"
+      }
+    },
+    "D": {
+      "status": "PASS",
+      "summary": {
+        "keys": {
+          "total": 8,
+          "verified": 8,
+          "divergent": 0,
+          "unresolved": 0
+        },
+        "capacityWarnings": 0
+      },
+      "report": {
+        "path": "C:/Users/Ender/startup/legacymind/out/bench/manifest/staticflow-report.json",
+        "sha256": "d2e02b08879d7040881681daf92dc50ad2d5332fdbb7fcb18b408aabed1abbdb"
+      }
+    }
+  },
+  "coverageEnvelope": {
+    "layerB": {
+      "curatedCases": 6
+    },
+    "layerA": {
+      "generatedCases": 200,
+      "seed": 20260715
+    },
+    "layerC": {
+      "obligations": {
+        "total": 3,
+        "verified": 2,
+        "divergent": 0,
+        "unrealized": 1,
+        "notApplicable": 0
+      },
+      "pathsCovered": "2/2"
+    },
+    "layerD": {
+      "keys": {
+        "total": 8,
+        "verified": 8,
+        "divergent": 0,
+        "unresolved": 0
+      },
+      "capacityWarnings": 0
+    },
+    "gaps": [
+      "layer C: 1 obligation(s) could not be realized as inputs (see report)"
+    ]
+  },
+  "selection": {
+    "mode": "migrate",
+    "path": "C:/Users/Ender/startup/legacymind/out/bench/manifest/migrate/selection.json",
+    "sha256": "ac07bf3090a31d63da3cfa6aa4b4c7c2ac6d20ad1d2e10f7b3e1133b70a4ae0e",
+    "candidatesEvaluated": 2,
+    "totalCostUsd": 0
+  },
+  "integrity": {
+    "algorithm": "ed25519",
+    "keyId": "9bf9bc9ae2dd373a",
+    "publicKey": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAbd/PCVMO2FT/HryeWaIJ1Alb+M81qCF80xbDSRzPqJE=\n-----END PUBLIC KEY-----",
+    "canonicalization": "json-sorted-keys",
+    "contentSha256": "a0f5bb14ee2be21990eb9d2951955979481a62fd0ad7e55867015608298a8313",
+    "signature": "tOWVw+qmbHqiW3+57f6mMZa6Dk4WUPxczVIj19eQtYFipdjdP5D534sQla1Wfy+PL2Ga4YSxwQ55sEV4Qc3ZDA==",
+    "note": "Ed25519 signature over the canonical certificate body (this field excluded). Check with `legacymind verify-cert`."
+  }
+}

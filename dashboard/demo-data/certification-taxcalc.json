@@ -1,0 +1,159 @@
+{
+  "tool": "legacymind certify",
+  "version": "0.1.0",
+  "generatedAt": "2026-08-03T23:08:32.425Z",
+  "verdict": "CERTIFIED",
+  "module": {
+    "programId": "TAXCALC",
+    "source": {
+      "file": "benchmark/modules/taxcalc.cbl",
+      "sha256": "b7cc8a1d1e4602633e46bd835a8317f2f0c2b15c8e0d7f7a51b5c470397b25f4"
+    }
+  },
+  "target": {
+    "file": "C:/Users/Ender/startup/legacymind/out/bench/taxcalc/migrate/candidate-a/Taxcalc.java",
+    "sha256": "13f78e239c3ad10ae13f5b7d05b3db7b448d60bfe352d49fe6b91afd66b20279",
+    "model": "claude-opus-4-8",
+    "candidate": "a"
+  },
+  "toolchain": {
+    "recorded": true,
+    "legacy": {
+      "compiler": "cobc (GnuCOBOL) 3.1.2.0",
+      "options": "(compiler defaults)",
+      "image": "legacymind/legacy-taxcalc",
+      "sandbox": "docker run --network none --rm"
+    },
+    "modern": {
+      "runtime": "Java 21 sandboxed in legacymind/harness-jdk21 (--network none, ro classpath)",
+      "compiledWith": "javac --release 21"
+    },
+    "notes": "Equivalence is established against this compiler with THESE options. Binary COMP truncation is decided by the options, not by the source: a certificate does not transfer to a build with different truncation settings (docs/binary-comp.md)."
+  },
+  "externalServices": {
+    "checked": true,
+    "services": []
+  },
+  "layers": {
+    "A": {
+      "status": "PASS",
+      "summary": {
+        "generated": 200,
+        "passed": 200,
+        "failed": 0,
+        "errored": 0
+      },
+      "report": {
+        "path": "C:/Users/Ender/startup/legacymind/out/bench/taxcalc/property-report.json",
+        "sha256": "0fa405057d0fcb077de3d7007f05d3470eb849af224f86c17b83e59ac45b9662"
+      }
+    },
+    "B": {
+      "status": "PASS",
+      "summary": {
+        "total": 5,
+        "passed": 5,
+        "failed": 0,
+        "errored": 0
+      },
+      "report": {
+        "path": "C:/Users/Ender/startup/legacymind/out/bench/taxcalc/migrate/candidate-a.diff-report.json",
+        "sha256": "8abb6f08ba292a9ac4a5d9a504cd5dd2c37ab679febdb2b239f64eb94ab7d119"
+      }
+    },
+    "C": {
+      "status": "PASS",
+      "summary": {
+        "obligations": {
+          "total": 3,
+          "verified": 3,
+          "divergent": 0,
+          "unrealized": 0,
+          "notApplicable": 0
+        },
+        "cases": {
+          "total": 16,
+          "passed": 16,
+          "failed": 0,
+          "errored": 0
+        },
+        "paths": {
+          "total": 1,
+          "covered": 1,
+          "unknown": 0,
+          "infeasible": 0
+        },
+        "unrealizedPathObligations": 0,
+        "witnesses": {
+          "realized": 1,
+          "total": 1
+        }
+      },
+      "report": {
+        "path": "C:/Users/Ender/startup/legacymind/out/bench/taxcalc/symexec-report.json",
+        "sha256": "7d2f762049c9fc1a0ac2e82d96976d7139a2d88adbfb9d0974af1ad1cb0b3f61"
+      }
+    },
+    "D": {
+      "status": "PASS",
+      "summary": {
+        "keys": {
+          "total": 3,
+          "verified": 3,
+          "divergent": 0,
+          "unresolved": 0
+        },
+        "capacityWarnings": 0
+      },
+      "report": {
+        "path": "C:/Users/Ender/startup/legacymind/out/bench/taxcalc/staticflow-report.json",
+        "sha256": "0cf47c6fa98db0cfdba690734a0471d95ee2c33c72203954efe4b4dabf1b1b4a"
+      }
+    }
+  },
+  "coverageEnvelope": {
+    "layerB": {
+      "curatedCases": 5
+    },
+    "layerA": {
+      "generatedCases": 200,
+      "seed": 20260708
+    },
+    "layerC": {
+      "obligations": {
+        "total": 3,
+        "verified": 3,
+        "divergent": 0,
+        "unrealized": 0,
+        "notApplicable": 0
+      },
+      "pathsCovered": "1/1"
+    },
+    "layerD": {
+      "keys": {
+        "total": 3,
+        "verified": 3,
+        "divergent": 0,
+        "unresolved": 0
+      },
+      "capacityWarnings": 0
+    },
+    "gaps": []
+  },
+  "selection": {
+    "mode": "migrate",
+    "path": "C:/Users/Ender/startup/legacymind/out/bench/taxcalc/migrate/selection.json",
+    "sha256": "376168eb6dc8cfb3786863bf24e691b1f788b0ee412ac6045538a88dce49e58c",
+    "candidatesEvaluated": 2,
+    "totalCostUsd": 0
+  },
+  "integrity": {
+    "algorithm": "ed25519",
+    "keyId": "9bf9bc9ae2dd373a",
+    "publicKey": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAbd/PCVMO2FT/HryeWaIJ1Alb+M81qCF80xbDSRzPqJE=\n-----END PUBLIC KEY-----",
+    "canonicalization": "json-sorted-keys",
+    "contentSha256": "30c4c5168b62035603d6a32fdaac7ec580e61b692fef29a120131a48922b47f7",
+    "signature": "XYM4Kmk3L7DmXgu0fEYgEM2THb9RC1puYK3eiT2o2Dh0f2m88Io97IPUtT81+/BzzZ4NFjP6CYQ3ftuTkxkrBQ==",
+    "note": "Ed25519 signature over the canonical certificate body (this field excluded). Check with `legacymind verify-cert`."
+  }
+}
