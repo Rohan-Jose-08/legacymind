@@ -152,14 +152,19 @@ windows are executed, not reasoned about.**
 | layer | treatment |
 |---|---|
 | A, B | **execute both sides** — they need no model at all, which is why the feature is deliverable now |
-| C | **refuses the module at the door**, naming every byte-modelled item |
+| C | byte-modelled items are **opaque**; paths over them claim nothing (stage 84 — it used to refuse the whole module) |
 | D | **discloses**: a window-written field is `UNRESOLVED`, never a claimed derivation |
 
-Layer C's refusal is deliberately total rather than per statement. Its
-state is rationals; a byte-modelled field read as a number would be a
-confident *wrong* claim, and no numeric domain can hold the space that a
-window can leave inside a `PIC 9`. Refusing at entry is the only sound
-option short of a symbolic byte domain, which is a stage of its own.
+Layer C's first cut refused the whole module, on the grounds that a
+byte-modelled field read as a number would be a confident *wrong* claim
+and no numeric domain can hold the space a window can leave inside a
+`PIC 9`. Both remain true — but refusing everything was heavier than the
+soundness argument requires. **Stage 84** starts those items **opaque**
+instead: opaque is already first-class here, so conditions over them do
+not parse as affine and their paths fork honestly and claim nothing,
+while the rest of the module verifies normally. A symbolic byte domain,
+which would let layer C reason about them rather than decline, is still
+a stage of its own.
 
 What lands in the IR:
 

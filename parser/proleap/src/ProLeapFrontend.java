@@ -218,9 +218,11 @@ public class ProLeapFrontend {
 					// module outright (docs/byte-window.md).
 					if (!lowering.byteModelled.isEmpty()) {
 						r.put("disclosures", new ArrayList<>(Arrays.asList(
-								"layer C (symbolic) will not run: byte-modelled storage ("
+								"layer C (symbolic) cannot reason about byte-modelled storage ("
 										+ String.join(", ", lowering.byteModelled)
-										+ ") - evidence comes from layers A, B and D (docs/byte-window.md)")));
+										+ "): those fields are opaque to it, so any path or obligation"
+										+ " depending on them is reported unknown rather than verified"
+										+ " (docs/byte-window.md)")));
 					}
 				}
 			} catch (final Throwable t) {

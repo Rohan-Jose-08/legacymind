@@ -1254,14 +1254,16 @@ function execute(stmts: Statement[], state: PathState, ctx: ExecCtx, out: PathSt
         out.push(state);
         return;
       case "move-window":
-        // Unreachable in practice: runSymExec refuses any module with
-        // byte-modelled storage at the door, and a move-window always makes
-        // its target byte-modelled. Kept as a hard stop so a future path into
-        // this engine fails loudly instead of silently skipping the write.
-        throw new DiffExecError(
-          `layer C: MOVE into a byte window of ${s.target} reached the symbolic engine ` +
-            `(docs/byte-window.md); this module should have been refused at entry`,
-        );
+        // The window writes part of the target's storage; the bytes it did
+        // not touch keep whatever was there. The result is not a value this
+        // engine can represent, so the target becomes opaque and the path
+        // says so rather than claiming a derivation.
+        state.env.set(s.target, {
+          kind: "opaque",
+          reason: `written through a byte window (${s.text})`,
+        });
+        state.notes.push(`${s.target} is byte-modelled after ${s.text}; its value is not tracked symbolically`);
+        break;
       case "terminate-abnormal":
         // Also a program end, and for path ENUMERATION that is all it is:
         // nothing after it runs. What distinguishes it from stop-run — the
@@ -1911,14 +1913,15 @@ export function runSymExec(configPath: string, outPath: string): number {
   // rationals, so a byte-modelled field read as a number would be a
   // confident wrong claim, not a missing one. A window can leave a space
   // inside a PIC 9 (docs/byte-window.md), which no numeric domain can hold.
+  // Byte-modelled storage holds bytes, not values (docs/byte-window.md): a
+  // window can leave a space inside a PIC 9, which no numeric domain can
+  // hold. Refusing the whole MODULE for it was over-conservative — in the
+  // real CardDemo readers that storage is touched only on an I/O-error
+  // paragraph — so instead every such item starts OPAQUE. Opaque is already
+  // a first-class case here: conditions over it do not parse as affine, so
+  // those paths fork honestly and claim nothing, while the rest of the
+  // module is verified normally.
   const byteModelled = byteModelledNames(ir.dataDivision.items);
-  if (byteModelled.length > 0) {
-    throw new DiffExecError(
-      `layer C: ${byteModelled.join(", ")} ${byteModelled.length === 1 ? "is" : "are"} byte-modelled ` +
-        `(a byte window reaches this storage), which the symbolic engine does not model — ` +
-        `run layers A/B/D for this module and see docs/byte-window.md`,
-    );
-  }
   const items = ir.dataDivision.items;
   const moneyRe = new RegExp(sym.moneyPattern ?? DEFAULT_MONEY_PATTERN);
   const annotations = new Set(sym.annotations ?? []);
@@ -1948,8 +1951,17 @@ export function runSymExec(configPath: string, outPath: string): number {
       // Stage 2b: recompute the layout from the record's DataItem tree and
       // assert it matches the IR's. Drift between the frontend computation
       // and this one is a build error, never a silent divergence.
-      const recItem = findItem(items, recordName);
-      if (!recItem) throw new DiffExecError(`layer C: record ${recordName} not in the data division of ${sym.ir}`);
+      // `READ ... INTO` makes the FD record a BUFFER and the INTO target the
+      // LAYOUT (docs/read-into.md), so the frontend computes the layout from
+      // the target — and recomputing from the FD record here reported drift
+      // on the first real module that uses the shape (2 slots vs 7). The
+      // layout's own paths name the item it came from, so use that; for a
+      // module without READ INTO it IS the FD record and nothing changes.
+      const layoutRoot = inEntry.layout[0]?.path?.split(".")[0] ?? recordName;
+      const recItem = findItem(items, layoutRoot);
+      if (!recItem) {
+        throw new DiffExecError(`layer C: layout root ${layoutRoot} not in the data division of ${sym.ir}`);
+      }
       const recomputed = computeLayout(recItem);
       assertLayoutMatches(recomputed, inEntry.recordWidth, inEntry.layout, sym.ir);
       fullLayout = inEntry.layout;
@@ -2095,6 +2107,16 @@ export function runSymExec(configPath: string, outPath: string): number {
     }
   };
   seedInitialValues(items);
+  // Byte-modelled items start opaque and stay that way, overriding any VALUE
+  // clause: a window write can put a non-digit into a PIC 9, and nothing here
+  // tracks when that happens. Conservative on purpose — it costs precision on
+  // those variables and claims nothing about them.
+  for (const name of byteModelled) {
+    initialEnv.set(name, {
+      kind: "opaque",
+      reason: `byte-modelled storage: a byte window reaches ${name} (docs/byte-window.md)`,
+    });
+  }
 
   const states: PathState[] = [];
   execute(tree, { env: initialEnv, constraints: [], conds: [], computes: [], notes: [], readCount: 0, eofSeen: false }, ctx, states);
