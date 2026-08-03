@@ -185,11 +185,20 @@ Two consequences, and the first is not optional:
   must say so explicitly, in the same way `externalServices` names a
   modelled service (`docs/external-services.md`). Certifying such a
   module silently would be a mis-answer dressed as a pass.
-- **The real fix is an EBCDIC-configured reference build.** Verifying
-  against a GnuCOBOL built for the customer's code page would close the
-  gap rather than disclose it. That is worth scoping on its own; it also
-  affects every existing certificate's transferability, so it is a
-  product question, not only an engine one.
+- ~~**The real fix is an EBCDIC-configured reference build.**~~
+  **Measured and withdrawn — see `docs/charset.md`.** GnuCOBOL's
+  collating sequence and its storage encoding are independent, and only
+  the first is configurable: with `PROGRAM COLLATING SEQUENCE IS EBCDIC`
+  declared, comparisons do change, but a byte still reads **65** for
+  `'A'`, never 193. So no reference build in this toolchain can give a
+  byte window mainframe values. **Disclosure is the only honest route
+  for byte windows**, which makes the first bullet not merely advisable
+  but the whole answer.
+
+  The collating half of the question turned out well: a customer source
+  that declares its sequence is already honoured faithfully, and no
+  certificate issued so far is exposed (0 of 28 certified modules order
+  alphanumeric operands at all).
 
 ## Probes
 
