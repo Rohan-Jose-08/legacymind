@@ -1,0 +1,29 @@
+# PROBE image (stage 90) — ground-truth for keyed RANDOM reads and for
+# more than one INDEXED file in a single run. Not a harness image: it
+# answers questions, it does not verify anything.
+FROM debian:bookworm-slim
+
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends gnucobol3 \
+ && rm -rf /var/lib/apt/lists/*
+
+COPY examples/probes/keyed-read.cbl /opt/legacy/program.cbl
+COPY examples/probes/keyed-read-loader.cbl /opt/legacy/loader.cbl
+
+RUN cobc -x -o /opt/legacy/program /opt/legacy/program.cbl \
+ && cobc -x -o /opt/legacy/loader /opt/legacy/loader.cbl \
+ && cobc --version | head -n 1 > /opt/legacy/cobc-version.txt
+
+RUN { echo '#!/bin/sh'; \
+      echo 'cd /tmp'; \
+      echo 'rm -f seed.txt XREFFILE ACCTFILE EMPTYFILE'; \
+      echo 'cat > seed.txt'; \
+      echo '/opt/legacy/loader || exit $?'; \
+      echo 'echo "--- loader done, files present: ---"'; \
+      echo 'ls -1 XREFFILE ACCTFILE EMPTYFILE 2>&1'; \
+      echo 'echo "--- program ---"'; \
+      echo '/opt/legacy/program'; \
+      echo "echo \"PROGRAM-EXIT=\$?\""; } > /opt/legacy/run.sh \
+ && chmod +x /opt/legacy/run.sh
+
+ENTRYPOINT ["/opt/legacy/run.sh"]
