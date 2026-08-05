@@ -1,7 +1,7 @@
 {
   "tool": "legacymind benchmark",
   "version": "0.1.0",
-  "generatedAt": "2026-08-05T11:27:39.888Z",
+  "generatedAt": "2026-08-05T13:45:19.945Z",
   "toolchain": {
     "parser": "proleap engine (ProLeap ANTLR4 COBOL85 grammar + reference-format preprocessor, JVM)",
     "legacy": "GnuCOBOL 3.1.2 (debian:bookworm-slim, sandboxed: --network none, --rm)",
@@ -15,7 +15,7 @@
       "programId": "PAYROLL",
       "source": "examples/payroll.cbl",
       "loc": 59,
-      "wallSeconds": 136.6,
+      "wallSeconds": 97,
       "steps": {
         "parse": true,
         "validateIr": true,
@@ -25,7 +25,8 @@
         "layerC": true,
         "layerD": true,
         "certify": true,
-        "verifyCert": true
+        "verifyCert": true,
+        "validateSchema": true
       },
       "verdict": "CERTIFIED",
       "winner": "a",
@@ -77,7 +78,7 @@
       "programId": "INTEREST",
       "source": "benchmark/modules/interest.cbl",
       "loc": 53,
-      "wallSeconds": 99.1,
+      "wallSeconds": 93.8,
       "steps": {
         "parse": true,
         "validateIr": true,
@@ -87,7 +88,8 @@
         "layerC": true,
         "layerD": true,
         "certify": true,
-        "verifyCert": true
+        "verifyCert": true,
+        "validateSchema": true
       },
       "verdict": "CERTIFIED",
       "winner": "a",
@@ -137,7 +139,7 @@
       "programId": "DISCOUNT",
       "source": "benchmark/modules/discount.cbl",
       "loc": 54,
-      "wallSeconds": 101.8,
+      "wallSeconds": 93.7,
       "steps": {
         "parse": true,
         "validateIr": true,
@@ -147,7 +149,8 @@
         "layerC": true,
         "layerD": true,
         "certify": true,
-        "verifyCert": true
+        "verifyCert": true,
+        "validateSchema": true
       },
       "verdict": "CERTIFIED",
       "winner": "a",
@@ -199,7 +202,7 @@
       "programId": "LEDGER",
       "source": "benchmark/modules/ledger.cbl",
       "loc": 72,
-      "wallSeconds": 106.7,
+      "wallSeconds": 101.1,
       "steps": {
         "parse": true,
         "validateIr": true,
@@ -209,7 +212,8 @@
         "layerC": true,
         "layerD": true,
         "certify": true,
-        "verifyCert": true
+        "verifyCert": true,
+        "validateSchema": true
       },
       "verdict": "CERTIFIED",
       "winner": "a",
@@ -261,7 +265,7 @@
       "programId": "COMPOUND",
       "source": "benchmark/modules/compound.cbl",
       "loc": 52,
-      "wallSeconds": 104.9,
+      "wallSeconds": 101,
       "steps": {
         "parse": true,
         "validateIr": true,
@@ -271,7 +275,8 @@
         "layerC": true,
         "layerD": true,
         "certify": true,
-        "verifyCert": true
+        "verifyCert": true,
+        "validateSchema": true
       },
       "verdict": "CERTIFIED",
       "winner": "a",
@@ -321,7 +326,7 @@
       "programId": "TAXCALC",
       "source": "benchmark/modules/taxcalc.cbl",
       "loc": 58,
-      "wallSeconds": 108.4,
+      "wallSeconds": 101.3,
       "steps": {
         "parse": true,
         "validateIr": true,
@@ -331,7 +336,8 @@
         "layerC": true,
         "layerD": true,
         "certify": true,
-        "verifyCert": true
+        "verifyCert": true,
+        "validateSchema": true
       },
       "verdict": "CERTIFIED",
       "winner": "a",
@@ -381,7 +387,7 @@
       "programId": "GRADE",
       "source": "benchmark/modules/grade.cbl",
       "loc": 47,
-      "wallSeconds": 98.4,
+      "wallSeconds": 97.6,
       "steps": {
         "parse": true,
         "validateIr": true,
@@ -391,7 +397,8 @@
         "layerC": true,
         "layerD": true,
         "certify": true,
-        "verifyCert": true
+        "verifyCert": true,
+        "validateSchema": true
       },
       "verdict": "CERTIFIED",
       "winner": "a",
@@ -444,7 +451,7 @@
       "programId": "COMMISSION",
       "source": "benchmark/modules/commission.cbl",
       "loc": 49,
-      "wallSeconds": 98.9,
+      "wallSeconds": 105.6,
       "steps": {
         "parse": true,
         "validateIr": true,
@@ -454,7 +461,8 @@
         "layerC": true,
         "layerD": true,
         "certify": true,
-        "verifyCert": true
+        "verifyCert": true,
+        "validateSchema": true
       },
       "verdict": "CERTIFIED",
       "winner": "a",
@@ -504,7 +512,7 @@
       "programId": "SENIOR",
       "source": "benchmark/modules/senior.cbl",
       "loc": 38,
-      "wallSeconds": 96.2,
+      "wallSeconds": 101.9,
       "steps": {
         "parse": true,
         "validateIr": true,
@@ -514,7 +522,8 @@
         "layerC": true,
         "layerD": true,
         "certify": true,
-        "verifyCert": true
+        "verifyCert": true,
+        "validateSchema": true
       },
       "verdict": "CERTIFIED",
       "winner": "a",
@@ -567,7 +576,7 @@
       "programId": "TIER",
       "source": "benchmark/modules/tier.cbl",
       "loc": 37,
-      "wallSeconds": 104.6,
+      "wallSeconds": 106.7,
       "steps": {
         "parse": true,
         "validateIr": true,
@@ -577,7 +586,8 @@
         "layerC": true,
         "layerD": true,
         "certify": true,
-        "verifyCert": true
+        "verifyCert": true,
+        "validateSchema": true
       },
       "verdict": "CERTIFIED",
       "winner": "a",
@@ -627,7 +637,7 @@
       "programId": "INVOICE",
       "source": "benchmark/modules/invoice.cbl",
       "loc": 41,
-      "wallSeconds": 91.4,
+      "wallSeconds": 101,
       "steps": {
         "parse": true,
         "validateIr": true,
@@ -637,7 +647,8 @@
         "layerC": true,
         "layerD": true,
         "certify": true,
-        "verifyCert": true
+        "verifyCert": true,
+        "validateSchema": true
       },
       "verdict": "CERTIFIED",
       "winner": "a",
@@ -687,7 +698,7 @@
       "programId": "SHIPPING",
       "source": "benchmark/modules/shipping.cbl",
       "loc": 55,
-      "wallSeconds": 93.9,
+      "wallSeconds": 99.7,
       "steps": {
         "parse": true,
         "validateIr": true,
@@ -697,7 +708,8 @@
         "layerC": true,
         "layerD": true,
         "certify": true,
-        "verifyCert": true
+        "verifyCert": true,
+        "validateSchema": true
       },
       "verdict": "CERTIFIED",
       "winner": "a",
@@ -747,7 +759,7 @@
       "programId": "TRANSFER",
       "source": "benchmark/modules/transfer.cbl",
       "loc": 52,
-      "wallSeconds": 98,
+      "wallSeconds": 104.5,
       "steps": {
         "parse": true,
         "validateIr": true,
@@ -757,7 +769,8 @@
         "layerC": true,
         "layerD": true,
         "certify": true,
-        "verifyCert": true
+        "verifyCert": true,
+        "validateSchema": true
       },
       "verdict": "CERTIFIED",
       "winner": "a",
@@ -807,7 +820,7 @@
       "programId": "RETAIL",
       "source": "benchmark/modules/retail.cbl",
       "loc": 45,
-      "wallSeconds": 108.5,
+      "wallSeconds": 106.4,
       "steps": {
         "parse": true,
         "validateIr": true,
@@ -817,7 +830,8 @@
         "layerC": true,
         "layerD": true,
         "certify": true,
-        "verifyCert": true
+        "verifyCert": true,
+        "validateSchema": true
       },
       "verdict": "CERTIFIED",
       "winner": "a",
@@ -867,7 +881,7 @@
       "programId": "PAYSLIP",
       "source": "benchmark/modules/payslip.cbl",
       "loc": 55,
-      "wallSeconds": 103.9,
+      "wallSeconds": 107.5,
       "steps": {
         "parse": true,
         "validateIr": true,
@@ -877,7 +891,8 @@
         "layerC": true,
         "layerD": true,
         "certify": true,
-        "verifyCert": true
+        "verifyCert": true,
+        "validateSchema": true
       },
       "verdict": "CERTIFIED",
       "winner": "a",
@@ -929,7 +944,7 @@
       "programId": "BONUS",
       "source": "benchmark/modules/bonus.cbl",
       "loc": 46,
-      "wallSeconds": 99.8,
+      "wallSeconds": 100.6,
       "steps": {
         "parse": true,
         "validateIr": true,
@@ -939,7 +954,8 @@
         "layerC": true,
         "layerD": true,
         "certify": true,
-        "verifyCert": true
+        "verifyCert": true,
+        "validateSchema": true
       },
       "verdict": "CERTIFIED",
       "winner": "a",
@@ -989,7 +1005,7 @@
       "programId": "BATCHSUM",
       "source": "examples/batchsum.cbl",
       "loc": 44,
-      "wallSeconds": 97.1,
+      "wallSeconds": 97.3,
       "steps": {
         "parse": true,
         "validateIr": true,
@@ -999,7 +1015,8 @@
         "layerC": true,
         "layerD": true,
         "certify": true,
-        "verifyCert": true
+        "verifyCert": true,
+        "validateSchema": true
       },
       "verdict": "CERTIFIED",
       "winner": "a",
@@ -1052,7 +1069,7 @@
       "programId": "REBATE",
       "source": "examples/rebate.cbl",
       "loc": 52,
-      "wallSeconds": 108,
+      "wallSeconds": 111.4,
       "steps": {
         "parse": true,
         "validateIr": true,
@@ -1062,7 +1079,8 @@
         "layerC": true,
         "layerD": true,
         "certify": true,
-        "verifyCert": true
+        "verifyCert": true,
+        "validateSchema": true
       },
       "verdict": "CERTIFIED",
       "winner": "a",
@@ -1116,7 +1134,7 @@
       "programId": "DUES",
       "source": "examples/dues.cbl",
       "loc": 35,
-      "wallSeconds": 98.9,
+      "wallSeconds": 99.4,
       "steps": {
         "parse": true,
         "validateIr": true,
@@ -1126,7 +1144,8 @@
         "layerC": true,
         "layerD": true,
         "certify": true,
-        "verifyCert": true
+        "verifyCert": true,
+        "validateSchema": true
       },
       "verdict": "CERTIFIED",
       "winner": "a",
@@ -1178,7 +1197,7 @@
       "programId": "TABSUM",
       "source": "examples/tabsum.cbl",
       "loc": 40,
-      "wallSeconds": 94.2,
+      "wallSeconds": 95.8,
       "steps": {
         "parse": true,
         "validateIr": true,
@@ -1188,7 +1207,8 @@
         "layerC": true,
         "layerD": true,
         "certify": true,
-        "verifyCert": true
+        "verifyCert": true,
+        "validateSchema": true
       },
       "verdict": "CERTIFIED",
       "winner": "a",
@@ -1240,7 +1260,7 @@
       "programId": "SETTLE",
       "source": "examples/settle.cbl",
       "loc": 41,
-      "wallSeconds": 93,
+      "wallSeconds": 101.7,
       "steps": {
         "parse": true,
         "validateIr": true,
@@ -1250,7 +1270,8 @@
         "layerC": true,
         "layerD": true,
         "certify": true,
-        "verifyCert": true
+        "verifyCert": true,
+        "validateSchema": true
       },
       "verdict": "CERTIFIED",
       "winner": "a",
@@ -1302,7 +1323,7 @@
       "programId": "LOCKER",
       "source": "examples/locker.cbl",
       "loc": 48,
-      "wallSeconds": 95.7,
+      "wallSeconds": 112.1,
       "steps": {
         "parse": true,
         "validateIr": true,
@@ -1312,7 +1333,8 @@
         "layerC": true,
         "layerD": true,
         "certify": true,
-        "verifyCert": true
+        "verifyCert": true,
+        "validateSchema": true
       },
       "verdict": "CERTIFIED",
       "winner": "a",
@@ -1362,7 +1384,7 @@
       "programId": "REMIT",
       "source": "benchmark/modules/remit.cbl",
       "loc": 59,
-      "wallSeconds": 110.2,
+      "wallSeconds": 100.8,
       "steps": {
         "parse": true,
         "validateIr": true,
@@ -1372,7 +1394,8 @@
         "layerC": true,
         "layerD": true,
         "certify": true,
-        "verifyCert": true
+        "verifyCert": true,
+        "validateSchema": true
       },
       "verdict": "CERTIFIED",
       "winner": "a",
@@ -1424,7 +1447,7 @@
       "programId": "TARIFF",
       "source": "benchmark/modules/tariff.cbl",
       "loc": 60,
-      "wallSeconds": 102.3,
+      "wallSeconds": 105.4,
       "steps": {
         "parse": true,
         "validateIr": true,
@@ -1434,7 +1457,8 @@
         "layerC": true,
         "layerD": true,
         "certify": true,
-        "verifyCert": true
+        "verifyCert": true,
+        "validateSchema": true
       },
       "verdict": "CERTIFIED",
       "winner": "a",
@@ -1486,7 +1510,7 @@
       "programId": "MANIFEST",
       "source": "benchmark/modules/manifest.cbl",
       "loc": 69,
-      "wallSeconds": 94.3,
+      "wallSeconds": 96.7,
       "steps": {
         "parse": true,
         "validateIr": true,
@@ -1496,7 +1520,8 @@
         "layerC": true,
         "layerD": true,
         "certify": true,
-        "verifyCert": true
+        "verifyCert": true,
+        "validateSchema": true
       },
       "verdict": "CERTIFIED",
       "winner": "a",
@@ -1548,7 +1573,7 @@
       "programId": "REORDER",
       "source": "benchmark/modules/reorder.cbl",
       "loc": 63,
-      "wallSeconds": 106.6,
+      "wallSeconds": 101,
       "steps": {
         "parse": true,
         "validateIr": true,
@@ -1558,7 +1583,8 @@
         "layerC": true,
         "layerD": true,
         "certify": true,
-        "verifyCert": true
+        "verifyCert": true,
+        "validateSchema": true
       },
       "verdict": "CERTIFIED",
       "winner": "a",
@@ -1611,7 +1637,7 @@
       "programId": "FREIGHT",
       "source": "benchmark/modules/freight.cbl",
       "loc": 60,
-      "wallSeconds": 123.2,
+      "wallSeconds": 122.1,
       "steps": {
         "parse": true,
         "validateIr": true,
@@ -1621,7 +1647,8 @@
         "layerC": true,
         "layerD": true,
         "certify": true,
-        "verifyCert": true
+        "verifyCert": true,
+        "validateSchema": true
       },
       "verdict": "CERTIFIED",
       "winner": "a",
@@ -1671,7 +1698,7 @@
       "programId": "LEDGERX",
       "source": "benchmark/modules/ledgerx.cbl",
       "loc": 80,
-      "wallSeconds": 105.6,
+      "wallSeconds": 104.2,
       "steps": {
         "parse": true,
         "validateIr": true,
@@ -1681,7 +1708,8 @@
         "layerC": true,
         "layerD": true,
         "certify": true,
-        "verifyCert": true
+        "verifyCert": true,
+        "validateSchema": true
       },
       "verdict": "CERTIFIED",
       "winner": "a",

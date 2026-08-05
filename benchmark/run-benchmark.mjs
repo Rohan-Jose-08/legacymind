@@ -47,6 +47,23 @@ if (!SKIP_IMAGES) {
   run(["docker", "build", "-f", "ir-core/Dockerfile", "-t", "legacymind/ir-core", "."], "ir-core image (rust)");
 }
 
+// Positive control for the schema gate, once per run. "Every IR validates"
+// looks identical whether the schema is correct or has been loosened until
+// nothing can fail it, and this project has already shipped one confident
+// zero from a detector that could not fire. This mutates a known-good IR in
+// twelve ways the schema must reject; if any is accepted, the run stops
+// rather than reporting a green that means nothing.
+{
+  const control = run(
+    ["node", "cli/scripts/schema-negative-control.mjs", "ir/schema.json", "ir/examples/calculate-pay.ir.json"],
+    "schema negative control (must reject 12 mutations)",
+  );
+  if (!control.ok) {
+    console.error("benchmark: the IR schema failed its own negative control; aborting before any module runs");
+    process.exit(1);
+  }
+}
+
 const rows = [];
 for (const m of modules) {
   console.log(`\n=== ${m.programId} (${m.source}) ===`);
@@ -76,6 +93,16 @@ for (const m of modules) {
   steps.validateIr = run(
     ["docker", "run", "--rm", "-v", IR_MOUNT, "legacymind/ir-core", `/ir/${m.programId}.ir.json`],
     "validate IR (rust ir-core)",
+  );
+  // ...and against ir/schema.json, which is what the README, the parser and
+  // ir-core all call "the contract". It was NOT in the gate, and it had
+  // drifted so far that 9 of these modules and every real-code IR failed it
+  // while the benchmark stayed green — ir-core round-trips `files` and
+  // several other blocks as untyped Values, so nothing was checking the
+  // shape the contract describes. Both run now; they cover different halves.
+  steps.validateSchema = run(
+    ["node", "cli/scripts/validate-ir.mjs", "ir/schema.json", `out/ir/${m.programId}.ir.json`],
+    "validate IR (json schema)",
   );
   if (!SKIP_IMAGES) {
     // File-writing modules use the wrapper Dockerfile (run, then serialize

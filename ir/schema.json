@@ -10,7 +10,7 @@
     "irVersion": { "const": "0.1.0" },
     "files": {
       "type": "array",
-      "description": "File I/O stage 1: LINE SEQUENTIAL OUTPUT files only (SELECT/FD + OPEN OUTPUT/WRITE/CLOSE). Each FD's single 01 record is lowered into dataDivision.items as ordinary storage and referenced here by name. Input files, multiple records per FD, WRITE FROM/ADVANCING, and the file-status protocol are outside the subset; runtime file semantics are ground-truthed by layer B (the harness serializes the output file after the KV stdout stream).",
+      "description": "SELECT/FD + OPEN/READ/WRITE/CLOSE. Each FD's single 01 record is lowered into dataDivision.items as ordinary storage and referenced here by name. LINE SEQUENTIAL and INDEXED (VSAM, ACCESS SEQUENTIAL) are lowered; ACCESS RANDOM/DYNAMIC, keyed READ, REWRITE, OPEN I-O/EXTEND, more than one input file, and multiple records per FD are outside the subset and rejected at the frontend. Runtime file semantics are ground-truthed by layer B against the real binary (docs/vsam.md).",
       "items": {
         "type": "object",
         "required": ["name", "assign", "organization", "record", "mode"],
@@ -18,8 +18,32 @@
         "properties": {
           "name": { "type": "string", "pattern": "^[A-Z][A-Z0-9-]*$" },
           "assign": { "type": "string", "description": "ASSIGN TO literal, quotes stripped." },
-          "organization": { "const": "line-sequential" },
+          "assignKind": { "const": "ddname", "description": "Present when the ASSIGN target is bound EXTERNALLY at run time (a JCL DD on z/OS, DD_<name> in the environment here) rather than being a path in the source. Emitted only for ddnames, so a literal-assigned file leaves the key absent and existing replay-cache keys are unaffected." },
+          "organization": { "enum": ["line-sequential", "indexed"] },
           "record": { "type": "string", "pattern": "^[A-Z][A-Z0-9-]*$" },
+          "recordKey": { "type": "string", "pattern": "^[A-Z][A-Z0-9-]*$", "description": "RECORD KEY of an INDEXED file. The file is read in KEY order, which the modern side must impose on itself from a flat seed - the defect class of finding 12." },
+          "fileStatus": { "type": "string", "pattern": "^[A-Z][A-Z0-9-]*$", "description": "FILE STATUS data item. Deliberately NOT bound by layer C: assuming reads always succeed would make abend paths look infeasible (docs/layer-c-declines.md)." },
+          "recordWidth": { "type": "integer", "minimum": 1, "description": "Total fixed width of the record in bytes; a re-carving via READ INTO must preserve it exactly." },
+          "layout": {
+            "type": "array",
+            "description": "Byte-exact field layout of the record (stage 2b, docs/memory-layout.md), used to bind record fields to input slots in layers A and C.",
+            "items": {
+              "type": "object",
+              "required": ["path", "offset", "width", "decode"],
+              "additionalProperties": false,
+              "properties": {
+                "path": { "type": "string" },
+                "name": { "type": "string", "description": "Absent only on FILLER slots, which have no name to bind." },
+                "offset": { "type": "integer", "minimum": 0 },
+                "width": { "type": "integer", "minimum": 1 },
+                "decode": { "enum": ["alnum", "num", "filler"], "description": "`filler` is unnamed padding: it occupies bytes and is never bound to an input slot, so it must still appear here or the offsets after it would be wrong." },
+                "digits": { "type": "integer", "minimum": 1 },
+                "scale": { "type": "integer", "minimum": 0 }
+              },
+              "if": { "properties": { "decode": { "not": { "const": "filler" } } } },
+              "then": { "required": ["name"] }
+            }
+          },
           "mode": { "enum": ["input", "output"], "description": "From the OPEN statement; each file must be opened in exactly one mode." }
         }
       }
@@ -142,8 +166,13 @@
     },
     "dataItem": {
       "type": "object",
-      "required": ["level", "name", "path", "usage", "span", "children"],
+      "required": ["level", "name", "path", "usage", "children"],
       "additionalProperties": false,
+      "if": { "not": { "required": ["indexName"] } },
+      "then": {
+        "required": ["span"],
+        "description": "Every item declared in the source carries a span. Only the synthetic INDEXED BY item may omit it, so dropping provenance still fails validation everywhere it matters."
+      },
       "properties": {
         "level": {
           "type": "integer",
@@ -160,6 +189,22 @@
         "type": { "$ref": "#/$defs/pictureType" },
         "usage": { "enum": ["DISPLAY", "COMP", "COMP-3", "BINARY", "PACKED-DECIMAL"] },
         "value": { "type": "string", "description": "VALUE clause literal exactly as written (e.g. ZERO, .225, 'ABC')." },
+        "redefines": { "type": "string", "pattern": "^[A-Z][A-Z0-9-]*$", "description": "REDEFINES target: this item is an alternate view over the same storage." },
+        "occurs": { "type": "integer", "minimum": 1, "description": "OCCURS n - fixed table cardinality. OCCURS DEPENDING ON is outside the subset." },
+        "occursGroup": { "type": "integer", "minimum": 1, "description": "OCCURS n on a GROUP item: the table cardinality, with the group's leaves flattened per element (O3-flat). Distinct from `occurs`, which is the cardinality of an ELEMENTARY table - the two are carried separately because the flattening changes how layers A and C bind element fields to input slots." },
+        "indexName": { "const": true, "description": "This item IS an index, synthesized from INDEXED BY <name> on an OCCURS clause rather than declared in the source: a level-77 PIC 9(4) DISPLAY item settable with SET. Because it has no source line of its own it carries no `span`, which is the one case where `span` may be absent." },
+        "window": {
+          "type": "object",
+          "description": "Byte window (docs/byte-window.md): this leaf is a view of `length` bytes at 1-based `offset` within `of`. Produced by reference modification and by a group REDEFINES over an elementary target.",
+          "required": ["of", "offset", "length"],
+          "additionalProperties": false,
+          "properties": {
+            "of": { "type": "string", "pattern": "^[A-Z][A-Z0-9-]*$" },
+            "offset": { "type": "integer", "minimum": 1 },
+            "length": { "type": "integer", "minimum": 1 }
+          }
+        },
+        "byteModelled": { "type": "boolean", "description": "This item holds BYTES, not values: a window can leave a space inside a PIC 9, which no numeric domain can hold. Layers A and B execute it; layer C treats it as OPAQUE and layer D reports it UNRESOLVED, rather than either of them claiming a value (docs/byte-window.md)." },
         "span": { "$ref": "#/$defs/span" },
         "children": { "type": "array", "items": { "$ref": "#/$defs/dataItem" } }
       }
@@ -206,7 +251,11 @@
       "required": ["name", "span", "statements"],
       "additionalProperties": false,
       "properties": {
-        "name": { "type": "string", "pattern": "^[A-Z][A-Z0-9-]*$" },
+        "name": {
+          "type": "string",
+          "pattern": "^([A-Z0-9][A-Z0-9-]*|MAINLINE PARAGRAPH|INLINE PERFORM [0-9]+)$",
+          "description": "Real COBOL paragraph names are frequently digit-leading (0000-CARDFILE-OPEN), so the leading character is [A-Z0-9]. The two space-bearing forms are SYNTHETIC names the frontend creates for code that has no paragraph of its own: statements before the first paragraph header (MAINLINE PARAGRAPH) and inline PERFORM bodies (INLINE PERFORM <n>). They are enumerated explicitly rather than admitted by a looser pattern, so a genuinely malformed name is still rejected."
+        },
         "span": { "$ref": "#/$defs/span" },
         "statements": { "type": "array", "items": { "$ref": "#/$defs/statement" } }
       }
@@ -377,6 +426,21 @@
             "record": { "type": "string", "pattern": "^[A-Z][A-Z0-9-]*$" },
             "atEnd": { "type": "array", "items": { "$ref": "#/$defs/statement" } },
             "notAtEnd": { "type": "array", "items": { "$ref": "#/$defs/statement" } },
+            "text": { "type": "string" },
+            "span": { "$ref": "#/$defs/span" }
+          }
+        },
+        {
+          "type": "object",
+          "description": "A MOVE into a BYTE WINDOW - reference modification with a literal offset and length, TARGET(offset:length) (docs/byte-window.md). Kept distinct from `move` because the receiving area is a byte range, not a value: layers A and B execute it, layer C refuses the obligation and layer D reports the key UNRESOLVED. Offset is 1-based, as written in COBOL.",
+          "required": ["kind", "target", "offset", "length", "from", "text", "span"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "const": "move-window" },
+            "target": { "type": "string", "pattern": "^[A-Z][A-Z0-9-]*$" },
+            "offset": { "type": "integer", "minimum": 1 },
+            "length": { "type": "integer", "minimum": 1 },
+            "from": { "$ref": "#/$defs/operandExpr" },
             "text": { "type": "string" },
             "span": { "$ref": "#/$defs/span" }
           }
