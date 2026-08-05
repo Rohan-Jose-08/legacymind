@@ -36,6 +36,10 @@ const VERDICT_STYLES: Record<string, string> = {
   PASS: "bg-emerald-100 text-emerald-800 border-emerald-300",
   FAIL: "bg-red-100 text-red-800 border-red-300",
   NOT_RUN: "bg-stone-100 text-stone-500 border-stone-300",
+  // Amber, not red and not grey: the layer refused this module for a stated
+  // reason. That is a disclosure the reader should notice — unlike NOT_RUN,
+  // which is merely an omission — and it is not a failure.
+  DECLINED: "bg-amber-100 text-amber-800 border-amber-300",
   DIVERGENT: "bg-red-100 text-red-800 border-red-300",
   VERIFIED: "bg-emerald-100 text-emerald-800 border-emerald-300",
   UNREALIZED: "bg-amber-100 text-amber-800 border-amber-300",

@@ -1,7 +1,7 @@
 {
   "tool": "legacymind certify",
   "version": "0.1.0",
-  "generatedAt": "2026-08-03T23:07:04.010Z",
+  "generatedAt": "2026-08-05T10:52:42.452Z",
   "verdict": "CERTIFIED",
   "module": {
     "programId": "CBACT03C",
@@ -76,8 +76,12 @@
       }
     },
     "C": {
-      "status": "NOT_RUN",
-      "note": "symbolic-execution report not provided"
+      "status": "DECLINED",
+      "note": "the layer refused this module: it is outside the program shapes layer C reasons about soundly",
+      "report": {
+        "path": "C:/Users/Ender/AppData/Local/Temp/claude/C--Users-Ender-startup/218d28ce-10f6-4c2f-95c2-9476bd5c1b39/scratchpad/real/cbact03c-c-decline.json",
+        "sha256": "48a5a730eab7aa3b6ebe28248179dad1e683d8bbc4358c73a72297caa451bf22"
+      }
     },
     "D": {
       "status": "NOT_RUN",
@@ -115,7 +119,7 @@
       "capacityWarnings": 0
     },
     "gaps": [
-      "layer C (symbolic execution) was not run",
+      "layer C (symbolic execution) DECLINED this module rather than being skipped: layer C: READ after AT END on the same path (outside the stage-2a shape) — no symbolic evidence exists for it and none can be produced by this engine (docs/layer-c-declines.md)",
       "external service CEE3ABD is modelled as non-returning: its own behaviour and its argument values are outside this certificate (docs/external-services.md)"
     ]
   },
@@ -132,8 +136,8 @@
     "keyId": "9bf9bc9ae2dd373a",
     "publicKey": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAbd/PCVMO2FT/HryeWaIJ1Alb+M81qCF80xbDSRzPqJE=\n-----END PUBLIC KEY-----",
     "canonicalization": "json-sorted-keys",
-    "contentSha256": "c23f04dc95b03f9726d9ff66a2c8edb915e102f77311ecaced87e5e3752e914b",
-    "signature": "kuEls3a1mcRNPpYYp+fBNn0n7Es9nMox2Aa7mpKlOprVjlUsxwZ5dGTETBIfZq3Hx1SwLRZGLzoOJGHbYlxsBA==",
+    "contentSha256": "ac7bab86db8b9cdaad53f5f03dac123cbcaca2a2f52086828bde4ba4da21a3be",
+    "signature": "YHi5dMQHDm3HCNXk2PARSQar/WoEDMCldFErxiGA4CgXJxIB1qyMOo51hQ5iQaDlUw8WCMs0wh8/tWeLm53lBw==",
     "note": "Ed25519 signature over the canonical certificate body (this field excluded). Check with `legacymind verify-cert`."
   }
 }

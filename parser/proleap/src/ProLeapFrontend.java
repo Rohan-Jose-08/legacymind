@@ -213,17 +213,43 @@ public class ProLeapFrontend {
 					r.put("ir", ir);
 					// A module can lower completely and STILL not get all four
 					// layers. Saying "verifiable" without saying which layers will
-					// run is the promise `assess` must not make: byte-modelled
-					// storage holds bytes, not values, so layer C refuses the
-					// module outright (docs/byte-window.md).
+					// run is the promise `assess` must not make.
+					//
+					// Byte-modelled storage does NOT make layer C refuse the module.
+					// An earlier comment here said it did; running layer C disproved
+					// it (finding 14). Stage 80 made those items start OPAQUE, so
+					// they fork honestly and claim nothing — which is what the
+					// disclosure below actually describes.
+					final List<String> disclosures = new ArrayList<>();
 					if (!lowering.byteModelled.isEmpty()) {
-						r.put("disclosures", new ArrayList<>(Arrays.asList(
+						disclosures.add(
 								"layer C (symbolic) cannot reason about byte-modelled storage ("
 										+ String.join(", ", lowering.byteModelled)
 										+ "): those fields are opaque to it, so any path or obligation"
 										+ " depending on them is reported unknown rather than verified"
-										+ " (docs/byte-window.md)")));
+										+ " (docs/byte-window.md)");
 					}
+					// The disclosure this stage exists to stop hiding: `assess` reads
+					// the IR statically and never runs layer C, so it cannot see a
+					// DECLINE. On the three CardDemo readers layer C declines outright
+					// — "READ after AT END", the loop exit being driven by a FILE
+					// STATUS the engine does not model — and nothing above would have
+					// said so. A reduced-evidence list is a FLOOR on what will be
+					// missing, never a ceiling (docs/layer-c-declines.md).
+					if (!((List<?>) ir.getOrDefault("files", new ArrayList<>())).isEmpty()) {
+						disclosures.add(
+								// ASCII only: this string reaches stdout as JSON and the
+								// frontend's output stream is not UTF-8, so a non-ASCII
+								// character here lands in the customer's report as a
+								// replacement glyph. (The non-ASCII elsewhere in this
+								// file is all in comments, which never leave javac.)
+								"this module reads or writes a file, and `assess` does not execute layer C:"
+										+ " a symbolic DECLINE - for instance a read loop whose exit is driven by a"
+										+ " FILE STATUS the engine does not model - is not visible from the IR alone."
+										+ " Treat the evidence listed here as an upper bound until layer C is actually"
+										+ " run on this module (docs/layer-c-declines.md)");
+					}
+					if (!disclosures.isEmpty()) r.put("disclosures", disclosures);
 				}
 			} catch (final Throwable t) {
 				r.put("ok", false);

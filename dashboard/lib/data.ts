@@ -19,7 +19,7 @@ export const DATA_DIR = path.resolve(
 export type LayerName = "A" | "B" | "C" | "D";
 
 export interface LayerEvidence {
-  status: "PASS" | "FAIL" | "NOT_RUN";
+  status: "PASS" | "FAIL" | "NOT_RUN" | "DECLINED";
   summary?: Record<string, unknown>;
   report?: { path: string; sha256: string };
   note?: string;

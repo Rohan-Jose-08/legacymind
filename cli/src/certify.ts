@@ -30,7 +30,7 @@ import { signBody } from "./sign.js";
 export class CertifyError extends Error {}
 
 interface LayerEvidence {
-  status: "PASS" | "FAIL" | "NOT_RUN";
+  status: "PASS" | "FAIL" | "NOT_RUN" | "DECLINED";
   summary?: Record<string, unknown>;
   report?: { path: string; sha256: string };
   note?: string;
@@ -52,6 +52,19 @@ function evidence(reportPath: string, verdict: string, summary: Record<string, u
   // counting towards "at least one supporting layer", so a layer that
   // examined nothing can never be what certifies a module. Calling it FAIL
   // would be wrong in the other direction: nothing diverged.
+  // DECLINED is a THIRD kind of absence, and the most informative one: the
+  // layer was pointed at the module and refused because the program is
+  // outside the shapes it can reason about soundly. Reported as NOT_RUN it
+  // would read as an operator's omission, which understates what is known.
+  // It still supplies no evidence, so like NO-EVIDENCE it can never be the
+  // layer that certifies a module.
+  if (verdict === "DECLINED") {
+    return {
+      status: "DECLINED",
+      note: "the layer refused this module: it is outside the program shapes layer C reasons about soundly",
+      report: { path: resolve(reportPath).replace(/\\/g, "/"), sha256: sha256File(reportPath) },
+    };
+  }
   if (verdict === "NO-EVIDENCE") {
     return {
       status: "NOT_RUN",
@@ -183,23 +196,39 @@ export function runCertify(opts: {
   // --- layer C -------------------------------------------------------------------
   if (opts.layerCPath) {
     const c = readJson(opts.layerCPath, "layer C report");
-    layers.C = evidence(opts.layerCPath, c.verdict, c.summary);
-    const infeasible = c.summary?.paths?.infeasible ?? 0;
-    coverage.layerC = {
-      obligations: c.summary?.obligations ?? null,
-      pathsCovered: c.summary?.paths
-        ? `${c.summary.paths.covered}/${c.summary.paths.total - infeasible}` +
-          (infeasible > 0 ? ` (+${infeasible} proven infeasible)` : "")
-        : null,
-    };
-    const unrealized = c.summary?.obligations?.unrealized ?? 0;
-    const unrealizedPaths = c.summary?.unrealizedPathObligations ?? 0;
-    if (unrealized > 0) gaps.push(`layer C: ${unrealized} obligation(s) could not be realized as inputs (see report)`);
-    if (unrealizedPaths > 0) {
-      gaps.push(`layer C: ${unrealizedPaths} obligation-path combination(s) unrealized (see report)`);
+    if (c.verdict === "DECLINED") {
+      // No summary, no coverage entry, and no artifact check: a decline
+      // report names a property of the PROGRAM and never touched the Java,
+      // so asking it which artifact it tested would manufacture a gap that
+      // is not real. The reason goes into the gaps verbatim — it is the
+      // most specific true thing the certificate can say about layer C.
+      layers.C = evidence(opts.layerCPath, c.verdict, c.summary);
+      gaps.push(
+        `layer C (symbolic execution) DECLINED this module rather than being skipped: ` +
+          `${String(c.reason ?? "reason not recorded in the report")} — no symbolic evidence ` +
+          `exists for it and none can be produced by this engine (docs/layer-c-declines.md)`,
+      );
+    } else {
+      layers.C = evidence(opts.layerCPath, c.verdict, c.summary);
+      const infeasible = c.summary?.paths?.infeasible ?? 0;
+      coverage.layerC = {
+        obligations: c.summary?.obligations ?? null,
+        pathsCovered: c.summary?.paths
+          ? `${c.summary.paths.covered}/${c.summary.paths.total - infeasible}` +
+            (infeasible > 0 ? ` (+${infeasible} proven infeasible)` : "")
+          : null,
+      };
+      const unrealized = c.summary?.obligations?.unrealized ?? 0;
+      const unrealizedPaths = c.summary?.unrealizedPathObligations ?? 0;
+      if (unrealized > 0) {
+        gaps.push(`layer C: ${unrealized} obligation(s) could not be realized as inputs (see report)`);
+      }
+      if (unrealizedPaths > 0) {
+        gaps.push(`layer C: ${unrealizedPaths} obligation-path combination(s) unrealized (see report)`);
+      }
+      checkTargetsArtifact(c, artifactToken, "C", gaps);
+      noteMock(c, mockLegacyLabels);
     }
-    checkTargetsArtifact(c, artifactToken, "C", gaps);
-    noteMock(c, mockLegacyLabels);
   } else {
     gaps.push("layer C (symbolic execution) was not run");
   }
@@ -252,7 +281,13 @@ export function runCertify(opts: {
   if (!target.sha256) gaps.push("target source file could not be hashed (moved or deleted since migrate)");
 
   // --- verdict ------------------------------------------------------------------------
-  const provided = [layers.A, layers.C, layers.D].filter((l) => l.status !== "NOT_RUN");
+  // NOT_RUN and DECLINED are both absences of evidence and are filtered the
+  // same way here: a layer that produced nothing can never be the layer that
+  // certifies a module, whatever the reason it produced nothing. The
+  // difference between them lives in the gaps, where the reader needs it.
+  const provided = [layers.A, layers.C, layers.D].filter(
+    (l) => l.status !== "NOT_RUN" && l.status !== "DECLINED",
+  );
   const allRunPassed = [layers.B, ...provided].every((l) => l.status === "PASS");
   const verdict = layers.B.status === "PASS" && provided.length >= 1 && allRunPassed ? "CERTIFIED" : "NOT_CERTIFIED";
 
@@ -492,7 +527,11 @@ export function runReport(certPath: string, outPath?: string): number {
   };
   for (const name of ["A", "B", "C", "D"]) {
     const l = cert.layers?.[name] ?? {};
-    const ev = l.report ? `\`${l.report.path}\` (\`${short(l.report.sha256)}\`)` : (l.note ?? "—");
+    // A declined layer has a report file, but the path is not the useful
+    // thing about it — the reason is. Show both, or the strongest statement
+    // this certificate makes about layer C hides behind a hash.
+    const ref = l.report ? `\`${l.report.path}\` (\`${short(l.report.sha256)}\`)` : null;
+    const ev = l.status === "DECLINED" ? `${l.note ?? "declined"} — ${ref ?? "no report"}` : (ref ?? l.note ?? "—");
     push(`| ${name} | ${tech[name]} | **${l.status}** | ${ev} |`);
   }
   push();

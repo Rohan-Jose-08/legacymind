@@ -544,7 +544,7 @@ export function rangeNames(target: string, thru: string | undefined, paras: Map<
   const i = order.indexOf(target);
   const j = order.indexOf(thru);
   if (i < 0 || j < 0 || j < i) {
-    throw new DiffExecError(`layer C: PERFORM ${target} THRU ${thru} is not a valid forward paragraph range`);
+    throw new SymbolicDeclined(`layer C: PERFORM ${target} THRU ${thru} is not a valid forward paragraph range`);
   }
   return order.slice(i, j + 1);
 }
@@ -609,10 +609,10 @@ export function topLevelChain(paras: Map<string, Paragraph>, entry: string): Sta
       if (s.kind === "go-to") {
         const t = order.indexOf(s.target);
         if (t <= cur) {
-          throw new DiffExecError(`top-level GO TO ${s.target} is not a strictly forward jump`);
+          throw new SymbolicDeclined(`top-level GO TO ${s.target} is not a strictly forward jump`);
         }
         if (rest.length > 0) {
-          throw new DiffExecError(`top-level GO TO ${s.target} is not in tail position`);
+          throw new SymbolicDeclined(`top-level GO TO ${s.target} is not in tail position`);
         }
         out.push(...paraChain(t));
         return out;
@@ -675,10 +675,10 @@ function eliminateExitGotos(stmts: Statement[], exit: string): Statement[] {
     const rest = stmts.slice(i + 1);
     if (s.kind === "go-to") {
       if (s.target !== exit) {
-        throw new DiffExecError(`layer C: GO TO ${s.target} is not the exit ${exit} of its enclosing PERFORM THRU range`);
+        throw new SymbolicDeclined(`layer C: GO TO ${s.target} is not the exit ${exit} of its enclosing PERFORM THRU range`);
       }
       if (rest.length > 0) {
-        throw new DiffExecError(`layer C: GO TO ${exit} is not in tail position (statements follow it in the same block)`);
+        throw new SymbolicDeclined(`layer C: GO TO ${exit} is not in tail position (statements follow it in the same block)`);
       }
       return out; // falling off the block == returning from the range
     }
@@ -694,11 +694,11 @@ function eliminateExitGotos(stmts: Statement[], exit: string): Statement[] {
         continue;
       }
       if (thenGoto && elseGoto) {
-        throw new DiffExecError(`layer C: GO TO ${exit} in both branches of an IF (unsupported early-exit shape)`);
+        throw new SymbolicDeclined(`layer C: GO TO ${exit} in both branches of an IF (unsupported early-exit shape)`);
       }
       if (thenGoto) {
         if (!tailGotoTo(s.then, exit)) {
-          throw new DiffExecError(`layer C: GO TO ${exit} nested below the tail of an IF then-branch (needs stage-2 flag elimination)`);
+          throw new SymbolicDeclined(`layer C: GO TO ${exit} nested below the tail of an IF then-branch (needs stage-2 flag elimination)`);
         }
         out.push({
           ...s,
@@ -707,7 +707,7 @@ function eliminateExitGotos(stmts: Statement[], exit: string): Statement[] {
         });
       } else {
         if (!tailGotoTo(s.else ?? [], exit)) {
-          throw new DiffExecError(`layer C: GO TO ${exit} nested below the tail of an IF else-branch (needs stage-2 flag elimination)`);
+          throw new SymbolicDeclined(`layer C: GO TO ${exit} nested below the tail of an IF else-branch (needs stage-2 flag elimination)`);
         }
         out.push({
           ...s,
@@ -729,7 +729,7 @@ export function inlineStatements(stmts: Statement[], paras: Map<string, Paragrap
     if (s.kind === "perform") {
       const names = rangeNames(s.target, s.thru, paras);
       if (names.some((n) => stack.includes(n))) {
-        throw new DiffExecError(
+        throw new SymbolicDeclined(
           `layer C: PERFORM cycle through ${s.target}${s.thru ? ` THRU ${s.thru}` : ""}; loops need fixpoint machinery`,
         );
       }
@@ -800,7 +800,7 @@ function loopBody(ctx: ExecCtx, s: LoopStmt): Statement[] {
   if (!body) {
     body = inlineStatements(rangeStatements(names, ctx.paras), ctx.paras, [...names]);
     if (containsAccept(body, ctx, new Set(names))) {
-      throw new DiffExecError(
+      throw new SymbolicDeclined(
         `layer C: ACCEPT inside PERFORM loop body ${key} — stdin positions become iteration-dependent (needs the record protocol)`,
       );
     }
@@ -808,6 +808,25 @@ function loopBody(ctx: ExecCtx, s: LoopStmt): Statement[] {
   }
   return body;
 }
+
+/**
+ * A refusal caused by the PROGRAM's shape rather than by the caller's config
+ * or by an internal invariant (docs/layer-c-declines.md).
+ *
+ * The distinction earns its keep in the certificate. Layer C throwing meant
+ * no report was written, so a module the engine structurally cannot reason
+ * about and a module nobody bothered to run produced the same certificate
+ * text — "symbolic-execution report not provided". That is the absence of a
+ * fact dressed as an absence of effort, and this project's whole claim is
+ * that gaps are named. A `SymbolicDeclined` is written out as a DECLINED
+ * report so `certify` can put the reason inside the signed body.
+ *
+ * Only sites that describe the program are raised this way. A bad config or
+ * a violated internal invariant stays a plain `DiffExecError` with no
+ * artifact, because a certificate must never say "layer C declines this
+ * module" on the strength of a typo.
+ */
+export class SymbolicDeclined extends DiffExecError {}
 
 /** Every item a byte window can reach, in declaration order (docs/byte-window.md). */
 export function byteModelledNames(items: DataItem[]): string[] {
@@ -1126,7 +1145,7 @@ function execute(stmts: Statement[], state: PathState, ctx: ExecCtx, out: PathSt
         // element type decides numeric vs text, the cell key is where it lands.
         const tc = tableCell(s.target, exprCtx());
         if (tc === null) {
-          throw new DiffExecError(`layer C: ACCEPT into ${s.target} which is not a resolvable table cell`);
+          throw new SymbolicDeclined(`layer C: ACCEPT into ${s.target} which is not a resolvable table cell`);
         }
         const key = tc === "notable" ? s.target : tc.key;
         const item = tc === "notable" ? findItem(ctx.items, s.target) : tc.item;
@@ -1161,7 +1180,7 @@ function execute(stmts: Statement[], state: PathState, ctx: ExecCtx, out: PathSt
             forked.notes.push(`condition "${s.condition.text}" is not affine; path constraints incomplete`);
             execute([...branch, ...rest], forked, ctx, out);
             if (out.length > ctx.maxPaths) {
-              throw new DiffExecError(`layer C: more than ${ctx.maxPaths} paths; needs bounded exploration`);
+              throw new SymbolicDeclined(`layer C: more than ${ctx.maxPaths} paths; needs bounded exploration`);
             }
             continue;
           }
@@ -1190,7 +1209,7 @@ function execute(stmts: Statement[], state: PathState, ctx: ExecCtx, out: PathSt
             }
             execute([...branch, ...rest], forked, ctx, out);
             if (out.length > ctx.maxPaths) {
-              throw new DiffExecError(`layer C: more than ${ctx.maxPaths} paths; needs bounded exploration`);
+              throw new SymbolicDeclined(`layer C: more than ${ctx.maxPaths} paths; needs bounded exploration`);
             }
           }
         }
@@ -1220,7 +1239,7 @@ function execute(stmts: Statement[], state: PathState, ctx: ExecCtx, out: PathSt
           throw new DiffExecError('layer C: READ requires a "records" block in the symbolic config');
         }
         if (state.eofSeen) {
-          throw new DiffExecError("layer C: READ after AT END on the same path (outside the stage-2a shape)");
+          throw new SymbolicDeclined("layer C: READ after AT END on the same path (outside the stage-2a shape)");
         }
         const restAfterRead = stmts.slice(si + 1);
         if (state.readCount < ctx.records.max) {
@@ -1246,7 +1265,7 @@ function execute(stmts: Statement[], state: PathState, ctx: ExecCtx, out: PathSt
           avail.readCount += 1;
           execute([...s.notAtEnd, ...restAfterRead], avail, ctx, out);
           if (out.length > ctx.maxPaths) {
-            throw new DiffExecError(`layer C: more than ${ctx.maxPaths} paths; lower the records max`);
+            throw new SymbolicDeclined(`layer C: more than ${ctx.maxPaths} paths; lower the records max`);
           }
         }
         const eof = cloneState(state);
@@ -1292,10 +1311,10 @@ function execute(stmts: Statement[], state: PathState, ctx: ExecCtx, out: PathSt
       case "go-to":
         // Sound GO-TO-exit is rewritten to if/else in inlineStatements before
         // execution; reaching one here means an unhandled shape slipped through.
-        throw new DiffExecError(`layer C: GO TO ${s.target} survived structured elimination`);
+        throw new SymbolicDeclined(`layer C: GO TO ${s.target} survived structured elimination`);
       default: {
         const never: never = s;
-        throw new DiffExecError(`layer C: unsupported statement kind ${(never as Statement).kind}`);
+        throw new SymbolicDeclined(`layer C: unsupported statement kind ${(never as Statement).kind}`);
       }
     }
   }
@@ -1348,7 +1367,7 @@ function unrollLoop(
     if (pushed.some(provablyFalse)) continue;
     execute(rest, exitState, ctx, out);
     if (out.length > ctx.maxPaths) {
-      throw new DiffExecError(`layer C: more than ${ctx.maxPaths} paths; lower maxLoopUnroll or split the module`);
+      throw new SymbolicDeclined(`layer C: more than ${ctx.maxPaths} paths; lower maxLoopUnroll or split the module`);
     }
   }
 
@@ -2089,7 +2108,7 @@ export function runSymExec(configPath: string, outPath: string): number {
   };
   collectAccepts(tree);
   if (recordsMode && acceptOrder.length > 0) {
-    throw new DiffExecError("layer C: ACCEPT alongside an input file (the frontend gate should have rejected this)");
+    throw new SymbolicDeclined("layer C: ACCEPT alongside an input file (the frontend gate should have rejected this)");
   }
 
   const ctx: ExecCtx = {

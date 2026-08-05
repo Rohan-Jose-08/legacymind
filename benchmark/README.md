@@ -654,6 +654,33 @@ in the order found. They are the sales pitch:
     side is host-JDK on Windows, naming `LM_JAVA_IMAGE` as the fix. A
     harness that fails for an environmental reason it could have predicted
     is the same class of defect as one that passes for a hollow one.
+14. **The certificate could not tell "the engine refuses this program" from
+    "nobody ran that layer" — and the reason we had written down for the
+    refusal was wrong (2026-08-05).** Found while fact-checking marketing
+    copy against the artifacts, which is a cheaper auditor than a customer.
+    `verify --layer C` threw on a structural refusal and wrote no report, so
+    `certify` saw an absent flag and emitted `NOT_RUN — "symbolic-execution
+    report not provided"`. That single sentence covered both an operator's
+    omission and a *measured fact about the customer's program*, and it is
+    the second that is worth paying for. Layer C now raises
+    `SymbolicDeclined` at the 19 sites that describe the program (as opposed
+    to the config or an internal invariant), writes a `DECLINED` report, and
+    `certify` lifts the reason verbatim into the signed gaps. No verdict
+    moves: a decline supplies no evidence, so it is filtered out of the
+    "at least one supporting layer" test exactly like `NOT_RUN`.
+    The second half is worse and is the reason this is logged rather than
+    quietly fixed. `HANDOFF.md` stated that layer C declined the three
+    CardDemo modules **because of byte-modelled storage**. Running it says
+    otherwise, identically on all three: `READ after AT END on the same
+    path` — the read loop's exit is driven by a FILE STATUS the engine does
+    not model, so end-of-file is undecidable. Byte-modelled storage causes
+    no refusal at all; stage 80 made those items *opaque*. The claim had
+    been carried forward for five stages without once being executed, in a
+    project whose entire pitch is that it measures rather than assumes.
+    Nothing false ever reached a certificate — the certificates said only
+    "not run" — but the doc was wrong, and the rule it earns is blunt:
+    **a stated reason that has never been executed is a guess, and must be
+    labelled as one until it is run.** See `docs/layer-c-declines.md`.
 
 ## Parser-coverage sweep
 

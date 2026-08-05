@@ -125,8 +125,18 @@ read loop whose exit condition *orders* an alphanumeric.
 Lifting the gate made `assess` report **3 of 31 CardDemo modules
 verifiable** — the first non-zero number this project has produced on real
 third-party COBOL. Stage 81's near-miss said to check what each layer
-would actually do first, and the check bites again: all three carry
-byte-modelled storage, so **layer C declines them** (`docs/byte-window.md`).
+would actually do first, and the check bites again: **layer C declines
+all three**.
+
+> **Corrected 2026-08-05 (finding 14).** This section originally gave the
+> reason as byte-modelled storage. That was never executed and is wrong.
+> The measured refusal, identical on all three, is `READ after AT END on
+> the same path`: the read loop's exit is driven by a FILE STATUS the
+> engine does not model. Byte-modelled storage produces *opaque* values,
+> not a refusal. `docs/layer-c-declines.md` has the measurement; the
+> disclosure quoted below still under-states the case for exactly this
+> reason, and `assess` now adds a second disclosure saying it cannot
+> predict a decline from the IR alone.
 
 That is a documented, disclosed mode rather than a defect — but "verifiable"
 had meant *full four-layer verification*, and for these three it is not.

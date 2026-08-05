@@ -18,7 +18,7 @@ import { ParseError, parseCobol } from "./parse/parser.js";
 import { parseCobolProleap, PROLEAP_FORMATS } from "./parse/proleap.js";
 import { DiffExecError, runDiffExec } from "./verify/diffexec.js";
 import { runPropGen } from "./verify/propgen.js";
-import { runSymExec } from "./verify/symexec.js";
+import { runSymExec, SymbolicDeclined } from "./verify/symexec.js";
 import { runStaticFlow } from "./verify/staticflow.js";
 import { AssessError, runAssess } from "./assess.js";
 import { MigrateError, runMigrate } from "./transpile/transpile.js";
@@ -177,6 +177,44 @@ function cmdParse(args: string[]): void {
   }
 }
 
+/**
+ * Write layer C's structural decline as a report artifact.
+ *
+ * Deliberately minimal, and deliberately NOT shaped like a passing report:
+ * it carries no summary, no obligations and no path counts, because a
+ * decline establishes nothing about the module beyond the fact that this
+ * engine will not reason about it. `certify` hashes this file and lifts
+ * `reason` verbatim into the signed certificate.
+ */
+function writeDeclineReport(configPath: string, outPath: string, reason: string): void {
+  let ir: string | null = null;
+  try {
+    ir = JSON.parse(readFileSync(configPath, "utf8")).symbolic?.ir ?? null;
+  } catch {
+    // A decline can outlive an unreadable config; the reason is the payload.
+  }
+  mkdirSync(dirname(outPath) || ".", { recursive: true });
+  writeFileSync(
+    outPath,
+    JSON.stringify(
+      {
+        tool: "legacymind verify --layer C",
+        verdict: "DECLINED",
+        reason,
+        config: configPath.replace(/\\/g, "/"),
+        ir,
+        generatedAt: new Date().toISOString(),
+        note:
+          "Layer C refused this module because of the PROGRAM's shape, not because of a " +
+          "configuration error. This is an absence of evidence with a named cause; it is not " +
+          "a failure, and it must not be read as one. See docs/layer-c-declines.md.",
+      },
+      null,
+      2,
+    ) + "\n",
+  );
+}
+
 function cmdVerify(args: string[]): void {
   const { flags } = parseArgs(args);
   const config = str(flags, "config");
@@ -196,7 +234,21 @@ function cmdVerify(args: string[]): void {
         }),
       );
     } else if (layer === "C") {
-      process.exit(runSymExec(config, out));
+      // A structural decline is EVIDENCE ABOUT THE MODULE, so it is written
+      // out rather than only printed. Without the artifact, `certify` cannot
+      // tell "layer C cannot reason about this program" from "nobody ran
+      // layer C", and says the weaker of the two (docs/layer-c-declines.md).
+      // The exit code is unchanged: a decline is still not a pass, and
+      // nothing that gates on exit status moves.
+      try {
+        process.exit(runSymExec(config, out));
+      } catch (e) {
+        if (!(e instanceof SymbolicDeclined)) throw e;
+        writeDeclineReport(config, out, e.message);
+        console.error(`legacymind: verify: ${e.message}`);
+        console.error(`  wrote DECLINED report to ${out} — certify records this as a named gap`);
+        process.exit(2);
+      }
     } else if (layer === "D") {
       process.exit(runStaticFlow(config, out));
     } else {

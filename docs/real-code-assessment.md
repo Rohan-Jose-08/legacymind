@@ -12,19 +12,33 @@
 >
 > **This is the first non-zero result on real third-party COBOL, and it
 > needs its qualifier attached every time it is repeated.** `CBACT02C`,
-> `CBACT03C` and `CBCUS01C` lower completely into the IR, but all three
-> carry byte-modelled storage, so **layer C declines them**: their
-> evidence would come from layers A, B and D, with the missing layer
-> recorded in the certificate. `assess` prints this in the same line as
+> `CBACT03C` and `CBCUS01C` lower completely into the IR, but **layer C
+> declines all three**: their evidence comes from layers A, B and D, with
+> the declining layer recorded in the certificate.
+>
+> **Corrected 2026-08-05 (finding 14):** this paragraph used to say the
+> decline was caused by byte-modelled storage. It is not — that was a
+> guess that had never been executed. Running layer C gives the same
+> answer on all three: `READ after AT END on the same path`, because the
+> read loop's exit is driven by a FILE STATUS the engine does not model.
+> Byte-modelled storage causes no refusal at all (stage 80 made those
+> items *opaque*). See `docs/layer-c-declines.md`.
+>
+> `assess` prints this in the same line as
 > the number —
 > `verifiable now: 3/31 (9.7%)  [0 four-layer, 3 reduced evidence]` —
 > because an earlier version of this change reported the 3 without the
 > qualifier and would have been false (`docs/read-loop.md`).
 >
 > **No real module has been certified end to end yet.** Verifiable means
-> eligible. Certification needs a VSAM harness image per module and a
-> `migrate` run, and until that happens the honest line is: *three
-> modules are eligible, none is certified.* The marketing guidance in
+> eligible. All three now carry signed `CERTIFIED` certificates, but in
+> **audit mode over Java we wrote by hand** — evidence about the verifier,
+> not about the transpiler, and not an audit of anyone else's migration.
+> A pipeline-generated certificate still needs a `migrate` run that
+> survives the verifier, which has not happened. The honest line is:
+> *three modules are eligible; the verifier has certified hand-written
+> Java for all three while naming the layer that declined; nothing the
+> transpiler produced has been certified.* The marketing guidance in
 > "What this means" below is unchanged.
 >
 > The median rose 15.5 → 21 only because the three nearest modules left
